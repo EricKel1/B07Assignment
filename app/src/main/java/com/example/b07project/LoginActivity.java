@@ -12,7 +12,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
     private EditText etEmail, etPassword;
     private ProgressBar progress;
-    private TextView tvError;
+    private TextView tvError, tvSignUp;
     private LoginContract.Presenter presenter;
 
     @Override
@@ -24,11 +24,16 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         etPassword= findViewById(R.id.etPassword);
         progress  = findViewById(R.id.progress);
         tvError   = findViewById(R.id.tvError);
+        tvSignUp  = findViewById(R.id.tvSignUp);
         Button btnLogin = findViewById(R.id.btnLogin);
 
         presenter = new LoginPresenter(this, new FirebaseAuthRepo());
 
         btnLogin.setOnClickListener(v -> presenter.onLoginClicked());
+        
+        tvSignUp.setOnClickListener(v -> {
+            startActivity(new Intent(this, SignUpActivity.class));
+        });
     }
 
     // --- View impl ---
