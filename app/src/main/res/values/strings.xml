@@ -1,3 +1,64 @@
 <resources>
-    <string name="app_name">B07Project</string>
+    <string name="app_name">SMART AIR</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">SMART AIR</string>
+    <string name="home_subtitle">Track your asthma journey</string>
+    <string name="rescue_inhaler_title">Rescue Inhaler</string>
+    <string name="rescue_inhaler_description">Quick-relief medicine for sudden symptoms</string>
+    <string name="btn_log_rescue_inhaler">Log Rescue Inhaler Use</string>
+    <string name="btn_view_history">View History</string>
+    <string name="btn_sign_out">Sign Out</string>
+    
+    <!-- Sign Up Screen -->
+    <string name="signup_title">Create Account</string>
+    <string name="signup_subtitle">Join SMART AIR to start tracking your asthma</string>
+    <string name="hint_full_name">Full Name</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="password_hint">At least 6 characters</string>
+    <string name="btn_signup">Sign Up</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="link_signin">Sign In</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="link_signup">Sign Up</string>
+    
+    <!-- Log Rescue Inhaler Screen -->
+    <string name="log_rescue_title">Log Rescue Inhaler Use</string>
+    <string name="log_rescue_subtitle">Record when you use your quick-relief medicine</string>
+    <string name="label_time">Time</string>
+    <string name="label_dose_count">Number of Puffs</string>
+    <string name="label_notes">Notes (Optional)</string>
+    <string name="hint_notes">How are you feeling? What were you doing?</string>
+    <string name="btn_save_log">Save Log</string>
+    <string name="btn_increase">+</string>
+    <string name="btn_decrease">-</string>
+    
+    <!-- History Screen -->
+    <string name="history_title">Rescue Inhaler History</string>
+    <string name="history_subtitle">View your past rescue inhaler uses</string>
+    <string name="history_empty_message">No rescue inhaler logs yet.\nStart logging your inhaler use!</string>
+    
+    <!-- Messages -->
+    <string name="msg_log_saved">Rescue inhaler use logged successfully!</string>
+    <string name="msg_save_failed">Failed to save log: %s</string>
+    <string name="msg_load_failed">Failed to load logs: %s</string>
+    <string name="msg_sign_in_required">Please sign in to save logs</string>
+    <string name="msg_sign_in_required_view">Please sign in to view logs</string>
+    <string name="msg_account_created">Account created successfully!</string>
+    <string name="msg_signup_failed">Sign up failed</string>
+    
+    <!-- Validation Messages -->
+    <string name="error_empty_name">Please enter your name</string>
+    <string name="error_empty_email">Please enter your email</string>
+    <string name="error_invalid_email">Please enter a valid email address</string>
+    <string name="error_empty_password">Please enter a password</string>
+    <string name="error_password_length">Password must be at least 6 characters</string>
+    <string name="error_empty_confirm_password">Please confirm your password</string>
+    <string name="error_passwords_mismatch">Passwords do not match</string>
+    <string name="error_email_already_registered">This email is already registered</string>
+    <string name="error_network">Network error. Please check your connection</string>
+    
+    <!-- Format strings -->
+    <string name="format_puff_count_singular">%d puff</string>
+    <string name="format_puff_count_plural">%d puffs</string>
 </resources>
