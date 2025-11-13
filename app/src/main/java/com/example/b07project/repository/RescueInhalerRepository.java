@@ -52,7 +52,6 @@ public class RescueInhalerRepository {
     public void getLogsForUser(String userId, LoadCallback callback) {
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 List<RescueInhalerLog> logs = new ArrayList<>();
@@ -66,6 +65,12 @@ public class RescueInhalerRepository {
                     log.setNotes(document.getString("notes"));
                     logs.add(log);
                 }
+                // Sort by timestamp in memory (newest first)
+                logs.sort((a, b) -> {
+                    if (a.getTimestamp() == null) return 1;
+                    if (b.getTimestamp() == null) return -1;
+                    return b.getTimestamp().compareTo(a.getTimestamp());
+                });
                 if (callback != null) {
                     callback.onSuccess(logs);
                 }
