@@ -52,6 +52,16 @@
             android:layout_marginTop="4dp"/>
 
         <TextView
+            android:id="@+id/tvScheduledInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Scheduled: 8:00 AM ✓ On Time"
+            android:textSize="14sp"
+            android:textColor="#4CAF50"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"/>
+
+        <TextView
             android:id="@+id/tvNotes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -14,7 +14,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Log Rescue Inhaler Use"
+            android:text="Log Medicine"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textColor="#1976D2"
@@ -26,12 +26,101 @@
             android:id="@+id/tvSubtitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Record when you use your quick-relief medicine"
+            android:text="Choose medicine type and record your dose"
             android:textSize="14sp"
             android:layout_marginTop="8dp"
             app:layout_constraintTop_toBottomOf="@id/tvTitle"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
+
+        <RadioGroup
+            android:id="@+id/rgMedicineType"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <RadioButton
+                android:id="@+id/rbRescue"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Rescue Inhaler"
+                android:checked="true"
+                android:textSize="16sp"
+                android:padding="12dp"/>
+
+            <RadioButton
+                android:id="@+id/rbController"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Controller Medicine"
+                android:textSize="16sp"
+                android:padding="12dp"/>
+        </RadioGroup>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/controllerOnlySection"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:background="@android:drawable/dialog_holo_light_frame"
+            app:layout_constraintTop_toBottomOf="@id/rgMedicineType"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/tvScheduledLabel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Scheduled Time"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <Button
+                android:id="@+id/btnSelectTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Select Time"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tvScheduledLabel"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <TextView
+                android:id="@+id/tvScheduledTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Not selected"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:padding="12dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/btnSelectTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+            <CheckBox
+                android:id="@+id/cbTakenOnTime"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="Taken on time"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@id/tvScheduledTime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <TextView
             android:id="@+id/tvTimestampLabel"
@@ -40,8 +129,8 @@
             android:text="Time"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:layout_marginTop="32dp"
-            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/controllerOnlySection"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
