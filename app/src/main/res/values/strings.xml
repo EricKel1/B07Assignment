@@ -52,6 +52,25 @@
     <string name="controller_history_subtitle">Your daily prevention medicine logs</string>
     <string name="controller_history_empty_message">No controller medicine logs yet.\nStart logging your daily medicine!</string>
     
+    <!-- Daily Symptom Check-In -->
+    <string name="symptom_checkin_title">Daily Symptom Check-In</string>
+    <string name="symptom_checkin_subtitle">Track how you\'re feeling today</string>
+    <string name="symptom_history_title">Symptom History</string>
+    <string name="symptom_history_subtitle">View your daily symptom check-ins</string>
+    <string name="symptom_history_empty">No symptom check-ins yet.\nStart tracking your daily symptoms!</string>
+    <string name="label_symptom_level">How severe are your symptoms today?</string>
+    <string name="symptom_level_description">1 = No symptoms, 5 = Severe</string>
+    <string name="label_triggers">What symptoms did you experience?</string>
+    <string name="trigger_wheezing">Wheezing</string>
+    <string name="trigger_coughing">Coughing</string>
+    <string name="trigger_shortness_breath">Shortness of breath</string>
+    <string name="trigger_chest_tightness">Chest tightness</string>
+    <string name="trigger_nighttime">Nighttime symptoms</string>
+    <string name="btn_daily_checkin">Daily Check-In</string>
+    <string name="btn_save_checkin">Save Check-In</string>
+    <string name="msg_checkin_saved">Symptom check-in saved successfully!</string>
+    <string name="msg_already_checked_in">You already checked in today. You can update your check-in.</string>
+    
     <!-- Messages -->
     <string name="msg_log_saved">Rescue inhaler use logged successfully!</string>
     <string name="msg_controller_log_saved">Controller medicine logged successfully!</string>

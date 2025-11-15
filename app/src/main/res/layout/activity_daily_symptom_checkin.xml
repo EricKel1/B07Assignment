@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Daily Symptom Check-In"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FF9800"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Track how you're feeling today"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvDateLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Date"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Today"
+            android:textSize="18sp"
+            android:padding="12dp"
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvDateLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSymptomLevelLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="How severe are your symptoms today?"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvDate"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSymptomLevelDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="1 = No symptoms, 5 = Severe"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSymptomLevelLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/sliderSymptomLevel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:valueFrom="1"
+            android:valueTo="5"
+            android:stepSize="1"
+            android:value="3"
+            android:layout_marginTop="8dp"
+            app:labelBehavior="floating"
+            app:layout_constraintTop_toBottomOf="@id/tvSymptomLevelDescription"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSymptomLevelValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FF9800"
+            app:layout_constraintTop_toBottomOf="@id/sliderSymptomLevel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvTriggersLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="What symptoms did you experience?"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSymptomLevelValue"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbWheezing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Wheezing"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTriggersLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbCoughing"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Coughing"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbWheezing"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbShortnessOfBreath"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Shortness of breath"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbCoughing"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbChestTightness"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Chest tightness"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbShortnessOfBreath"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbNighttimeSymptoms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Nighttime symptoms"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbChestTightness"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvNotesLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Additional Notes (Optional)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/cbNighttimeSymptoms"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etNotes"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:hint="Any triggers? How did you manage symptoms?"
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:maxLines="4"
+            android:padding="12dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvNotesLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Save Check-In"
+            android:textSize="18sp"
+            android:paddingVertical="16dp"
+            android:backgroundTint="#FF9800"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/etNotes"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <ProgressBar
+            android:id="@+id/progress"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/btnSave"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvMessage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/progress"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
