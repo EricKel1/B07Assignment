@@ -1,0 +1,212 @@
+package com.example.b07project;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.b07project.models.SymptomCheckIn;
+import com.example.b07project.repository.SymptomCheckInRepository;
+import com.google.android.material.slider.Slider;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+
+public class DailySymptomCheckInActivity extends AppCompatActivity {
+
+    private TextView tvDate, tvSymptomLevelValue, tvMessage;
+    private Slider sliderSymptomLevel;
+    private CheckBox cbWheezing, cbCoughing, cbShortnessOfBreath, cbChestTightness, cbNighttimeSymptoms;
+    private EditText etNotes;
+    private Button btnSave;
+    private ProgressBar progress;
+
+    private Date todayDate;
+    private SymptomCheckInRepository repository;
+    private SimpleDateFormat dateFormat;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_daily_symptom_checkin);
+
+        initializeViews();
+        repository = new SymptomCheckInRepository();
+        dateFormat = new SimpleDateFormat("EEEE, MMM dd, yyyy", Locale.getDefault());
+
+        // Set today's date
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        todayDate = calendar.getTime();
+        tvDate.setText(dateFormat.format(todayDate));
+
+        setupListeners();
+        checkForExistingCheckIn();
+    }
+
+    private void initializeViews() {
+        tvDate = findViewById(R.id.tvDate);
+        tvSymptomLevelValue = findViewById(R.id.tvSymptomLevelValue);
+        tvMessage = findViewById(R.id.tvMessage);
+        sliderSymptomLevel = findViewById(R.id.sliderSymptomLevel);
+        cbWheezing = findViewById(R.id.cbWheezing);
+        cbCoughing = findViewById(R.id.cbCoughing);
+        cbShortnessOfBreath = findViewById(R.id.cbShortnessOfBreath);
+        cbChestTightness = findViewById(R.id.cbChestTightness);
+        cbNighttimeSymptoms = findViewById(R.id.cbNighttimeSymptoms);
+        etNotes = findViewById(R.id.etNotes);
+        btnSave = findViewById(R.id.btnSave);
+        progress = findViewById(R.id.progress);
+    }
+
+    private void setupListeners() {
+        sliderSymptomLevel.addOnChangeListener((slider, value, fromUser) -> {
+            tvSymptomLevelValue.setText(String.valueOf((int) value));
+            updateSymptomLevelColor((int) value);
+        });
+
+        btnSave.setOnClickListener(v -> saveCheckIn());
+    }
+
+    private void updateSymptomLevelColor(int level) {
+        int color;
+        switch (level) {
+            case 1:
+                color = 0xFF4CAF50; // Green
+                break;
+            case 2:
+                color = 0xFF8BC34A; // Light green
+                break;
+            case 3:
+                color = 0xFFFF9800; // Orange
+                break;
+            case 4:
+                color = 0xFFFF5722; // Deep orange
+                break;
+            case 5:
+                color = 0xFFF44336; // Red
+                break;
+            default:
+                color = 0xFFFF9800;
+        }
+        tvSymptomLevelValue.setTextColor(color);
+    }
+
+    private void checkForExistingCheckIn() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+
+        showLoading(true);
+        repository.checkIfCheckInExistsForDate(currentUser.getUid(), todayDate,
+            new SymptomCheckInRepository.CheckInExistsCallback() {
+                @Override
+                public void onResult(boolean exists, SymptomCheckIn existingCheckIn) {
+                    showLoading(false);
+                    if (exists) {
+                        loadExistingCheckIn(existingCheckIn);
+                        showMessage("You already checked in today. You can update your check-in.", false);
+                    }
+                }
+
+                @Override
+                public void onFailure(String error) {
+                    showLoading(false);
+                }
+            });
+    }
+
+    private void loadExistingCheckIn(SymptomCheckIn checkIn) {
+        sliderSymptomLevel.setValue(checkIn.getSymptomLevel());
+        tvSymptomLevelValue.setText(String.valueOf(checkIn.getSymptomLevel()));
+        updateSymptomLevelColor(checkIn.getSymptomLevel());
+
+        if (checkIn.getTriggers() != null) {
+            cbWheezing.setChecked(checkIn.getTriggers().contains("Wheezing"));
+            cbCoughing.setChecked(checkIn.getTriggers().contains("Coughing"));
+            cbShortnessOfBreath.setChecked(checkIn.getTriggers().contains("Shortness of breath"));
+            cbChestTightness.setChecked(checkIn.getTriggers().contains("Chest tightness"));
+            cbNighttimeSymptoms.setChecked(checkIn.getTriggers().contains("Nighttime symptoms"));
+        }
+
+        if (checkIn.getNotes() != null) {
+            etNotes.setText(checkIn.getNotes());
+        }
+    }
+
+    private void saveCheckIn() {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            showMessage("Please sign in to save check-in", true);
+            return;
+        }
+
+        showLoading(true);
+
+        int symptomLevel = (int) sliderSymptomLevel.getValue();
+        List<String> triggers = getSelectedTriggers();
+        String notes = etNotes.getText().toString().trim();
+
+        SymptomCheckIn checkIn = new SymptomCheckIn(
+            currentUser.getUid(),
+            todayDate,
+            symptomLevel,
+            triggers,
+            notes.isEmpty() ? null : notes,
+            new Date()
+        );
+
+        repository.saveCheckIn(checkIn, new SymptomCheckInRepository.SaveCallback() {
+            @Override
+            public void onSuccess(String documentId) {
+                showLoading(false);
+                Toast.makeText(DailySymptomCheckInActivity.this,
+                    "Symptom check-in saved successfully!",
+                    Toast.LENGTH_LONG).show();
+                finish();
+            }
+
+            @Override
+            public void onFailure(String error) {
+                showLoading(false);
+                showMessage("Failed to save check-in: " + error, true);
+            }
+        });
+    }
+
+    private List<String> getSelectedTriggers() {
+        List<String> triggers = new ArrayList<>();
+        if (cbWheezing.isChecked()) triggers.add("Wheezing");
+        if (cbCoughing.isChecked()) triggers.add("Coughing");
+        if (cbShortnessOfBreath.isChecked()) triggers.add("Shortness of breath");
+        if (cbChestTightness.isChecked()) triggers.add("Chest tightness");
+        if (cbNighttimeSymptoms.isChecked()) triggers.add("Nighttime symptoms");
+        return triggers;
+    }
+
+    private void showLoading(boolean show) {
+        progress.setVisibility(show ? View.VISIBLE : View.GONE);
+        btnSave.setEnabled(!show);
+        sliderSymptomLevel.setEnabled(!show);
+    }
+
+    private void showMessage(String message, boolean isError) {
+        tvMessage.setText(message);
+        tvMessage.setTextColor(getColor(isError ? android.R.color.holo_red_dark : android.R.color.holo_green_dark));
+        tvMessage.setVisibility(View.VISIBLE);
+    }
+}
