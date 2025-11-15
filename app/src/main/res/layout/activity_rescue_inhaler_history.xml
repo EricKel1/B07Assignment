@@ -9,7 +9,7 @@
         android:id="@+id/tvTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Rescue Inhaler History"
+        android:text="Medicine History"
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#1976D2"
@@ -21,12 +21,42 @@
         android:id="@+id/tvSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="View your past rescue inhaler uses"
+        android:text="View your medicine logs"
         android:textSize="14sp"
         android:layout_marginTop="4dp"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
+
+    <RadioGroup
+        android:id="@+id/rgHistoryType"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <RadioButton
+            android:id="@+id/rbRescueHistory"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Rescue Inhaler"
+            android:checked="true"
+            android:textSize="14sp"
+            android:padding="8dp"/>
+
+        <RadioButton
+            android:id="@+id/rbControllerHistory"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Controller Medicine"
+            android:textSize="14sp"
+            android:padding="8dp"/>
+    </RadioGroup>
 
     <ProgressBar
         android:id="@+id/progress"
@@ -34,7 +64,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintTop_toBottomOf="@id/rgHistoryType"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -43,12 +73,12 @@
         android:id="@+id/tvEmptyMessage"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="No rescue inhaler logs yet.\nStart logging your inhaler use!"
+        android:text="No medicine logs yet.\nStart logging your medicine!"
         android:textAlignment="center"
         android:textSize="16sp"
         android:visibility="gone"
         android:padding="24dp"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintTop_toBottomOf="@id/rgHistoryType"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
@@ -60,7 +90,7 @@
         android:layout_marginTop="16dp"
         android:clipToPadding="false"
         android:paddingBottom="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+        app:layout_constraintTop_toBottomOf="@id/rgHistoryType"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

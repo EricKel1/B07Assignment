@@ -6,7 +6,10 @@
     <string name="home_subtitle">Track your asthma journey</string>
     <string name="rescue_inhaler_title">Rescue Inhaler</string>
     <string name="rescue_inhaler_description">Quick-relief medicine for sudden symptoms</string>
+    <string name="controller_medicine_title">Controller Medicine</string>
+    <string name="controller_medicine_description">Daily prevention medicine to keep asthma under control</string>
     <string name="btn_log_rescue_inhaler">Log Rescue Inhaler Use</string>
+    <string name="btn_log_controller_medicine">Log Controller Medicine</string>
     <string name="btn_view_history">View History</string>
     <string name="btn_sign_out">Sign Out</string>
     
@@ -33,19 +36,32 @@
     <string name="btn_increase">+</string>
     <string name="btn_decrease">-</string>
     
+    <!-- Log Controller Medicine Screen -->
+    <string name="log_controller_title">Log Controller Medicine</string>
+    <string name="log_controller_subtitle">Record your daily prevention medicine</string>
+    <string name="label_scheduled_time">Scheduled Time</string>
+    <string name="label_taken_on_time">Taken on time</string>
+    <string name="btn_select_time">Select Time</string>
+    <string name="hint_controller_notes">Any side effects or observations?</string>
+    
     <!-- History Screen -->
     <string name="history_title">Rescue Inhaler History</string>
     <string name="history_subtitle">View your past rescue inhaler uses</string>
     <string name="history_empty_message">No rescue inhaler logs yet.\nStart logging your inhaler use!</string>
+    <string name="controller_history_title">Controller Medicine History</string>
+    <string name="controller_history_subtitle">Your daily prevention medicine logs</string>
+    <string name="controller_history_empty_message">No controller medicine logs yet.\nStart logging your daily medicine!</string>
     
     <!-- Messages -->
     <string name="msg_log_saved">Rescue inhaler use logged successfully!</string>
+    <string name="msg_controller_log_saved">Controller medicine logged successfully!</string>
     <string name="msg_save_failed">Failed to save log: %s</string>
     <string name="msg_load_failed">Failed to load logs: %s</string>
     <string name="msg_sign_in_required">Please sign in to save logs</string>
     <string name="msg_sign_in_required_view">Please sign in to view logs</string>
     <string name="msg_account_created">Account created successfully!</string>
     <string name="msg_signup_failed">Sign up failed</string>
+    <string name="msg_select_time_first">Please select a scheduled time</string>
     
     <!-- Validation Messages -->
     <string name="error_empty_name">Please enter your name</string>
