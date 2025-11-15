@@ -16,6 +16,8 @@
         <activity android:name=".SignUpActivity" android:exported="true" />
         <activity android:name=".LogRescueInhalerActivity" />
         <activity android:name=".RescueInhalerHistoryActivity" />
+        <activity android:name=".DailySymptomCheckInActivity" />
+        <activity android:name=".SymptomHistoryActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
