@@ -8,7 +8,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class HomeActivity extends AppCompatActivity {
     
-    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnSignOut;
+    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +24,7 @@ public class HomeActivity extends AppCompatActivity {
         btnViewHistory = findViewById(R.id.btnViewHistory);
         btnDailyCheckIn = findViewById(R.id.btnDailyCheckIn);
         btnViewSymptomHistory = findViewById(R.id.btnViewSymptomHistory);
+        btnViewPatterns = findViewById(R.id.btnViewPatterns);
         btnSignOut = findViewById(R.id.btnSignOut);
     }
     
@@ -42,6 +43,10 @@ public class HomeActivity extends AppCompatActivity {
         
         btnViewSymptomHistory.setOnClickListener(v -> {
             startActivity(new Intent(this, SymptomHistoryActivity.class));
+        });
+        
+        btnViewPatterns.setOnClickListener(v -> {
+            startActivity(new Intent(this, TriggerPatternsActivity.class));
         });
         
         btnSignOut.setOnClickListener(v -> {
