@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <!-- Safety Disclaimer -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardDisclaimer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFF9C4"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚠️ This is guidance, not a diagnosis. If in doubt, call emergency services (911)."
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#F57C00"
+                android:padding="16dp"/>
+
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Having Trouble Breathing?"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#D32F2F"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/cardDisclaimer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Answer these questions to get personalized guidance"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Red Flag Checks -->
+        <TextView
+            android:id="@+id/tvRedFlagsLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Emergency Warning Signs"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#D32F2F"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvRedFlagsInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Check any that apply:"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRedFlagsLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbCantSpeak"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Can't speak in full sentences"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRedFlagsInfo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbChestRetractions"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Chest is pulling in (retractions)"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/cbCantSpeak"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbBlueLips"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Blue or gray lips/nails"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/cbChestRetractions"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Rescue Inhaler Usage -->
+        <TextView
+            android:id="@+id/tvRescueLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Rescue Inhaler Usage"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/cbBlueLips"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvRescueInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="How many times have you used your rescue inhaler in the last 3 hours?"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRescueLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etRescueAttempts"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:hint="0"
+            android:inputType="number"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvRescueInfo"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <!-- Current PEF (Optional) -->
+        <TextView
+            android:id="@+id/tvPEFLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Current Peak Flow (optional)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/etRescueAttempts"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etCurrentPEF"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:hint="L/min"
+            android:inputType="number"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvPEFLabel"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <!-- Get Guidance Button -->
+        <Button
+            android:id="@+id/btnGetGuidance"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Get Guidance"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:backgroundTint="#D32F2F"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/etCurrentPEF"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Decision Card (Hidden initially) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardDecision"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:visibility="gone"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:layout_constraintTop_toBottomOf="@id/btnGetGuidance"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/tvDecisionTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🚨 Emergency"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="#D32F2F"/>
+
+                <TextView
+                    android:id="@+id/tvDecisionGuidance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Call 911 or go to the emergency room immediately."
+                    android:textSize="16sp"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvActionStepsTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Action Steps:"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="16dp"/>
+
+                <TextView
+                    android:id="@+id/tvActionSteps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text=""
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
+
+                <!-- Timer Display (for home monitoring) -->
+                <LinearLayout
+                    android:id="@+id/layoutTimer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="⏱️ Re-check Timer"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvTimerDisplay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="10:00"
+                        android:textSize="32sp"
+                        android:textStyle="bold"
+                        android:textColor="#1976D2"
+                        android:gravity="center"
+                        android:layout_marginTop="8dp"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="We'll check in after this time. If you're not feeling better, we'll recommend emergency care."
+                        android:textSize="12sp"
+                        android:layout_marginTop="4dp"
+                        android:textColor="#757575"/>
+
+                </LinearLayout>
+
+                <!-- Response Buttons -->
+                <LinearLayout
+                    android:id="@+id/layoutResponseButtons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btnFeelingBetter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="✓ I'm Feeling Better"
+                        android:backgroundTint="#4CAF50"
+                        android:paddingVertical="12dp"/>
+
+                    <Button
+                        android:id="@+id/btnNotBetter"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Still Having Trouble"
+                        android:backgroundTint="#FF9800"
+                        android:layout_marginTop="8dp"
+                        android:paddingVertical="12dp"/>
+
+                    <Button
+                        android:id="@+id/btnEmergencyNow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="⚠️ Need Emergency Help"
+                        android:backgroundTint="#D32F2F"
+                        android:layout_marginTop="8dp"
+                        android:paddingVertical="12dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textSize="16sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/cardDecision"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
