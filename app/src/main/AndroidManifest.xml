@@ -18,6 +18,7 @@
         <activity android:name=".RescueInhalerHistoryActivity" />
         <activity android:name=".DailySymptomCheckInActivity" />
         <activity android:name=".SymptomHistoryActivity" />
+        <activity android:name=".TriggerPatternsActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

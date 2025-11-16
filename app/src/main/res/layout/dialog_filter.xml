@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Filter by Triggers"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterExercise"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_exercise"
+            android:layout_marginTop="8dp"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterColdAir"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_cold_air"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterPets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pets"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterPollen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pollen"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterStress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_stress"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterSmoke"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_smoke"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterWeather"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_weather"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterDust"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_dust"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="16dp"/>
+
+        <TextView
+            android:id="@+id/tvSymptomFilterLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Filter by Symptoms"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterWheezing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/symptom_wheezing"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterCoughing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/symptom_coughing"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterShortnessBreath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/symptom_shortness_breath"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterChestTightness"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/symptom_chest_tightness"
+            android:visibility="gone"/>
+
+        <CheckBox
+            android:id="@+id/cbFilterNighttime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/symptom_nighttime"
+            android:visibility="gone"/>
+
+        <View
+            android:id="@+id/divider2"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginVertical="16dp"
+            android:visibility="gone"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Date Range"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_blue"/>
+
+        <RadioGroup
+            android:id="@+id/rgDateRange"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <RadioButton
+                android:id="@+id/rbAllTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="All time"
+                android:checked="true"/>
+
+            <RadioButton
+                android:id="@+id/rbThisWeek"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="This week"/>
+
+            <RadioButton
+                android:id="@+id/rbThisMonth"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="This month"/>
+
+            <RadioButton
+                android:id="@+id/rbCustom"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Custom range"/>
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+</ScrollView>
