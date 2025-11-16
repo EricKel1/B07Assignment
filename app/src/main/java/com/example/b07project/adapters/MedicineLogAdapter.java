@@ -9,6 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.b07project.R;
 import com.example.b07project.models.ControllerMedicineLog;
 import com.example.b07project.models.MedicineLog;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +74,22 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
             holder.tvScheduledInfo.setVisibility(View.GONE);
         }
         
+        // Display triggers
+        if (log.getTriggers() != null && !log.getTriggers().isEmpty()) {
+            holder.chipGroupTriggers.removeAllViews();
+            for (String trigger : log.getTriggers()) {
+                Chip chip = new Chip(holder.itemView.getContext());
+                chip.setText(trigger);
+                chip.setChipBackgroundColorResource(R.color.design_default_color_primary_variant);
+                chip.setTextColor(holder.itemView.getContext().getColor(android.R.color.white));
+                chip.setClickable(false);
+                holder.chipGroupTriggers.addView(chip);
+            }
+            holder.chipGroupTriggers.setVisibility(View.VISIBLE);
+        } else {
+            holder.chipGroupTriggers.setVisibility(View.GONE);
+        }
+        
         if (log.getNotes() != null && !log.getNotes().isEmpty()) {
             holder.tvNotes.setText(log.getNotes());
             holder.tvNotes.setVisibility(View.VISIBLE);
@@ -87,6 +105,7 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
     
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvDoseCount, tvDate, tvTime, tvScheduledInfo, tvNotes;
+        ChipGroup chipGroupTriggers;
         
         ViewHolder(View itemView) {
             super(itemView);
@@ -94,6 +113,7 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
             tvDate = itemView.findViewById(R.id.tvDate);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvScheduledInfo = itemView.findViewById(R.id.tvScheduledInfo);
+            chipGroupTriggers = itemView.findViewById(R.id.chipGroupTriggers);
             tvNotes = itemView.findViewById(R.id.tvNotes);
         }
     }

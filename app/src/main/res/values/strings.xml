@@ -60,12 +60,21 @@
     <string name="symptom_history_empty">No symptom check-ins yet.\nStart tracking your daily symptoms!</string>
     <string name="label_symptom_level">How severe are your symptoms today?</string>
     <string name="symptom_level_description">1 = No symptoms, 5 = Severe</string>
-    <string name="label_triggers">What symptoms did you experience?</string>
-    <string name="trigger_wheezing">Wheezing</string>
-    <string name="trigger_coughing">Coughing</string>
-    <string name="trigger_shortness_breath">Shortness of breath</string>
-    <string name="trigger_chest_tightness">Chest tightness</string>
-    <string name="trigger_nighttime">Nighttime symptoms</string>
+    <string name="label_symptoms">What symptoms did you experience?</string>
+    <string name="symptom_wheezing">Wheezing</string>
+    <string name="symptom_coughing">Coughing</string>
+    <string name="symptom_shortness_breath">Shortness of breath</string>
+    <string name="symptom_chest_tightness">Chest tightness</string>
+    <string name="symptom_nighttime">Nighttime symptoms</string>
+    <string name="label_triggers">What might have triggered your symptoms?</string>
+    <string name="trigger_exercise">Exercise</string>
+    <string name="trigger_cold_air">Cold air</string>
+    <string name="trigger_pets">Pets</string>
+    <string name="trigger_pollen">Pollen</string>
+    <string name="trigger_stress">Stress</string>
+    <string name="trigger_smoke">Smoke</string>
+    <string name="trigger_weather">Weather change</string>
+    <string name="trigger_dust">Dust</string>
     <string name="btn_daily_checkin">Daily Check-In</string>
     <string name="btn_save_checkin">Save Check-In</string>
     <string name="msg_checkin_saved">Symptom check-in saved successfully!</string>
