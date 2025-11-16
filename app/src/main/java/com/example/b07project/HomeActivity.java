@@ -14,7 +14,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class HomeActivity extends AppCompatActivity {
     
     private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut;
-    private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents;
+    private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique;
     private TextView tvCurrentZone, tvZonePercentage;
     private PEFRepository pefRepository;
     
@@ -38,6 +38,7 @@ public class HomeActivity extends AppCompatActivity {
         btnEmergencyTriage = findViewById(R.id.btnEmergencyTriage);
         btnEnterPEF = findViewById(R.id.btnEnterPEF);
         btnViewIncidents = findViewById(R.id.btnViewIncidents);
+        btnInhalerTechnique = findViewById(R.id.btnInhalerTechnique);
         btnSignOut = findViewById(R.id.btnSignOut);
         
         tvCurrentZone = findViewById(R.id.tvCurrentZone);
@@ -75,6 +76,10 @@ public class HomeActivity extends AppCompatActivity {
         
         btnViewIncidents.setOnClickListener(v -> {
             startActivity(new Intent(this, IncidentHistoryActivity.class));
+        });
+        
+        btnInhalerTechnique.setOnClickListener(v -> {
+            startActivity(new Intent(this, InhalerTechniqueActivity.class));
         });
         
         btnSignOut.setOnClickListener(v -> {
