@@ -34,6 +34,7 @@ public class ControllerMedicineRepository {
         data.put("doseCount", log.getDoseCount());
         data.put("scheduledTime", log.getScheduledTime());
         data.put("takenOnTime", log.isTakenOnTime());
+        data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
 
         db.collection(COLLECTION_NAME)
@@ -66,6 +67,7 @@ public class ControllerMedicineRepository {
                     log.setScheduledTime(document.getDate("scheduledTime"));
                     Boolean takenOnTime = document.getBoolean("takenOnTime");
                     log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
+                    log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
                     logs.add(log);
                 }
@@ -107,6 +109,7 @@ public class ControllerMedicineRepository {
                         log.setScheduledTime(document.getDate("scheduledTime"));
                         Boolean takenOnTime = document.getBoolean("takenOnTime");
                         log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
+                        log.setTriggers((List<String>) document.get("triggers"));
                         log.setNotes(document.getString("notes"));
                         logs.add(log);
                     }
