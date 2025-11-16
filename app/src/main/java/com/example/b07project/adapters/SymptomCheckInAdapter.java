@@ -90,7 +90,7 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
             for (String symptom : checkIn.getSymptoms()) {
                 Chip chip = new Chip(holder.itemView.getContext());
                 chip.setText(symptom);
-                chip.setChipBackgroundColorResource(R.color.design_default_color_primary);
+                chip.setChipBackgroundColorResource(R.color.primary_blue);
                 chip.setTextColor(holder.itemView.getContext().getColor(android.R.color.white));
                 chip.setClickable(false);
                 chip.setTextSize(12f);

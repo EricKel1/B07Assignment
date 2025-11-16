@@ -8,17 +8,19 @@ public class SymptomCheckIn {
     private String userId;
     private Date date;
     private int symptomLevel; // 1-5 scale
-    private List<String> triggers; // wheezing, coughing, shortness of breath, chest tightness, nighttime symptoms
+    private List<String> symptoms; // wheezing, coughing, shortness of breath, chest tightness, nighttime symptoms
+    private List<String> triggers; // exercise, cold air, pets, pollen, stress, smoke, weather change, dust
     private String notes;
     private Date timestamp;
 
     public SymptomCheckIn() {
     }
 
-    public SymptomCheckIn(String userId, Date date, int symptomLevel, List<String> triggers, String notes, Date timestamp) {
+    public SymptomCheckIn(String userId, Date date, int symptomLevel, List<String> symptoms, List<String> triggers, String notes, Date timestamp) {
         this.userId = userId;
         this.date = date;
         this.symptomLevel = symptomLevel;
+        this.symptoms = symptoms;
         this.triggers = triggers;
         this.notes = notes;
         this.timestamp = timestamp;
@@ -54,6 +56,14 @@ public class SymptomCheckIn {
 
     public void setSymptomLevel(int symptomLevel) {
         this.symptomLevel = symptomLevel;
+    }
+
+    public List<String> getSymptoms() {
+        return symptoms;
+    }
+
+    public void setSymptoms(List<String> symptoms) {
+        this.symptoms = symptoms;
     }
 
     public List<String> getTriggers() {

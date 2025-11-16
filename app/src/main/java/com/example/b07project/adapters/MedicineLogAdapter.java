@@ -80,7 +80,7 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
             for (String trigger : log.getTriggers()) {
                 Chip chip = new Chip(holder.itemView.getContext());
                 chip.setText(trigger);
-                chip.setChipBackgroundColorResource(R.color.design_default_color_primary_variant);
+                chip.setChipBackgroundColorResource(R.color.trigger_chip);
                 chip.setTextColor(holder.itemView.getContext().getColor(android.R.color.white));
                 chip.setClickable(false);
                 holder.chipGroupTriggers.addView(chip);
