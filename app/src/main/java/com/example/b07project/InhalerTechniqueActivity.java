@@ -1,19 +1,21 @@
 package com.example.b07project;
 
-import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
 
 public class InhalerTechniqueActivity extends AppCompatActivity {
 
-    private WebView webViewVideo;
+    private YouTubePlayerView youtubePlayerView;
     private Button btnStartTimer, btnClose;
     private TextView tvTimerDisplay;
     private CountDownTimer practiceTimer;
@@ -25,34 +27,41 @@ public class InhalerTechniqueActivity extends AppCompatActivity {
         setContentView(R.layout.activity_inhaler_technique);
 
         initializeViews();
-        setupYouTubeVideo();
+        setupYouTubePlayer();
         setupListeners();
     }
 
     private void initializeViews() {
-        webViewVideo = findViewById(R.id.webViewVideo);
+        youtubePlayerView = findViewById(R.id.youtubePlayerView);
         btnStartTimer = findViewById(R.id.btnStartTimer);
         btnClose = findViewById(R.id.btnClose);
         tvTimerDisplay = findViewById(R.id.tvTimerDisplay);
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private void setupYouTubeVideo() {
-        WebSettings webSettings = webViewVideo.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
-        webViewVideo.setWebChromeClient(new WebChromeClient());
-
-        // YouTube iframe embed HTML
-        String videoHtml = "<html><body style='margin:0;padding:0;'>"
-                + "<iframe width='100%' height='100%' "
-                + "src='https://www.youtube.com/embed/" + VIDEO_ID + "?autoplay=0&rel=0' "
-                + "frameborder='0' "
-                + "allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' "
-                + "allowfullscreen></iframe>"
-                + "</body></html>";
-
-        webViewVideo.loadData(videoHtml, "text/html", "utf-8");
+    private void setupYouTubePlayer() {
+        getLifecycle().addObserver(youtubePlayerView);
+        
+        // Configure IFrame player options
+        IFramePlayerOptions options = new IFramePlayerOptions.Builder(this)
+                .controls(1)  // Show player controls
+                .rel(0)       // Show related videos from same channel only
+                .ivLoadPolicy(3)  // Hide video annotations
+                .ccLoadPolicy(1)  // Hide captions by default
+                .build();
+        
+        youtubePlayerView.initialize(new AbstractYouTubePlayerListener() {
+            @Override
+            public void onReady(@NonNull YouTubePlayer youTubePlayer) {
+                // Use cueVideo to load without autoplay
+                youTubePlayer.cueVideo(VIDEO_ID, 0);
+            }
+            
+            @Override
+            public void onError(@NonNull YouTubePlayer youTubePlayer, @NonNull PlayerConstants.PlayerError error) {
+                String errorMessage = "YouTube Player Error: " + error.name();
+                Toast.makeText(InhalerTechniqueActivity.this, errorMessage, Toast.LENGTH_LONG).show();
+            }
+        }, options);
     }
 
     private void setupListeners() {
@@ -103,13 +112,16 @@ public class InhalerTechniqueActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        youtubePlayerView.release();
         if (practiceTimer != null) {
             practiceTimer.cancel();
-        }
-        if (webViewVideo != null) {
-            webViewVideo.destroy();
         }
     }
 }

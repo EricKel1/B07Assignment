@@ -60,11 +60,13 @@
                     android:textStyle="bold"
                     android:textColor="#1565C0"/>
 
-                <WebView
-                    android:id="@+id/webViewVideo"
+                <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+                    android:id="@+id/youtubePlayerView"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_marginTop="12dp"/>
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:enableAutomaticInitialization="false"
+                    app:handleNetworkEvents="true"/>
 
                 <TextView
                     android:layout_width="match_parent"
