@@ -61,6 +61,14 @@
             android:layout_marginTop="4dp"
             android:visibility="gone"/>
 
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupTriggers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:chipSpacingHorizontal="4dp"/>
+
         <TextView
             android:id="@+id/tvNotes"
             android:layout_width="match_parent"

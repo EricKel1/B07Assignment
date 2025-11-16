@@ -51,11 +51,38 @@
             android:textColor="#666666"
             android:layout_marginTop="4dp"/>
 
+        <TextView
+            android:id="@+id/tvSymptomsLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Symptoms:"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupSymptoms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:chipSpacing="4dp"/>
+
+        <TextView
+            android:id="@+id/tvTriggersLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Triggers:"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#666666"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"/>
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chipGroupTriggers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
             app:chipSpacing="4dp"/>
 
         <TextView

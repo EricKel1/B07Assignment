@@ -112,7 +112,7 @@
             android:id="@+id/tvTriggersLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="What symptoms did you experience?"
+            android:text="@string/label_symptoms"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
@@ -124,7 +124,7 @@
             android:id="@+id/cbWheezing"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Wheezing"
+            android:text="@string/symptom_wheezing"
             android:textSize="14sp"
             android:layout_marginTop="8dp"
             app:layout_constraintTop_toBottomOf="@id/tvTriggersLabel"
@@ -135,7 +135,7 @@
             android:id="@+id/cbCoughing"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Coughing"
+            android:text="@string/symptom_coughing"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/cbWheezing"
             app:layout_constraintStart_toStartOf="parent"
@@ -145,7 +145,7 @@
             android:id="@+id/cbShortnessOfBreath"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Shortness of breath"
+            android:text="@string/symptom_shortness_breath"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/cbCoughing"
             app:layout_constraintStart_toStartOf="parent"
@@ -155,7 +155,7 @@
             android:id="@+id/cbChestTightness"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Chest tightness"
+            android:text="@string/symptom_chest_tightness"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/cbShortnessOfBreath"
             app:layout_constraintStart_toStartOf="parent"
@@ -165,10 +165,104 @@
             android:id="@+id/cbNighttimeSymptoms"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Nighttime symptoms"
+            android:text="@string/symptom_nighttime"
             android:textSize="14sp"
             app:layout_constraintTop_toBottomOf="@id/cbChestTightness"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvEnvironmentalTriggersLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/label_triggers"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/cbNighttimeSymptoms"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerExercise"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_exercise"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvEnvironmentalTriggersLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerColdAir"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerColdAir"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_cold_air"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvEnvironmentalTriggersLabel"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerExercise"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerPets"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pets"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerExercise"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerPollen"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerPollen"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pollen"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerColdAir"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerPets"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerStress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_stress"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerPets"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerSmoke"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerSmoke"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_smoke"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerPollen"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerStress"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerWeather"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_weather"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerStress"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerDust"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerDust"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_dust"
+            android:textSize="14sp"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerSmoke"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerWeather"
             app:layout_constraintEnd_toEndOf="parent"/>
 
         <TextView
@@ -179,7 +273,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
-            app:layout_constraintTop_toBottomOf="@id/cbNighttimeSymptoms"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerWeather"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

@@ -199,6 +199,92 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvTriggersLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/label_triggers"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/layoutDoseCounter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerExercise"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_exercise"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTriggersLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerColdAir"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerColdAir"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_cold_air"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTriggersLabel"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerExercise"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerPets"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pets"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerExercise"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerPollen"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerPollen"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_pollen"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerColdAir"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerPets"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerStress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_stress"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerPets"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerSmoke"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerSmoke"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_smoke"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerPollen"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerStress"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerWeather"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_weather"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerStress"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/cbTriggerDust"/>
+
+        <CheckBox
+            android:id="@+id/cbTriggerDust"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/trigger_dust"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerSmoke"
+            app:layout_constraintStart_toEndOf="@id/cbTriggerWeather"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
             android:id="@+id/tvNotesLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -206,7 +292,7 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginTop="24dp"
-            app:layout_constraintTop_toBottomOf="@id/layoutDoseCounter"
+            app:layout_constraintTop_toBottomOf="@id/cbTriggerWeather"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 

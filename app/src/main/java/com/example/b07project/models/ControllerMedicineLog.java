@@ -1,6 +1,7 @@
 package com.example.b07project.models;
 
 import java.util.Date;
+import java.util.List;
 
 public class ControllerMedicineLog extends MedicineLog {
     private Date scheduledTime;
@@ -10,8 +11,8 @@ public class ControllerMedicineLog extends MedicineLog {
         super();
     }
 
-    public ControllerMedicineLog(String userId, Date timestamp, int doseCount, Date scheduledTime, boolean takenOnTime, String notes) {
-        super(userId, timestamp, doseCount, notes);
+    public ControllerMedicineLog(String userId, Date timestamp, int doseCount, Date scheduledTime, boolean takenOnTime, List<String> triggers, String notes) {
+        super(userId, timestamp, doseCount, triggers, notes);
         this.scheduledTime = scheduledTime;
         this.takenOnTime = takenOnTime;
     }

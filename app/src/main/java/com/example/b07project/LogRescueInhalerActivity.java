@@ -21,8 +21,10 @@ import com.example.b07project.repository.RescueInhalerRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class LogRescueInhalerActivity extends AppCompatActivity {
@@ -33,6 +35,8 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private TextView tvTimestamp, tvDoseCount, tvMessage, tvScheduledTime;
     private Button btnSelectTime;
     private CheckBox cbTakenOnTime;
+    private CheckBox cbTriggerExercise, cbTriggerColdAir, cbTriggerPets, cbTriggerPollen;
+    private CheckBox cbTriggerStress, cbTriggerSmoke, cbTriggerWeather, cbTriggerDust;
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
@@ -74,6 +78,14 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         tvScheduledTime = findViewById(R.id.tvScheduledTime);
         btnSelectTime = findViewById(R.id.btnSelectTime);
         cbTakenOnTime = findViewById(R.id.cbTakenOnTime);
+        cbTriggerExercise = findViewById(R.id.cbTriggerExercise);
+        cbTriggerColdAir = findViewById(R.id.cbTriggerColdAir);
+        cbTriggerPets = findViewById(R.id.cbTriggerPets);
+        cbTriggerPollen = findViewById(R.id.cbTriggerPollen);
+        cbTriggerStress = findViewById(R.id.cbTriggerStress);
+        cbTriggerSmoke = findViewById(R.id.cbTriggerSmoke);
+        cbTriggerWeather = findViewById(R.id.cbTriggerWeather);
+        cbTriggerDust = findViewById(R.id.cbTriggerDust);
         etNotes = findViewById(R.id.etNotes);
         btnDecrease = findViewById(R.id.btnDecrease);
         btnIncrease = findViewById(R.id.btnIncrease);
@@ -146,6 +158,19 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         tvDoseCount.setText(String.valueOf(doseCount));
     }
     
+    private List<String> getSelectedTriggers() {
+        List<String> triggers = new ArrayList<>();
+        if (cbTriggerExercise.isChecked()) triggers.add("exercise");
+        if (cbTriggerColdAir.isChecked()) triggers.add("cold air");
+        if (cbTriggerPets.isChecked()) triggers.add("pets");
+        if (cbTriggerPollen.isChecked()) triggers.add("pollen");
+        if (cbTriggerStress.isChecked()) triggers.add("stress");
+        if (cbTriggerSmoke.isChecked()) triggers.add("smoke");
+        if (cbTriggerWeather.isChecked()) triggers.add("weather change");
+        if (cbTriggerDust.isChecked()) triggers.add("dust");
+        return triggers;
+    }
+    
     private void saveLog() {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
@@ -163,6 +188,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         showLoading(true);
         
         String notes = etNotes.getText().toString().trim();
+        List<String> triggers = getSelectedTriggers();
         
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(
@@ -171,6 +197,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 doseCount,
                 scheduledTime,
                 cbTakenOnTime.isChecked(),
+                triggers,
                 notes.isEmpty() ? null : notes
             );
             
@@ -195,6 +222,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 currentUser.getUid(),
                 timestamp,
                 doseCount,
+                triggers,
                 notes.isEmpty() ? null : notes
             );
             
