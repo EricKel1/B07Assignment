@@ -1,21 +1,24 @@
 package com.example.b07project.models;
 
 import java.util.Date;
+import java.util.List;
 
 public class MedicineLog {
     private String id;
     private String userId;
     private Date timestamp;
     private int doseCount;
+    private List<String> triggers;
     private String notes;
 
     public MedicineLog() {
     }
 
-    public MedicineLog(String userId, Date timestamp, int doseCount, String notes) {
+    public MedicineLog(String userId, Date timestamp, int doseCount, List<String> triggers, String notes) {
         this.userId = userId;
         this.timestamp = timestamp;
         this.doseCount = doseCount;
+        this.triggers = triggers;
         this.notes = notes;
     }
 
@@ -49,6 +52,14 @@ public class MedicineLog {
 
     public void setDoseCount(int doseCount) {
         this.doseCount = doseCount;
+    }
+
+    public List<String> getTriggers() {
+        return triggers;
+    }
+
+    public void setTriggers(List<String> triggers) {
+        this.triggers = triggers;
     }
 
     public String getNotes() {

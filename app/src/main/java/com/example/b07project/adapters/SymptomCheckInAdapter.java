@@ -83,20 +83,42 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
         holder.tvSymptomLevel.setTextColor(color);
         holder.tvSymptomDescription.setText(description);
 
+        // Add symptom chips
+        holder.chipGroupSymptoms.removeAllViews();
+        if (checkIn.getSymptoms() != null && !checkIn.getSymptoms().isEmpty()) {
+            holder.tvSymptomsLabel.setVisibility(View.VISIBLE);
+            for (String symptom : checkIn.getSymptoms()) {
+                Chip chip = new Chip(holder.itemView.getContext());
+                chip.setText(symptom);
+                chip.setChipBackgroundColorResource(R.color.design_default_color_primary);
+                chip.setTextColor(holder.itemView.getContext().getColor(android.R.color.white));
+                chip.setClickable(false);
+                chip.setTextSize(12f);
+                holder.chipGroupSymptoms.addView(chip);
+            }
+            holder.chipGroupSymptoms.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvSymptomsLabel.setVisibility(View.GONE);
+            holder.chipGroupSymptoms.setVisibility(View.GONE);
+        }
+
         // Add trigger chips
         holder.chipGroupTriggers.removeAllViews();
         if (checkIn.getTriggers() != null && !checkIn.getTriggers().isEmpty()) {
+            holder.tvTriggersLabel.setVisibility(View.VISIBLE);
             for (String trigger : checkIn.getTriggers()) {
                 Chip chip = new Chip(holder.itemView.getContext());
                 chip.setText(trigger);
                 chip.setChipBackgroundColorResource(android.R.color.transparent);
                 chip.setChipStrokeColorResource(android.R.color.darker_gray);
                 chip.setChipStrokeWidth(2f);
+                chip.setClickable(false);
                 chip.setTextSize(12f);
                 holder.chipGroupTriggers.addView(chip);
             }
             holder.chipGroupTriggers.setVisibility(View.VISIBLE);
         } else {
+            holder.tvTriggersLabel.setVisibility(View.GONE);
             holder.chipGroupTriggers.setVisibility(View.GONE);
         }
 
@@ -115,15 +137,18 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDate, tvSymptomLevel, tvSymptomDescription, tvNotes;
-        ChipGroup chipGroupTriggers;
+        TextView tvDate, tvSymptomLevel, tvSymptomDescription, tvSymptomsLabel, tvTriggersLabel, tvNotes;
+        ChipGroup chipGroupSymptoms, chipGroupTriggers;
 
         ViewHolder(View itemView) {
             super(itemView);
             tvDate = itemView.findViewById(R.id.tvDate);
             tvSymptomLevel = itemView.findViewById(R.id.tvSymptomLevel);
             tvSymptomDescription = itemView.findViewById(R.id.tvSymptomDescription);
+            tvSymptomsLabel = itemView.findViewById(R.id.tvSymptomsLabel);
+            tvTriggersLabel = itemView.findViewById(R.id.tvTriggersLabel);
             tvNotes = itemView.findViewById(R.id.tvNotes);
+            chipGroupSymptoms = itemView.findViewById(R.id.chipGroupSymptoms);
             chipGroupTriggers = itemView.findViewById(R.id.chipGroupTriggers);
         }
     }
