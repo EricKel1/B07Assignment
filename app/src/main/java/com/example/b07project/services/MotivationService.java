@@ -82,17 +82,26 @@ public class MotivationService {
         getStreak("controller", new StreakCallback() {
             @Override
             public void onSuccess(Streak streak) {
+                android.util.Log.d("MotivationService", "updateControllerStreak - Got streak: " + 
+                    streak.getId() + ", current=" + streak.getCurrentStreak() + 
+                    ", lastUpdated=" + streak.getLastUpdated());
+                
                 long today = getStartOfDay(System.currentTimeMillis());
                 long lastUpdated = getStartOfDay(streak.getLastUpdated());
                 long daysDiff = TimeUnit.MILLISECONDS.toDays(today - lastUpdated);
 
-                // Only update if this is a new day
-                if (daysDiff >= 1) {
-                    if (daysDiff == 1) {
+                android.util.Log.d("MotivationService", "updateControllerStreak - daysDiff=" + daysDiff + 
+                    ", currentStreak=" + streak.getCurrentStreak());
+
+                // Update if: it's a new day OR it's the first time (currentStreak == 0 and lastUpdated == 0)
+                boolean isFirstTime = (streak.getCurrentStreak() == 0 && streak.getLastUpdated() == 0);
+                
+                if (daysDiff >= 1 || isFirstTime) {
+                    if (daysDiff == 1 && !isFirstTime) {
                         // Continue streak (consecutive day)
                         streak.setCurrentStreak(streak.getCurrentStreak() + 1);
-                    } else if (daysDiff > 1 || streak.getCurrentStreak() == 0) {
-                        // Streak broken or first time, start at 1
+                    } else {
+                        // Streak broken, or first time - start at 1
                         streak.setCurrentStreak(1);
                     }
 
@@ -101,16 +110,22 @@ public class MotivationService {
                     }
 
                     streak.setLastUpdated(System.currentTimeMillis());
+                    
+                    android.util.Log.d("MotivationService", "updateControllerStreak - Saving streak: current=" + 
+                        streak.getCurrentStreak() + ", longest=" + streak.getLongestStreak());
+                    
                     saveStreak(streak, callback);
                     checkBadgesAfterStreakUpdate(streak);
                 } else {
                     // Already updated today, just complete callback
+                    android.util.Log.d("MotivationService", "updateControllerStreak - Already updated today");
                     callback.onComplete();
                 }
             }
 
             @Override
             public void onFailure(Exception e) {
+                android.util.Log.e("MotivationService", "updateControllerStreak - Failed to get streak", e);
                 callback.onComplete();
             }
         });
@@ -155,6 +170,16 @@ public class MotivationService {
     }
 
     private void saveStreak(Streak streak, UpdateCallback callback) {
+        if (streak.getId() == null || streak.getId().isEmpty()) {
+            // Generate new ID if not set
+            streak.setId(db.collection("streaks").document().getId());
+            android.util.Log.d("MotivationService", "saveStreak - Generated new ID: " + streak.getId());
+        }
+        
+        android.util.Log.d("MotivationService", "saveStreak - Saving to Firestore: ID=" + streak.getId() + 
+            ", userId=" + streak.getUserId() + ", type=" + streak.getType() + 
+            ", current=" + streak.getCurrentStreak() + ", longest=" + streak.getLongestStreak());
+        
         Map<String, Object> streakData = new HashMap<>();
         streakData.put("userId", streak.getUserId());
         streakData.put("type", streak.getType());
@@ -165,9 +190,11 @@ public class MotivationService {
         db.collection("streaks").document(streak.getId())
                 .set(streakData)
                 .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("MotivationService", "saveStreak - Successfully saved to Firestore");
                     if (callback != null) callback.onComplete();
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "saveStreak - Failed to save to Firestore", e);
                     e.printStackTrace();
                     if (callback != null) callback.onComplete();
                 });
@@ -263,6 +290,12 @@ public class MotivationService {
     }
 
     private void saveBadge(Badge badge, UpdateCallback callback) {
+        if (badge.getId() == null || badge.getId().isEmpty()) {
+            // Generate new ID if not set
+            badge.setId(db.collection("badges").document().getId());
+            android.util.Log.d("MotivationService", "saveBadge - Generated new ID: " + badge.getId());
+        }
+        
         Map<String, Object> badgeData = new HashMap<>();
         badgeData.put("userId", badge.getUserId());
         badgeData.put("type", badge.getType());
@@ -279,6 +312,7 @@ public class MotivationService {
                     if (callback != null) callback.onComplete();
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "saveBadge - Failed to save", e);
                     if (callback != null) callback.onComplete();
                 });
     }
@@ -294,14 +328,18 @@ public class MotivationService {
                     .get()
                     .addOnSuccessListener(querySnapshot -> {
                         if (!querySnapshot.isEmpty()) {
-                            Badge badge = querySnapshot.getDocuments().get(0).toObject(Badge.class);
-                            if (badge != null && !badge.isEarned()) {
-                                badge.setProgress(streak.getCurrentStreak());
-                                if (streak.getCurrentStreak() >= 7) {
-                                    badge.setEarned(true);
-                                    badge.setEarnedDate(System.currentTimeMillis());
+                            DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                            Badge badge = doc.toObject(Badge.class);
+                            if (badge != null) {
+                                badge.setId(doc.getId()); // Set ID from document
+                                if (!badge.isEarned()) {
+                                    badge.setProgress(streak.getCurrentStreak());
+                                    if (streak.getCurrentStreak() >= 7) {
+                                        badge.setEarned(true);
+                                        badge.setEarnedDate(System.currentTimeMillis());
+                                    }
+                                    saveBadge(badge, null);
                                 }
-                                saveBadge(badge, null);
                             }
                         }
                     });
@@ -317,14 +355,18 @@ public class MotivationService {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
-                        Badge badge = querySnapshot.getDocuments().get(0).toObject(Badge.class);
-                        if (badge != null && !badge.isEarned()) {
-                            badge.setProgress(badge.getProgress() + 1);
-                            if (badge.getProgress() >= badge.getRequirement()) {
-                                badge.setEarned(true);
-                                badge.setEarnedDate(System.currentTimeMillis());
+                        DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                        Badge badge = doc.toObject(Badge.class);
+                        if (badge != null) {
+                            badge.setId(doc.getId()); // Set ID from document
+                            if (!badge.isEarned()) {
+                                badge.setProgress(badge.getProgress() + 1);
+                                if (badge.getProgress() >= badge.getRequirement()) {
+                                    badge.setEarned(true);
+                                    badge.setEarnedDate(System.currentTimeMillis());
+                                }
+                                saveBadge(badge, null);
                             }
-                            saveBadge(badge, null);
                         }
                     }
                 });

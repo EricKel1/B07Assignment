@@ -18,6 +18,7 @@ import com.example.b07project.models.MedicineLog;
 import com.example.b07project.models.RescueInhalerLog;
 import com.example.b07project.repository.ControllerMedicineRepository;
 import com.example.b07project.repository.RescueInhalerRepository;
+import com.example.b07project.services.MotivationService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import java.text.SimpleDateFormat;
@@ -46,6 +47,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private Date scheduledTime = null;
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
+    private MotivationService motivationService;
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     
@@ -57,6 +59,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
         controllerRepository = new ControllerMedicineRepository();
+        motivationService = new MotivationService(this);
         dateFormat = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
         timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         
@@ -204,11 +207,14 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             controllerRepository.saveLog(log, new ControllerMedicineRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
-                    showLoading(false);
-                    Toast.makeText(LogRescueInhalerActivity.this, 
-                        "Controller medicine logged successfully!", 
-                        Toast.LENGTH_LONG).show();
-                    finish();
+                    // Update controller streak after successful save
+                    motivationService.updateControllerStreak(() -> {
+                        showLoading(false);
+                        Toast.makeText(LogRescueInhalerActivity.this, 
+                            "Controller medicine logged successfully! Streak updated.", 
+                            Toast.LENGTH_LONG).show();
+                        finish();
+                    });
                 }
                 
                 @Override

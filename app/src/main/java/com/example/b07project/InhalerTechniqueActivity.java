@@ -7,6 +7,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.b07project.services.MotivationService;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
@@ -19,6 +20,7 @@ public class InhalerTechniqueActivity extends AppCompatActivity {
     private Button btnStartTimer, btnClose;
     private TextView tvTimerDisplay;
     private CountDownTimer practiceTimer;
+    private MotivationService motivationService;
     private static final String VIDEO_ID = "2i9_DelNqs4";
 
     @Override
@@ -26,6 +28,7 @@ public class InhalerTechniqueActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inhaler_technique);
 
+        motivationService = new MotivationService(this);
         initializeViews();
         setupYouTubePlayer();
         setupListeners();
@@ -87,9 +90,13 @@ public class InhalerTechniqueActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 tvTimerDisplay.setText("✓");
-                Toast.makeText(InhalerTechniqueActivity.this, 
-                    "Great job! You can breathe out now.", 
-                    Toast.LENGTH_LONG).show();
+                
+                // Update technique streak after completing practice
+                motivationService.updateTechniqueStreak(() -> {
+                    Toast.makeText(InhalerTechniqueActivity.this, 
+                        "Great job! You can breathe out now.", 
+                        Toast.LENGTH_LONG).show();
+                });
                 
                 // Reset after 2 seconds
                 tvTimerDisplay.postDelayed(() -> {
