@@ -352,6 +352,54 @@
 
         </androidx.cardview.widget.CardView>
 
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardMotivation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#FFF9C4"
+            app:layout_constraintTop_toBottomOf="@id/cardTriggerPatterns"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Streaks &amp; Badges"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#F57F17"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Track your progress and earn achievements"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#424242"/>
+
+                <Button
+                    android:id="@+id/btnMotivation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="View Streaks &amp; Badges"
+                    android:textSize="16sp"
+                    android:backgroundTint="#FBC02D"
+                    android:layout_marginTop="16dp"
+                    android:paddingVertical="12dp"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
         <Button
             android:id="@+id/btnSignOut"
             android:layout_width="wrap_content"
@@ -359,7 +407,7 @@
             android:text="Sign Out"
             android:backgroundTint="#757575"
             android:layout_marginTop="32dp"
-            app:layout_constraintTop_toBottomOf="@id/cardTriggerPatterns"
+            app:layout_constraintTop_toBottomOf="@id/cardMotivation"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
