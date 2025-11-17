@@ -319,10 +319,12 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         
         // Show dialog
         android.util.Log.d("ConfettiService", "Showing dialog");
-        new AlertDialog.Builder(this)
-            .setTitle("🎉 Badge Earned!")
-            .setMessage("Congratulations! You earned:\n\n" + badge.getName() + "\n" + badge.getDescription())
-            .setPositiveButton("Awesome!", (dialog, which) -> {
+        
+        // Create Material Design styled dialog
+        AlertDialog dialog = new AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog)
+            .setTitle("🎉 Congratulations!")
+            .setMessage("You earned a new badge!\n\n" + badge.getName() + "\n" + badge.getDescription())
+            .setPositiveButton("Awesome!", (dialogInterface, which) -> {
                 android.util.Log.d("ConfettiService", "Awesome button clicked");
                 // Remove confetti view
                 if (konfettiView != null && konfettiView.getParent() != null) {
@@ -335,7 +337,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 android.util.Log.d("ConfettiService", "Finishing activity");
                 finish();
             })
-            .setOnDismissListener(dialog -> {
+            .setOnDismissListener(dialogInterface -> {
                 android.util.Log.d("ConfettiService", "Dialog dismissed");
                 // Remove confetti view on dismiss
                 if (konfettiView != null && konfettiView.getParent() != null) {
@@ -348,7 +350,19 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 finish();
             })
             .setCancelable(false)
-            .show();
+            .create();
+        
+        // Show and style the dialog
+        dialog.show();
+        
+        // Set rounded corners background
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_rounded_background);
+        }
+        
+        // Customize button appearance
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.primary_blue));
+        
         android.util.Log.d("ConfettiService", "Dialog shown");
     }
 }
