@@ -43,6 +43,16 @@ public class MotivationService {
         void onFailure(Exception e);
     }
 
+    public interface BadgeEarnedCallback {
+        void onBadgeEarned(Badge badge);
+    }
+
+    private BadgeEarnedCallback badgeEarnedCallback;
+
+    public void setBadgeEarnedCallback(BadgeEarnedCallback callback) {
+        this.badgeEarnedCallback = callback;
+    }
+
     public void getStreak(String type, StreakCallback callback) {
         String userId = auth.getCurrentUser().getUid();
         db.collection("streaks")
@@ -260,6 +270,21 @@ public class MotivationService {
         );
         defaultBadges.add(techniqueMaster);
 
+        // Test badge - First Rescue Use
+        String testBadgeId = db.collection("badges").document().getId();
+        Badge testBadge = new Badge(
+                testBadgeId,
+                userId,
+                "first_rescue_use",
+                "First Step",
+                "Log your first rescue inhaler use",
+                false,
+                0,
+                0,
+                1
+        );
+        defaultBadges.add(testBadge);
+
         // Save all badges with their pre-assigned IDs
         int[] saveCount = {0};
         for (Badge badge : defaultBadges) {
@@ -337,6 +362,11 @@ public class MotivationService {
                                     badge.setEarned(true);
                                     badge.setEarnedDate(System.currentTimeMillis());
                                     android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Badge earned!");
+                                    
+                                    // Notify callback
+                                    if (badgeEarnedCallback != null) {
+                                        badgeEarnedCallback.onBadgeEarned(badge);
+                                    }
                                 }
                                 
                                 saveBadge(badge, null);
@@ -385,6 +415,11 @@ public class MotivationService {
                                     badge.setEarned(true);
                                     badge.setEarnedDate(System.currentTimeMillis());
                                     android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Badge earned!");
+                                    
+                                    // Notify callback
+                                    if (badgeEarnedCallback != null) {
+                                        badgeEarnedCallback.onBadgeEarned(badge);
+                                    }
                                 }
                                 saveBadge(badge, null);
                             } else {
@@ -399,6 +434,46 @@ public class MotivationService {
                 })
                 .addOnFailureListener(e -> {
                     android.util.Log.e("MotivationService", "updateTechniqueSessionBadge - Query failed", e);
+                });
+    }
+
+    public void checkFirstRescueBadge(UpdateCallback callback) {
+        String userId = auth.getCurrentUser().getUid();
+        android.util.Log.d("MotivationService", "checkFirstRescueBadge - Starting check");
+        
+        db.collection("badges")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("type", "first_rescue_use")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                        Badge badge = doc.toObject(Badge.class);
+                        if (badge != null && !badge.isEarned()) {
+                            badge.setId(doc.getId());
+                            badge.setProgress(1);
+                            badge.setEarned(true);
+                            badge.setEarnedDate(System.currentTimeMillis());
+                            
+                            android.util.Log.d("MotivationService", "checkFirstRescueBadge - Badge earned!");
+                            
+                            // Notify callback
+                            if (badgeEarnedCallback != null) {
+                                badgeEarnedCallback.onBadgeEarned(badge);
+                            }
+                            
+                            saveBadge(badge, callback);
+                        } else {
+                            callback.onComplete();
+                        }
+                    } else {
+                        callback.onComplete();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "checkFirstRescueBadge - Failed", e);
+                    callback.onComplete();
                 });
     }
 

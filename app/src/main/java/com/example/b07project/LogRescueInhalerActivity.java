@@ -1,8 +1,11 @@
 package com.example.b07project;
 
+import android.app.AlertDialog;
 import android.app.TimePickerDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -13,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import com.example.b07project.models.Badge;
 import com.example.b07project.models.ControllerMedicineLog;
 import com.example.b07project.models.MedicineLog;
 import com.example.b07project.models.RescueInhalerLog;
@@ -27,6 +31,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import nl.dionsegijn.konfetti.xml.KonfettiView;
+import nl.dionsegijn.konfetti.core.Party;
+import nl.dionsegijn.konfetti.core.PartyFactory;
+import nl.dionsegijn.konfetti.core.emitter.Emitter;
+import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
+import nl.dionsegijn.konfetti.core.models.Shape;
+import nl.dionsegijn.konfetti.core.models.Size;
 
 public class LogRescueInhalerActivity extends AppCompatActivity {
     
@@ -50,6 +61,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private MotivationService motivationService;
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
+    private KonfettiView konfettiView;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +74,11 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         motivationService = new MotivationService(this);
         dateFormat = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
         timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        
+        // Setup badge earned callback
+        motivationService.setBadgeEarnedCallback(badge -> {
+            runOnUiThread(() -> showBadgeEarnedNotification(badge));
+        });
         
         timestamp = new Date();
         updateTimestampDisplay();
@@ -236,10 +253,10 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String documentId) {
                     showLoading(false);
-                    Toast.makeText(LogRescueInhalerActivity.this, 
-                        "Rescue inhaler use logged successfully!", 
-                        Toast.LENGTH_LONG).show();
-                    finish();
+                    // Check test badge after logging
+                    motivationService.checkFirstRescueBadge(() -> {
+                        // Delay finish to allow dialog to show
+                    });
                 }
                 
                 @Override
@@ -262,5 +279,76 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         tvMessage.setText(message);
         tvMessage.setTextColor(getColor(isError ? android.R.color.holo_red_dark : android.R.color.holo_green_dark));
         tvMessage.setVisibility(View.VISIBLE);
+    }
+    
+    private void showBadgeEarnedNotification(Badge badge) {
+        android.util.Log.d("ConfettiService", "showBadgeEarnedNotification - Starting");
+        
+        // Create confetti view programmatically
+        ViewGroup rootView = findViewById(android.R.id.content);
+        android.util.Log.d("ConfettiService", "Root view: " + rootView);
+        
+        konfettiView = new KonfettiView(this);
+        ConstraintLayout.LayoutParams params = new ConstraintLayout.LayoutParams(
+            ConstraintLayout.LayoutParams.MATCH_PARENT,
+            ConstraintLayout.LayoutParams.MATCH_PARENT
+        );
+        konfettiView.setLayoutParams(params);
+        konfettiView.setZ(1000f); // Bring to front
+        konfettiView.setElevation(1000f); // Ensure it's on top
+        konfettiView.bringToFront();
+        rootView.addView(konfettiView);
+        android.util.Log.d("ConfettiService", "KonfettiView added to root");
+        
+        // Start confetti animation - Big, fast confetti raining down the full screen
+        EmitterConfig emitterConfig = new Emitter(5L, java.util.concurrent.TimeUnit.SECONDS).max(200);
+        Party party = new PartyFactory(emitterConfig)
+            .angle(90)  // 90 degrees = straight down (0° is right, clockwise)
+            .spread(45)  // Spread angle
+            .timeToLive(5000L)  // Live for 5 seconds to reach bottom
+            .fadeOutEnabled(true)
+            .setDamping(0.97f)  // Slow down less (closer to 1.0 = less slowdown)
+            .shapes(Shape.Circle.INSTANCE, new Shape.Rectangle(0.5f), Shape.Square.INSTANCE)
+            .sizes(new Size(30, 100f, 0.1f))  // Much bigger confetti: 30-100dp
+            .position(0.0, 0.0, 1.0, 0.0)  // Spawn across entire top width
+            .build();
+        
+        android.util.Log.d("ConfettiService", "Party created, starting confetti");
+        konfettiView.start(party);
+        android.util.Log.d("ConfettiService", "Confetti started");
+        
+        // Show dialog
+        android.util.Log.d("ConfettiService", "Showing dialog");
+        new AlertDialog.Builder(this)
+            .setTitle("🎉 Badge Earned!")
+            .setMessage("Congratulations! You earned:\n\n" + badge.getName() + "\n" + badge.getDescription())
+            .setPositiveButton("Awesome!", (dialog, which) -> {
+                android.util.Log.d("ConfettiService", "Awesome button clicked");
+                // Remove confetti view
+                if (konfettiView != null && konfettiView.getParent() != null) {
+                    ((ViewGroup) konfettiView.getParent()).removeView(konfettiView);
+                    android.util.Log.d("ConfettiService", "KonfettiView removed");
+                }
+                Toast.makeText(LogRescueInhalerActivity.this, 
+                    "Rescue inhaler use logged successfully!", 
+                    Toast.LENGTH_SHORT).show();
+                android.util.Log.d("ConfettiService", "Finishing activity");
+                finish();
+            })
+            .setOnDismissListener(dialog -> {
+                android.util.Log.d("ConfettiService", "Dialog dismissed");
+                // Remove confetti view on dismiss
+                if (konfettiView != null && konfettiView.getParent() != null) {
+                    ((ViewGroup) konfettiView.getParent()).removeView(konfettiView);
+                    android.util.Log.d("ConfettiService", "KonfettiView removed on dismiss");
+                }
+                Toast.makeText(LogRescueInhalerActivity.this, 
+                    "Rescue inhaler use logged successfully!", 
+                    Toast.LENGTH_SHORT).show();
+                finish();
+            })
+            .setCancelable(false)
+            .show();
+        android.util.Log.d("ConfettiService", "Dialog shown");
     }
 }
