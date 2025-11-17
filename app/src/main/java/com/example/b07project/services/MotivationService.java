@@ -52,17 +52,25 @@ public class MotivationService {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (!querySnapshot.isEmpty()) {
-                        Streak streak = querySnapshot.getDocuments().get(0).toObject(Streak.class);
-                        callback.onSuccess(streak);
+                        DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                        Streak streak = doc.toObject(Streak.class);
+                        // Ensure ID is set from document
+                        if (streak != null) {
+                            streak.setId(doc.getId());
+                            callback.onSuccess(streak);
+                        } else {
+                            callback.onFailure(new Exception("Failed to parse streak"));
+                        }
                     } else {
-                        // Create new streak
+                        // Create new streak with generated ID
+                        String newId = db.collection("streaks").document().getId();
                         Streak newStreak = new Streak(
-                                db.collection("streaks").document().getId(),
+                                newId,
                                 userId,
                                 type,
                                 0,
                                 0,
-                                System.currentTimeMillis()
+                                0  // Set lastUpdated to 0 so first update will trigger
                         );
                         callback.onSuccess(newStreak);
                     }
@@ -74,31 +82,31 @@ public class MotivationService {
         getStreak("controller", new StreakCallback() {
             @Override
             public void onSuccess(Streak streak) {
-                checkControllerMedicationForToday(hasMedication -> {
-                    if (hasMedication) {
-                        long today = getStartOfDay(System.currentTimeMillis());
-                        long lastUpdated = getStartOfDay(streak.getLastUpdated());
-                        long daysDiff = TimeUnit.MILLISECONDS.toDays(today - lastUpdated);
+                long today = getStartOfDay(System.currentTimeMillis());
+                long lastUpdated = getStartOfDay(streak.getLastUpdated());
+                long daysDiff = TimeUnit.MILLISECONDS.toDays(today - lastUpdated);
 
-                        if (daysDiff == 1) {
-                            // Continue streak
-                            streak.setCurrentStreak(streak.getCurrentStreak() + 1);
-                            if (streak.getCurrentStreak() > streak.getLongestStreak()) {
-                                streak.setLongestStreak(streak.getCurrentStreak());
-                            }
-                        } else if (daysDiff > 1) {
-                            // Streak broken, reset
-                            streak.setCurrentStreak(1);
-                        }
-                        // If daysDiff == 0, already updated today
-
-                        streak.setLastUpdated(System.currentTimeMillis());
-                        saveStreak(streak, callback);
-                        checkBadgesAfterStreakUpdate(streak);
-                    } else {
-                        callback.onComplete();
+                // Only update if this is a new day
+                if (daysDiff >= 1) {
+                    if (daysDiff == 1) {
+                        // Continue streak (consecutive day)
+                        streak.setCurrentStreak(streak.getCurrentStreak() + 1);
+                    } else if (daysDiff > 1 || streak.getCurrentStreak() == 0) {
+                        // Streak broken or first time, start at 1
+                        streak.setCurrentStreak(1);
                     }
-                });
+
+                    if (streak.getCurrentStreak() > streak.getLongestStreak()) {
+                        streak.setLongestStreak(streak.getCurrentStreak());
+                    }
+
+                    streak.setLastUpdated(System.currentTimeMillis());
+                    saveStreak(streak, callback);
+                    checkBadgesAfterStreakUpdate(streak);
+                } else {
+                    // Already updated today, just complete callback
+                    callback.onComplete();
+                }
             }
 
             @Override
@@ -116,12 +124,13 @@ public class MotivationService {
                 long lastUpdated = getStartOfDay(streak.getLastUpdated());
                 long daysDiff = TimeUnit.MILLISECONDS.toDays(today - lastUpdated);
 
+                // Only update if this is a new day
                 if (daysDiff >= 1) {
                     if (daysDiff == 1) {
-                        // Continue streak
+                        // Continue streak (consecutive day)
                         streak.setCurrentStreak(streak.getCurrentStreak() + 1);
-                    } else {
-                        // Streak broken, reset
+                    } else if (daysDiff > 1 || streak.getCurrentStreak() == 0) {
+                        // Streak broken or first time, start at 1
                         streak.setCurrentStreak(1);
                     }
 
@@ -132,6 +141,9 @@ public class MotivationService {
                     streak.setLastUpdated(System.currentTimeMillis());
                     saveStreak(streak, callback);
                     updateTechniqueSessionBadge();
+                } else {
+                    // Already updated today, just complete callback
+                    callback.onComplete();
                 }
             }
 
@@ -152,8 +164,13 @@ public class MotivationService {
 
         db.collection("streaks").document(streak.getId())
                 .set(streakData)
-                .addOnSuccessListener(aVoid -> callback.onComplete())
-                .addOnFailureListener(e -> callback.onComplete());
+                .addOnSuccessListener(aVoid -> {
+                    if (callback != null) callback.onComplete();
+                })
+                .addOnFailureListener(e -> {
+                    e.printStackTrace();
+                    if (callback != null) callback.onComplete();
+                });
     }
 
     // Badge Methods
@@ -185,8 +202,9 @@ public class MotivationService {
         String userId = auth.getCurrentUser().getUid();
         List<Badge> defaultBadges = new ArrayList<>();
 
+        String perfectWeekId = db.collection("badges").document().getId();
         Badge perfectWeek = new Badge(
-                db.collection("badges").document().getId(),
+                perfectWeekId,
                 userId,
                 "perfect_controller_week",
                 "Perfect Week",
@@ -201,8 +219,9 @@ public class MotivationService {
         SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         int techniqueRequired = prefs.getInt("technique_sessions_required", DEFAULT_TECHNIQUE_SESSIONS_REQUIRED);
 
+        String techniqueMasterId = db.collection("badges").document().getId();
         Badge techniqueMaster = new Badge(
-                db.collection("badges").document().getId(),
+                techniqueMasterId,
                 userId,
                 "technique_sessions",
                 "Technique Master",
@@ -217,8 +236,9 @@ public class MotivationService {
         int rescueThreshold = prefs.getInt("low_rescue_threshold", DEFAULT_LOW_RESCUE_THRESHOLD);
         int rescuePeriod = prefs.getInt("low_rescue_period", DEFAULT_LOW_RESCUE_PERIOD);
 
+        String lowRescueId = db.collection("badges").document().getId();
         Badge lowRescue = new Badge(
-                db.collection("badges").document().getId(),
+                lowRescueId,
                 userId,
                 "low_rescue_month",
                 "Control Champion",
@@ -230,12 +250,16 @@ public class MotivationService {
         );
         defaultBadges.add(lowRescue);
 
-        // Save all badges
+        // Save all badges with their pre-assigned IDs
+        int[] saveCount = {0};
         for (Badge badge : defaultBadges) {
-            saveBadge(badge, null);
+            saveBadge(badge, () -> {
+                saveCount[0]++;
+                if (saveCount[0] == defaultBadges.size()) {
+                    callback.onSuccess(defaultBadges);
+                }
+            });
         }
-
-        callback.onSuccess(defaultBadges);
     }
 
     private void saveBadge(Badge badge, UpdateCallback callback) {
@@ -375,8 +399,7 @@ public class MotivationService {
         long todayEnd = todayStart + TimeUnit.DAYS.toMillis(1) - 1;
 
         // Check if user has logged controller medication today
-        // Assuming there's a "controller_logs" collection
-        db.collection("controller_logs")
+        db.collection("controller_medicine_logs")
                 .whereEqualTo("userId", userId)
                 .whereGreaterThanOrEqualTo("timestamp", todayStart)
                 .whereLessThanOrEqualTo("timestamp", todayEnd)
@@ -438,6 +461,50 @@ public class MotivationService {
         thresholds.put("low_rescue_threshold", prefs.getInt("low_rescue_threshold", DEFAULT_LOW_RESCUE_THRESHOLD));
         thresholds.put("low_rescue_period", prefs.getInt("low_rescue_period", DEFAULT_LOW_RESCUE_PERIOD));
         return thresholds;
+    }
+
+    // Cleanup method to remove duplicate badges
+    public void cleanupDuplicateBadges(UpdateCallback callback) {
+        String userId = auth.getCurrentUser().getUid();
+        db.collection("badges")
+                .whereEqualTo("userId", userId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // Group badges by type
+                    Map<String, List<DocumentSnapshot>> badgesByType = new HashMap<>();
+                    
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String type = doc.getString("type");
+                        if (type != null) {
+                            if (!badgesByType.containsKey(type)) {
+                                badgesByType.put(type, new ArrayList<>());
+                            }
+                            badgesByType.get(type).add(doc);
+                        }
+                    }
+                    
+                    // Delete duplicates (keep only the first one of each type)
+                    int deletionsNeeded = 0;
+                    for (Map.Entry<String, List<DocumentSnapshot>> entry : badgesByType.entrySet()) {
+                        List<DocumentSnapshot> badges = entry.getValue();
+                        if (badges.size() > 1) {
+                            // Delete all except the first one
+                            for (int i = 1; i < badges.size(); i++) {
+                                deletionsNeeded++;
+                                badges.get(i).getReference().delete();
+                            }
+                        }
+                    }
+                    
+                    if (callback != null) {
+                        callback.onComplete();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (callback != null) {
+                        callback.onComplete();
+                    }
+                });
     }
 
     // Callback interfaces

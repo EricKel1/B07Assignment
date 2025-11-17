@@ -35,7 +35,11 @@ public class MotivationActivity extends AppCompatActivity {
         initializeViews();
         setupRecyclerView();
         setupListeners();
-        loadData();
+        
+        // Clean up any duplicate badges before loading
+        motivationService.cleanupDuplicateBadges(() -> {
+            loadData();
+        });
     }
 
     private void initializeViews() {
