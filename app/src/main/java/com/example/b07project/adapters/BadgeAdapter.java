@@ -91,12 +91,30 @@ public class BadgeAdapter extends RecyclerView.Adapter<BadgeAdapter.BadgeViewHol
             } else {
                 // Badge not earned yet
                 tvBadgeEarned.setVisibility(View.GONE);
-                progressBadge.setVisibility(View.VISIBLE);
-                tvBadgeProgress.setVisibility(View.VISIBLE);
                 
-                progressBadge.setMax(badge.getRequirement());
-                progressBadge.setProgress(badge.getProgress());
-                tvBadgeProgress.setText(badge.getProgress() + " / " + badge.getRequirement());
+                // Special display for low_rescue_month badge
+                if ("low_rescue_month".equals(badge.getType()) && badge.getPeriodEndDate() > 0) {
+                    progressBadge.setVisibility(View.GONE);
+                    tvBadgeProgress.setVisibility(View.VISIBLE);
+                    
+                    long now = System.currentTimeMillis();
+                    long daysLeft = (badge.getPeriodEndDate() - now) / (1000 * 60 * 60 * 24);
+                    
+                    String progressText;
+                    if (badge.getProgress() > badge.getRequirement()) {
+                        progressText = "⚠️ " + badge.getProgress() + " uses this month (limit: " + badge.getRequirement() + ")";
+                    } else {
+                        progressText = badge.getProgress() + " of " + badge.getRequirement() + " uses • " + daysLeft + " days left";
+                    }
+                    tvBadgeProgress.setText(progressText);
+                } else {
+                    progressBadge.setVisibility(View.VISIBLE);
+                    tvBadgeProgress.setVisibility(View.VISIBLE);
+                    
+                    progressBadge.setMax(badge.getRequirement());
+                    progressBadge.setProgress(badge.getProgress());
+                    tvBadgeProgress.setText(badge.getProgress() + " / " + badge.getRequirement());
+                }
                 
                 itemView.setAlpha(0.6f);
             }

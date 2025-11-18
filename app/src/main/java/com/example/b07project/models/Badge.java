@@ -10,6 +10,7 @@ public class Badge {
     private long earnedDate; // timestamp in milliseconds
     private int progress; // current progress towards badge
     private int requirement; // requirement to earn badge
+    private long periodEndDate; // For time-based badges like low_rescue_month
 
     public Badge() {
         // Required empty constructor for Firestore
@@ -65,6 +66,10 @@ public class Badge {
         return requirement;
     }
 
+    public long getPeriodEndDate() {
+        return periodEndDate;
+    }
+
     // Setters
     public void setId(String id) {
         this.id = id;
@@ -100,5 +105,9 @@ public class Badge {
 
     public void setRequirement(int requirement) {
         this.requirement = requirement;
+    }
+
+    public void setPeriodEndDate(long periodEndDate) {
+        this.periodEndDate = periodEndDate;
     }
 }

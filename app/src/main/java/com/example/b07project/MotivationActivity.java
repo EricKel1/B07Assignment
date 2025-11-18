@@ -30,14 +30,18 @@ public class MotivationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_motivation);
 
+        android.util.Log.d("RescueInhalerService", "=== MOTIVATION ACTIVITY CREATED ===");
+
         motivationService = new MotivationService(this);
 
         initializeViews();
         setupRecyclerView();
         setupListeners();
         
+        android.util.Log.d("RescueInhalerService", "Starting cleanup and data load...");
         // Clean up any duplicate badges before loading
         motivationService.cleanupDuplicateBadges(() -> {
+            android.util.Log.d("RescueInhalerService", "Cleanup complete, loading data...");
             loadData();
         });
     }
@@ -64,21 +68,30 @@ public class MotivationActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        loadStreaks();
-        loadBadges();
+        android.util.Log.d("RescueInhalerService", "loadData() called");
+        
+        // Update badge progress before loading
+        motivationService.checkLowRescueBadge(() -> {
+            loadStreaks();
+            loadBadges();
+        });
     }
 
     private void loadStreaks() {
+        android.util.Log.d("RescueInhalerService", "Loading streaks...");
         // Load controller streak
         motivationService.getStreak("controller", new MotivationService.StreakCallback() {
             @Override
             public void onSuccess(Streak streak) {
+                android.util.Log.d("RescueInhalerService", "Controller streak loaded: current=" + 
+                    streak.getCurrentStreak() + ", longest=" + streak.getLongestStreak());
                 tvControllerStreak.setText(streak.getCurrentStreak() + " days");
                 tvControllerLongest.setText("Longest: " + streak.getLongestStreak() + " days");
             }
 
             @Override
             public void onFailure(Exception e) {
+                android.util.Log.e("RescueInhalerService", "Failed to load controller streak", e);
                 Toast.makeText(MotivationActivity.this, "Failed to load controller streak", Toast.LENGTH_SHORT).show();
             }
         });
@@ -87,26 +100,37 @@ public class MotivationActivity extends AppCompatActivity {
         motivationService.getStreak("technique", new MotivationService.StreakCallback() {
             @Override
             public void onSuccess(Streak streak) {
+                android.util.Log.d("RescueInhalerService", "Technique streak loaded: current=" + 
+                    streak.getCurrentStreak() + ", longest=" + streak.getLongestStreak());
                 tvTechniqueStreak.setText(streak.getCurrentStreak() + " days");
                 tvTechniqueLongest.setText("Longest: " + streak.getLongestStreak() + " days");
             }
 
             @Override
             public void onFailure(Exception e) {
+                android.util.Log.e("RescueInhalerService", "Failed to load technique streak", e);
                 Toast.makeText(MotivationActivity.this, "Failed to load technique streak", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void loadBadges() {
+        android.util.Log.d("RescueInhalerService", "Loading badges from Firestore...");
         motivationService.getAllBadges(new MotivationService.BadgeListCallback() {
             @Override
             public void onSuccess(List<Badge> badges) {
+                android.util.Log.d("RescueInhalerService", "Badges loaded successfully: count=" + badges.size());
+                for (Badge badge : badges) {
+                    android.util.Log.d("RescueInhalerService", "  - Badge: type=" + badge.getType() + 
+                        ", name=" + badge.getName() + ", progress=" + badge.getProgress() + 
+                        "/" + badge.getRequirement() + ", earned=" + badge.isEarned());
+                }
                 badgeAdapter.updateBadges(badges);
             }
 
             @Override
             public void onFailure(Exception e) {
+                android.util.Log.e("RescueInhalerService", "Failed to load badges", e);
                 Toast.makeText(MotivationActivity.this, "Failed to load badges", Toast.LENGTH_SHORT).show();
             }
         });
@@ -120,6 +144,7 @@ public class MotivationActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        android.util.Log.d("RescueInhalerService", "=== MOTIVATION ACTIVITY RESUMED ===");
         // Refresh data when returning from settings
         loadData();
     }

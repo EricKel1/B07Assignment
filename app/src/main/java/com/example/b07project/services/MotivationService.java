@@ -295,7 +295,7 @@ public class MotivationService {
                 userId,
                 "low_rescue_month",
                 "Control Champion",
-                "Use rescue inhaler ≤" + rescueThreshold + " days in " + rescuePeriod + " days",
+                "Use rescue inhaler ≤" + rescueThreshold + " times in " + rescuePeriod + " days",
                 false,
                 0,
                 0,
@@ -316,11 +316,17 @@ public class MotivationService {
     }
 
     private void saveBadge(Badge badge, UpdateCallback callback) {
+        android.util.Log.d("RescueInhalerService", "saveBadge - CALLED for badge type: " + badge.getType() + ", name: " + badge.getName());
+        android.util.Log.d("RescueInhalerService", "saveBadge - Badge ID BEFORE check: " + badge.getId());
+        android.util.Log.d("RescueInhalerService", "saveBadge - Badge progress: " + badge.getProgress() + ", requirement: " + badge.getRequirement() + ", earned: " + badge.isEarned());
+        
         if (badge.getId() == null || badge.getId().isEmpty()) {
             // Generate new ID if not set
             badge.setId(db.collection("badges").document().getId());
-            android.util.Log.d("MotivationService", "saveBadge - Generated new ID: " + badge.getId());
+            android.util.Log.d("RescueInhalerService", "saveBadge - Generated new ID: " + badge.getId());
         }
+        
+        android.util.Log.d("RescueInhalerService", "saveBadge - Final Badge ID: " + badge.getId());
         
         Map<String, Object> badgeData = new HashMap<>();
         badgeData.put("userId", badge.getUserId());
@@ -331,14 +337,21 @@ public class MotivationService {
         badgeData.put("earnedDate", badge.getEarnedDate());
         badgeData.put("progress", badge.getProgress());
         badgeData.put("requirement", badge.getRequirement());
+        badgeData.put("periodEndDate", badge.getPeriodEndDate());
+
+        android.util.Log.d("RescueInhalerService", "saveBadge - badgeData map created with progress: " + badgeData.get("progress"));
+        android.util.Log.d("RescueInhalerService", "saveBadge - Full badgeData: " + badgeData.toString());
+        android.util.Log.d("RescueInhalerService", "saveBadge - About to call Firestore .set() on document: " + badge.getId());
 
         db.collection("badges").document(badge.getId())
                 .set(badgeData)
                 .addOnSuccessListener(aVoid -> {
+                    android.util.Log.d("RescueInhalerService", "saveBadge - SUCCESS! Firestore .set() completed for badge: " + badge.getId());
+                    android.util.Log.d("RescueInhalerService", "saveBadge - Saved progress value: " + badgeData.get("progress"));
                     if (callback != null) callback.onComplete();
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("MotivationService", "saveBadge - Failed to save", e);
+                    android.util.Log.e("RescueInhalerService", "saveBadge - FAILED! Firestore .set() error for badge: " + badge.getId(), e);
                     if (callback != null) callback.onComplete();
                 });
     }
@@ -419,7 +432,7 @@ public class MotivationService {
                 userId,
                 "low_rescue_month",
                 "Control Champion",
-                "Use rescue inhaler ≤" + rescueThreshold + " days in " + rescuePeriod + " days",
+                "Use rescue inhaler ≤" + rescueThreshold + " times in " + rescuePeriod + " days",
                 false,
                 0,
                 0,
@@ -596,97 +609,133 @@ public class MotivationService {
 
     private void performLowRescueBadgeCheck(int rescueThreshold, int rescuePeriod, UpdateCallback callback) {
         String userId = auth.getCurrentUser().getUid();
-        long periodStart = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(rescuePeriod);
 
-        android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Starting check for userId: " + userId +
-                ", threshold: " + rescueThreshold + ", period: " + rescuePeriod + " days");
+        android.util.Log.d("RescueInhalerService", "=== LOW RESCUE BADGE CHECK START ===");
+        android.util.Log.d("RescueInhalerService", "userId: " + userId);
+        android.util.Log.d("RescueInhalerService", "threshold: " + rescueThreshold + ", period: " + rescuePeriod + " days");
 
         try {
             com.google.firebase.auth.FirebaseUser user = auth.getCurrentUser();
-            if (user != null && user.getMetadata() != null) {
-                long createdAt = user.getMetadata().getCreationTimestamp();
-                long ageDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - createdAt);
-                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Account ageDays=" + ageDays);
-                if (ageDays < rescuePeriod) {
-                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Skipping award: account age < required period");
-                    if (callback != null) callback.onComplete();
-                    return;
-                }
-            } else {
-                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Missing user metadata; skipping award");
+            if (user == null || user.getMetadata() == null) {
+                android.util.Log.e("RescueInhalerService", "ERROR: Missing user metadata");
                 if (callback != null) callback.onComplete();
                 return;
             }
-        } catch (Exception e) {
-            android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Metadata check failed", e);
-            if (callback != null) callback.onComplete();
-            return;
-        }
 
-        db.collection("rescue_inhaler_logs")
-                .whereEqualTo("userId", userId)
-                .whereGreaterThanOrEqualTo("timestamp", periodStart)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Found " + querySnapshot.size() + " rescue logs");
-                    java.util.Set<Long> uniqueDays = new java.util.HashSet<>();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        Long timestamp = doc.getLong("timestamp");
-                        if (timestamp != null) {
-                            uniqueDays.add(getStartOfDay(timestamp));
+            long accountCreated = user.getMetadata().getCreationTimestamp();
+            long now = System.currentTimeMillis();
+            long accountAgeDays = TimeUnit.MILLISECONDS.toDays(now - accountCreated);
+
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
+            android.util.Log.d("RescueInhalerService", "Account created: " + sdf.format(new java.util.Date(accountCreated)));
+            android.util.Log.d("RescueInhalerService", "Current time: " + sdf.format(new java.util.Date(now)));
+            android.util.Log.d("RescueInhalerService", "Account age: " + accountAgeDays + " days");
+
+            // Calculate which month period we're in (0-indexed from account creation)
+            int currentMonthIndex = (int) (accountAgeDays / rescuePeriod);
+            long periodStart = accountCreated + TimeUnit.DAYS.toMillis(currentMonthIndex * rescuePeriod);
+            long periodEnd = accountCreated + TimeUnit.DAYS.toMillis((currentMonthIndex + 1) * rescuePeriod);
+            
+            // Track progress even if account is not old enough to earn badge
+            boolean canEarnBadge = accountAgeDays >= rescuePeriod;
+
+            android.util.Log.d("RescueInhalerService", "Current month index: " + currentMonthIndex);
+            android.util.Log.d("RescueInhalerService", "Period start: " + sdf.format(new java.util.Date(periodStart)));
+            android.util.Log.d("RescueInhalerService", "Period end: " + sdf.format(new java.util.Date(periodEnd)));
+            android.util.Log.d("RescueInhalerService", "Querying Firestore for rescue_inhaler_logs...");
+
+            // Convert long timestamps to Date objects for Firestore query
+            java.util.Date periodStartDate = new java.util.Date(periodStart);
+            java.util.Date periodEndDate = new java.util.Date(periodEnd);
+
+            db.collection("rescue_inhaler_logs")
+                    .whereEqualTo("userId", userId)
+                    .whereGreaterThanOrEqualTo("timestamp", periodStartDate)
+                    .whereLessThan("timestamp", periodEndDate)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        int totalRescueUses = querySnapshot.size();
+                        android.util.Log.d("RescueInhalerService", "Query SUCCESS: Found " + totalRescueUses + " rescue logs");
+                        
+                        // Log each document found
+                        for (DocumentSnapshot logDoc : querySnapshot.getDocuments()) {
+                            java.util.Date timestamp = logDoc.getDate("timestamp");
+                            if (timestamp != null) {
+                                android.util.Log.d("RescueInhalerService", "  - Log ID: " + logDoc.getId() + 
+                                    ", timestamp: " + sdf.format(timestamp));
+                            }
                         }
-                    }
 
-                    int rescueDays = uniqueDays.size();
-                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Unique rescue days: " + rescueDays);
+                        android.util.Log.d("RescueInhalerService", "Querying for low_rescue_month badge...");
 
-                    db.collection("badges")
-                            .whereEqualTo("userId", userId)
-                            .whereEqualTo("type", "low_rescue_month")
-                            .limit(1)
-                            .get()
-                            .addOnSuccessListener(badgeQuery -> {
-                                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Badge query result: isEmpty=" + badgeQuery.isEmpty());
+                        db.collection("badges")
+                                .whereEqualTo("userId", userId)
+                                .whereEqualTo("type", "low_rescue_month")
+                                .limit(1)
+                                .get()
+                                .addOnSuccessListener(badgeQuery -> {
+                                    android.util.Log.d("RescueInhalerService", "Badge query result: isEmpty=" + badgeQuery.isEmpty());
 
-                                if (!badgeQuery.isEmpty()) {
-                                    DocumentSnapshot doc = badgeQuery.getDocuments().get(0);
-                                    Badge badge = doc.toObject(Badge.class);
-                                    if (badge != null) {
-                                        badge.setId(doc.getId());
+                                    if (!badgeQuery.isEmpty()) {
+                                        DocumentSnapshot doc = badgeQuery.getDocuments().get(0);
+                                        Badge badge = doc.toObject(Badge.class);
+                                        if (badge != null) {
+                                            badge.setId(doc.getId());
 
-                                        android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Rescue days: " + rescueDays +
-                                                ", threshold: " + rescueThreshold + ", earned: " + badge.isEarned());
+                                            android.util.Log.d("RescueInhalerService", "Current badge state:");
+                                            android.util.Log.d("RescueInhalerService", "  - Badge ID: " + badge.getId());
+                                            android.util.Log.d("RescueInhalerService", "  - Old progress: " + badge.getProgress());
+                                            android.util.Log.d("RescueInhalerService", "  - New progress: " + totalRescueUses);
+                                            android.util.Log.d("RescueInhalerService", "  - Requirement: " + rescueThreshold);
+                                            android.util.Log.d("RescueInhalerService", "  - Already earned: " + badge.isEarned());
 
-                                        badge.setProgress(rescueDays);
+                                            badge.setProgress(totalRescueUses);
+                                            badge.setPeriodEndDate(periodEnd); // Set period end for display
 
-                                        if (!badge.isEarned() && rescueDays <= rescueThreshold) {
-                                            badge.setEarned(true);
-                                            badge.setEarnedDate(System.currentTimeMillis());
-                                            android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Badge earned!");
+                                            // Check if we're at the end of the month period
+                                            boolean isEndOfMonth = (now >= periodEnd - TimeUnit.DAYS.toMillis(1));
+                                            android.util.Log.d("RescueInhalerService", "Can earn badge (account old enough): " + canEarnBadge);
+                                            android.util.Log.d("RescueInhalerService", "Is end of month period: " + isEndOfMonth);
+                                            
+                                            if (!badge.isEarned() && canEarnBadge && isEndOfMonth && totalRescueUses <= rescueThreshold) {
+                                                badge.setEarned(true);
+                                                badge.setEarnedDate(System.currentTimeMillis());
+                                                android.util.Log.d("RescueInhalerService", "🎉 BADGE EARNED for month " + currentMonthIndex + "!");
 
-                                            if (badgeEarnedCallback != null) {
-                                                badgeEarnedCallback.onBadgeEarned(badge);
+                                                if (badgeEarnedCallback != null) {
+                                                    badgeEarnedCallback.onBadgeEarned(badge);
+                                                }
+                                            } else {
+                                                android.util.Log.d("RescueInhalerService", "Badge NOT earned (earned=" + badge.isEarned() + 
+                                                    ", canEarn=" + canEarnBadge + ", endOfMonth=" + isEndOfMonth + ", uses=" + totalRescueUses + "<=" + rescueThreshold + ")");
                                             }
-                                        }
 
-                                        saveBadge(badge, callback);
+                                            android.util.Log.d("RescueInhalerService", "Saving badge to Firestore...");
+                                            saveBadge(badge, callback);
+                                        } else {
+                                            android.util.Log.e("RescueInhalerService", "ERROR: Badge object is null");
+                                            if (callback != null) callback.onComplete();
+                                        }
                                     } else {
-                                        callback.onComplete();
+                                        android.util.Log.e("RescueInhalerService", "ERROR: No badge found in Firestore");
+                                        if (callback != null) callback.onComplete();
                                     }
-                                } else {
-                                    android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - No badge found");
-                                    callback.onComplete();
-                                }
-                            })
-                            .addOnFailureListener(e -> {
-                                android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Badge query failed", e);
-                                callback.onComplete();
-                            });
-                })
-                .addOnFailureListener(e -> {
-                    android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Rescue logs query failed", e);
-                    callback.onComplete();
-                });
+                                })
+                                .addOnFailureListener(e -> {
+                                    android.util.Log.e("RescueInhalerService", "ERROR: Badge query failed", e);
+                                    if (callback != null) callback.onComplete();
+                                });
+                    })
+                    .addOnFailureListener(e -> {
+                        android.util.Log.e("RescueInhalerService", "ERROR: Rescue logs query failed", e);
+                        if (callback != null) callback.onComplete();
+                    });
+        } catch (Exception e) {
+            android.util.Log.e("RescueInhalerService", "ERROR: Exception in performLowRescueBadgeCheck", e);
+            if (callback != null) callback.onComplete();
+        }
+        
+        android.util.Log.d("RescueInhalerService", "=== LOW RESCUE BADGE CHECK END ===");
     }
 
     // Helper methods
@@ -754,7 +803,7 @@ public class MotivationService {
                         Badge badge = querySnapshot.getDocuments().get(0).toObject(Badge.class);
                         if (badge != null) {
                             badge.setRequirement(lowRescueThreshold);
-                            badge.setDescription("Use rescue inhaler ≤" + lowRescueThreshold + " days in " + lowRescuePeriod + " days");
+                            badge.setDescription("Use rescue inhaler ≤" + lowRescueThreshold + " times in " + lowRescuePeriod + " days");
                             saveBadge(badge, null);
                         }
                     }
