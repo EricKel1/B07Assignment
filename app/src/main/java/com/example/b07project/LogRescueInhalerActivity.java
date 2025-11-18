@@ -255,7 +255,10 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                     showLoading(false);
                     // Check test badge after logging
                     motivationService.checkFirstRescueBadge(() -> {
-                        // Delay finish to allow dialog to show
+                        // Check low rescue badge after test badge
+                        motivationService.checkLowRescueBadge(() -> {
+                            // Delay finish to allow dialog to show
+                        });
                     });
                 }
                 

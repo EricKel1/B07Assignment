@@ -285,6 +285,24 @@ public class MotivationService {
         );
         defaultBadges.add(testBadge);
 
+        // Low Rescue Month badge
+        int rescueThreshold = prefs.getInt("low_rescue_threshold", DEFAULT_LOW_RESCUE_THRESHOLD);
+        int rescuePeriod = prefs.getInt("low_rescue_period", DEFAULT_LOW_RESCUE_PERIOD);
+
+        String lowRescueId = db.collection("badges").document().getId();
+        Badge lowRescue = new Badge(
+                lowRescueId,
+                userId,
+                "low_rescue_month",
+                "Control Champion",
+                "Use rescue inhaler ≤" + rescueThreshold + " days in " + rescuePeriod + " days",
+                false,
+                0,
+                0,
+                rescueThreshold
+        );
+        defaultBadges.add(lowRescue);
+
         // Save all badges with their pre-assigned IDs
         int[] saveCount = {0};
         for (Badge badge : defaultBadges) {
@@ -325,122 +343,213 @@ public class MotivationService {
                 });
     }
 
+    private void ensureBadgeExists(String type, BadgeTemplateBuilder builder, Runnable onComplete) {
+        String userId = auth.getCurrentUser().getUid();
+        db.collection("badges")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("type", type)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (querySnapshot.isEmpty()) {
+                        String badgeId = db.collection("badges").document().getId();
+                        Badge badge = builder.build(badgeId, userId);
+                        android.util.Log.d("MotivationService", "ensureBadgeExists - Creating missing badge type=" + type);
+                        saveBadge(badge, () -> {
+                            if (onComplete != null) onComplete.run();
+                        });
+                    } else {
+                        if (onComplete != null) onComplete.run();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "ensureBadgeExists - Failed for type=" + type, e);
+                    if (onComplete != null) onComplete.run();
+                });
+    }
+
+    private void ensureFirstRescueBadgeExists(Runnable onComplete) {
+        ensureBadgeExists("first_rescue_use", (badgeId, userId) -> new Badge(
+                badgeId,
+                userId,
+                "first_rescue_use",
+                "First Step",
+                "Log your first rescue inhaler use",
+                false,
+                0,
+                0,
+                1
+        ), onComplete);
+    }
+
+    private void ensureTechniqueBadgeExists(Runnable onComplete) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int techniqueRequired = prefs.getInt("technique_sessions_required", DEFAULT_TECHNIQUE_SESSIONS_REQUIRED);
+
+        ensureBadgeExists("technique_sessions", (badgeId, userId) -> new Badge(
+                badgeId,
+                userId,
+                "technique_sessions",
+                "Technique Master",
+                "Complete " + techniqueRequired + " high-quality technique practice sessions",
+                false,
+                0,
+                0,
+                techniqueRequired
+        ), onComplete);
+    }
+
+    private void ensurePerfectWeekBadgeExists(Runnable onComplete) {
+        ensureBadgeExists("perfect_controller_week", (badgeId, userId) -> new Badge(
+                badgeId,
+                userId,
+                "perfect_controller_week",
+                "Perfect Week",
+                "Take controller medication every day for 7 consecutive days",
+                false,
+                0,
+                0,
+                7
+        ), onComplete);
+    }
+
+    private void ensureLowRescueBadgeExists(int rescueThreshold, int rescuePeriod, Runnable onComplete) {
+        ensureBadgeExists("low_rescue_month", (badgeId, userId) -> new Badge(
+                badgeId,
+                userId,
+                "low_rescue_month",
+                "Control Champion",
+                "Use rescue inhaler ≤" + rescueThreshold + " days in " + rescuePeriod + " days",
+                false,
+                0,
+                0,
+                rescueThreshold
+        ), onComplete);
+    }
+
     private void checkBadgesAfterStreakUpdate(Streak streak) {
         android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Called with streak type: " + 
             streak.getType() + ", currentStreak: " + streak.getCurrentStreak());
         
         if (streak.getType().equals("controller")) {
-            // Update perfect week badge progress
-            String userId = auth.getCurrentUser().getUid();
-            android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Querying for controller badge, userId: " + userId);
-            
-            db.collection("badges")
-                    .whereEqualTo("userId", userId)
-                    .whereEqualTo("type", "perfect_controller_week")
-                    .limit(1)
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Query result: isEmpty=" + querySnapshot.isEmpty());
-                        
-                        if (!querySnapshot.isEmpty()) {
-                            DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
-                            Badge badge = doc.toObject(Badge.class);
-                            android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Found badge: " + 
-                                (badge != null ? "id=" + doc.getId() + ", progress=" + badge.getProgress() : "null"));
-                            
-                            if (badge != null) {
-                                badge.setId(doc.getId()); // Set ID from document
-                                
-                                android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Controller badge progress: " + 
-                                    badge.getProgress() + " -> " + streak.getCurrentStreak());
-                                
-                                // Update progress to match current streak
-                                badge.setProgress(streak.getCurrentStreak());
-                                
-                                // Check if earned
-                                if (!badge.isEarned() && streak.getCurrentStreak() >= badge.getRequirement()) {
-                                    badge.setEarned(true);
-                                    badge.setEarnedDate(System.currentTimeMillis());
-                                    android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Badge earned!");
-                                    
-                                    // Notify callback
-                                    if (badgeEarnedCallback != null) {
-                                        badgeEarnedCallback.onBadgeEarned(badge);
-                                    }
-                                }
-                                
-                                saveBadge(badge, null);
-                            } else {
-                                android.util.Log.e("MotivationService", "checkBadgesAfterStreakUpdate - Badge object is null");
-                            }
-                        } else {
-                            android.util.Log.e("MotivationService", "checkBadgesAfterStreakUpdate - No badge found in query");
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        android.util.Log.e("MotivationService", "checkBadgesAfterStreakUpdate - Query failed", e);
-                    });
+            ensurePerfectWeekBadgeExists(() -> performPerfectWeekBadgeCheck(streak));
         } else {
             android.util.Log.d("MotivationService", "checkBadgesAfterStreakUpdate - Not controller type, skipping");
         }
     }
 
+    private void performPerfectWeekBadgeCheck(Streak streak) {
+        String userId = streak.getUserId();
+        android.util.Log.d("MotivationService", "performPerfectWeekBadgeCheck - Querying for controller badge, userId: " + userId);
+
+        db.collection("badges")
+                .whereEqualTo("userId", userId)
+                .whereEqualTo("type", "perfect_controller_week")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    android.util.Log.d("MotivationService", "performPerfectWeekBadgeCheck - Query result: isEmpty=" + querySnapshot.isEmpty());
+
+                    if (!querySnapshot.isEmpty()) {
+                        DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                        Badge badge = doc.toObject(Badge.class);
+                        android.util.Log.d("MotivationService", "performPerfectWeekBadgeCheck - Found badge: " +
+                                (badge != null ? "id=" + doc.getId() + ", progress=" + badge.getProgress() : "null"));
+
+                        if (badge != null) {
+                            badge.setId(doc.getId());
+
+                            android.util.Log.d("MotivationService", "performPerfectWeekBadgeCheck - Controller badge progress: " +
+                                    badge.getProgress() + " -> " + streak.getCurrentStreak());
+
+                            badge.setProgress(streak.getCurrentStreak());
+
+                            if (!badge.isEarned() && streak.getCurrentStreak() >= badge.getRequirement()) {
+                                badge.setEarned(true);
+                                badge.setEarnedDate(System.currentTimeMillis());
+                                android.util.Log.d("MotivationService", "performPerfectWeekBadgeCheck - Badge earned!");
+
+                                if (badgeEarnedCallback != null) {
+                                    badgeEarnedCallback.onBadgeEarned(badge);
+                                }
+                            }
+
+                            saveBadge(badge, null);
+                        } else {
+                            android.util.Log.e("MotivationService", "performPerfectWeekBadgeCheck - Badge object is null");
+                        }
+                    } else {
+                        android.util.Log.e("MotivationService", "performPerfectWeekBadgeCheck - No badge found in query");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "performPerfectWeekBadgeCheck - Query failed", e);
+                });
+    }
+
     private void updateTechniqueSessionBadge() {
+        ensureTechniqueBadgeExists(this::performTechniqueSessionBadgeUpdate);
+    }
+
+    private void performTechniqueSessionBadgeUpdate() {
         String userId = auth.getCurrentUser().getUid();
-        android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Starting for userId: " + userId);
-        
+        android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Starting for userId: " + userId);
+
         db.collection("badges")
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("type", "technique_sessions")
                 .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Query result: isEmpty=" + querySnapshot.isEmpty());
-                    
+                    android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Query result: isEmpty=" + querySnapshot.isEmpty());
+
                     if (!querySnapshot.isEmpty()) {
                         DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
                         Badge badge = doc.toObject(Badge.class);
-                        android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Found badge: " + 
-                            (badge != null ? "progress=" + badge.getProgress() + ", earned=" + badge.isEarned() : "null"));
-                        
+                        android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Found badge: " +
+                                (badge != null ? "progress=" + badge.getProgress() + ", earned=" + badge.isEarned() : "null"));
+
                         if (badge != null) {
-                            badge.setId(doc.getId()); // Set ID from document
+                            badge.setId(doc.getId());
                             if (!badge.isEarned()) {
                                 int oldProgress = badge.getProgress();
                                 badge.setProgress(badge.getProgress() + 1);
-                                android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Updated progress: " + 
-                                    oldProgress + " -> " + badge.getProgress() + ", requirement: " + badge.getRequirement());
-                                
+                                android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Updated progress: " +
+                                        oldProgress + " -> " + badge.getProgress() + ", requirement: " + badge.getRequirement());
+
                                 if (badge.getProgress() >= badge.getRequirement()) {
                                     badge.setEarned(true);
                                     badge.setEarnedDate(System.currentTimeMillis());
-                                    android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Badge earned!");
-                                    
-                                    // Notify callback
+                                    android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Badge earned!");
+
                                     if (badgeEarnedCallback != null) {
                                         badgeEarnedCallback.onBadgeEarned(badge);
                                     }
                                 }
                                 saveBadge(badge, null);
                             } else {
-                                android.util.Log.d("MotivationService", "updateTechniqueSessionBadge - Badge already earned");
+                                android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Badge already earned");
                             }
                         } else {
-                            android.util.Log.e("MotivationService", "updateTechniqueSessionBadge - Badge object is null");
+                            android.util.Log.e("MotivationService", "performTechniqueSessionBadgeUpdate - Badge object is null");
                         }
                     } else {
-                        android.util.Log.e("MotivationService", "updateTechniqueSessionBadge - No badge found in query");
+                        android.util.Log.e("MotivationService", "performTechniqueSessionBadgeUpdate - No badge found in query");
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("MotivationService", "updateTechniqueSessionBadge - Query failed", e);
+                    android.util.Log.e("MotivationService", "performTechniqueSessionBadgeUpdate - Query failed", e);
                 });
     }
 
     public void checkFirstRescueBadge(UpdateCallback callback) {
+        ensureFirstRescueBadgeExists(() -> performFirstRescueBadgeCheck(callback));
+    }
+
+    private void performFirstRescueBadgeCheck(UpdateCallback callback) {
         String userId = auth.getCurrentUser().getUid();
-        android.util.Log.d("MotivationService", "checkFirstRescueBadge - Starting check");
-        
+        android.util.Log.d("MotivationService", "performFirstRescueBadgeCheck - Starting check");
+
         db.collection("badges")
                 .whereEqualTo("userId", userId)
                 .whereEqualTo("type", "first_rescue_use")
@@ -455,14 +564,13 @@ public class MotivationService {
                             badge.setProgress(1);
                             badge.setEarned(true);
                             badge.setEarnedDate(System.currentTimeMillis());
-                            
-                            android.util.Log.d("MotivationService", "checkFirstRescueBadge - Badge earned!");
-                            
-                            // Notify callback
+
+                            android.util.Log.d("MotivationService", "performFirstRescueBadgeCheck - Badge earned!");
+
                             if (badgeEarnedCallback != null) {
                                 badgeEarnedCallback.onBadgeEarned(badge);
                             }
-                            
+
                             saveBadge(badge, callback);
                         } else {
                             callback.onComplete();
@@ -472,7 +580,111 @@ public class MotivationService {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("MotivationService", "checkFirstRescueBadge - Failed", e);
+                    android.util.Log.e("MotivationService", "performFirstRescueBadgeCheck - Failed", e);
+                    callback.onComplete();
+                });
+    }
+
+    public void checkLowRescueBadge(UpdateCallback callback) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        int rescueThreshold = prefs.getInt("low_rescue_threshold", DEFAULT_LOW_RESCUE_THRESHOLD);
+        int rescuePeriod = prefs.getInt("low_rescue_period", DEFAULT_LOW_RESCUE_PERIOD);
+
+        ensureLowRescueBadgeExists(rescueThreshold, rescuePeriod,
+                () -> performLowRescueBadgeCheck(rescueThreshold, rescuePeriod, callback));
+    }
+
+    private void performLowRescueBadgeCheck(int rescueThreshold, int rescuePeriod, UpdateCallback callback) {
+        String userId = auth.getCurrentUser().getUid();
+        long periodStart = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(rescuePeriod);
+
+        android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Starting check for userId: " + userId +
+                ", threshold: " + rescueThreshold + ", period: " + rescuePeriod + " days");
+
+        try {
+            com.google.firebase.auth.FirebaseUser user = auth.getCurrentUser();
+            if (user != null && user.getMetadata() != null) {
+                long createdAt = user.getMetadata().getCreationTimestamp();
+                long ageDays = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - createdAt);
+                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Account ageDays=" + ageDays);
+                if (ageDays < rescuePeriod) {
+                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Skipping award: account age < required period");
+                    if (callback != null) callback.onComplete();
+                    return;
+                }
+            } else {
+                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Missing user metadata; skipping award");
+                if (callback != null) callback.onComplete();
+                return;
+            }
+        } catch (Exception e) {
+            android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Metadata check failed", e);
+            if (callback != null) callback.onComplete();
+            return;
+        }
+
+        db.collection("rescue_inhaler_logs")
+                .whereEqualTo("userId", userId)
+                .whereGreaterThanOrEqualTo("timestamp", periodStart)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Found " + querySnapshot.size() + " rescue logs");
+                    java.util.Set<Long> uniqueDays = new java.util.HashSet<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Long timestamp = doc.getLong("timestamp");
+                        if (timestamp != null) {
+                            uniqueDays.add(getStartOfDay(timestamp));
+                        }
+                    }
+
+                    int rescueDays = uniqueDays.size();
+                    android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Unique rescue days: " + rescueDays);
+
+                    db.collection("badges")
+                            .whereEqualTo("userId", userId)
+                            .whereEqualTo("type", "low_rescue_month")
+                            .limit(1)
+                            .get()
+                            .addOnSuccessListener(badgeQuery -> {
+                                android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Badge query result: isEmpty=" + badgeQuery.isEmpty());
+
+                                if (!badgeQuery.isEmpty()) {
+                                    DocumentSnapshot doc = badgeQuery.getDocuments().get(0);
+                                    Badge badge = doc.toObject(Badge.class);
+                                    if (badge != null) {
+                                        badge.setId(doc.getId());
+
+                                        android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Rescue days: " + rescueDays +
+                                                ", threshold: " + rescueThreshold + ", earned: " + badge.isEarned());
+
+                                        badge.setProgress(rescueDays);
+
+                                        if (!badge.isEarned() && rescueDays <= rescueThreshold) {
+                                            badge.setEarned(true);
+                                            badge.setEarnedDate(System.currentTimeMillis());
+                                            android.util.Log.d("MotivationService", "performLowRescueBadgeCheck - Badge earned!");
+
+                                            if (badgeEarnedCallback != null) {
+                                                badgeEarnedCallback.onBadgeEarned(badge);
+                                            }
+                                        }
+
+                                        saveBadge(badge, callback);
+                                    } else {
+                                        callback.onComplete();
+                                    }
+                                } else {
+                                    android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - No badge found");
+                                    callback.onComplete();
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Badge query failed", e);
+                                callback.onComplete();
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    android.util.Log.e("MotivationService", "performLowRescueBadgeCheck - Rescue logs query failed", e);
                     callback.onComplete();
                 });
     }
@@ -609,5 +821,9 @@ public class MotivationService {
 
     private interface MedicationCheckCallback {
         void onResult(boolean hasMedication);
+    }
+
+    private interface BadgeTemplateBuilder {
+        Badge build(String badgeId, String userId);
     }
 }
