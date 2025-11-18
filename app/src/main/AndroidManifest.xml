@@ -23,6 +23,8 @@
         <activity android:name=".TriageActivity" />
         <activity android:name=".IncidentHistoryActivity" />
         <activity android:name=".InhalerTechniqueActivity" />
+        <activity android:name=".MotivationActivity" />
+        <activity android:name=".MotivationSettingsActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

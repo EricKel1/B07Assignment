@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SignUpActivity extends AppCompatActivity {
     
@@ -23,6 +24,7 @@ public class SignUpActivity extends AppCompatActivity {
     private TextView tvError, tvSignIn;
     
     private FirebaseAuth auth;
+    private FirebaseFirestore db;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,7 @@ public class SignUpActivity extends AppCompatActivity {
         setContentView(R.layout.activity_signup);
         
         auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         
         initializeViews();
         setupListeners();
@@ -72,6 +75,23 @@ public class SignUpActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     FirebaseUser user = auth.getCurrentUser();
                     if (user != null) {
+                        // Store account creation timestamp
+                        long creationTime = System.currentTimeMillis();
+                        java.util.Map<String, Object> userData = new java.util.HashMap<>();
+                        userData.put("userId", user.getUid());
+                        userData.put("email", email);
+                        userData.put("name", name);
+                        userData.put("accountCreatedAt", creationTime);
+                        
+                        db.collection("users").document(user.getUid())
+                            .set(userData)
+                            .addOnSuccessListener(aVoid -> {
+                                android.util.Log.d("SignUpActivity", "User data saved with creation time: " + creationTime);
+                            })
+                            .addOnFailureListener(e -> {
+                                android.util.Log.e("SignUpActivity", "Failed to save user data", e);
+                            });
+                        
                         UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
                             .setDisplayName(name)
                             .build();
