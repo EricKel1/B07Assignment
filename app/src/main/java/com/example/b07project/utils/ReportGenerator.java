@@ -1,5 +1,6 @@
 package com.example.b07project.utils;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,30 +10,28 @@ import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.TextUtils;
+import android.util.Base64;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
+import com.example.b07project.R;
 import com.example.b07project.models.ControllerMedicineLog;
 import com.example.b07project.models.Report;
 import com.example.b07project.models.RescueInhalerLog;
 import com.example.b07project.repository.ControllerMedicineRepository;
 import com.example.b07project.repository.RescueInhalerRepository;
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
-import com.github.mikephil.charting.renderer.XAxisRenderer;
-import com.github.mikephil.charting.renderer.YAxisRenderer;
-import com.github.mikephil.charting.utils.MPPointF;
-import com.github.mikephil.charting.utils.Transformer;
-import com.github.mikephil.charting.utils.Utils;
-import com.github.mikephil.charting.utils.ViewPortHandler;
 import com.google.firebase.auth.FirebaseAuth;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -44,11 +43,13 @@ import java.util.Map;
 
 public class ReportGenerator {
 
+    private static final String TAG = "reportdebugging";
     private Context context;
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
     private SimpleDateFormat dateFormat;
-    private static final float TINY_AXIS_TEXT_DP = 4f;
+    private static final float TINY_AXIS_TEXT_DP = 2.5f;
+    private AlertDialog progressDialog;
 
     public interface ReportCallback {
         void onSuccess(Report report);
@@ -122,6 +123,7 @@ public class ReportGenerator {
     }
 
     public void viewReport(Report report) {
+        showLoading();
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Date startDate = new Date(report.getStartDate());
         Date endDate = new Date(report.getEndDate());
@@ -137,6 +139,7 @@ public class ReportGenerator {
 
                     @Override
                     public void onFailure(String error) {
+                        dismissLoading();
                         Toast.makeText(context, "Failed to load data", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -144,276 +147,377 @@ public class ReportGenerator {
 
             @Override
             public void onFailure(String error) {
+                dismissLoading();
                 Toast.makeText(context, "Failed to load data", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
-        PdfDocument document = new PdfDocument();
-        PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(595, 842, 1).create(); // A4 size
-        PdfDocument.Page page = document.startPage(pageInfo);
-        Canvas canvas = page.getCanvas();
-        Paint paint = new Paint();
-
-        // Title
-        paint.setTextSize(24f);
-        paint.setColor(Color.BLACK);
-        paint.setFakeBoldText(true);
-        canvas.drawText("Medication Usage Report", 40, 60, paint);
-
-        // Date range
-        paint.setTextSize(14f);
-        paint.setFakeBoldText(false);
-        paint.setColor(Color.GRAY);
-        canvas.drawText("Period: " + dateFormat.format(new Date(report.getStartDate())) + 
-                       " - " + dateFormat.format(new Date(report.getEndDate())), 40, 90, paint);
-
-        // Patient name
-        String patientName = FirebaseAuth.getInstance().getCurrentUser().getEmail();
-        canvas.drawText("Patient: " + patientName, 40, 115, paint);
-
-        int yPosition = 160;
-
-        // Rescue Inhaler Section
-        paint.setTextSize(18f);
-        paint.setColor(Color.BLACK);
-        paint.setFakeBoldText(true);
-        canvas.drawText("Rescue Inhaler", 40, yPosition, paint);
-        yPosition += 30;
-
-        paint.setTextSize(12f);
-        paint.setFakeBoldText(false);
-        canvas.drawText("Total uses: " + report.getTotalRescueUses(), 40, yPosition, paint);
-        yPosition += 20;
-        canvas.drawText("Average per day: " + String.format("%.2f", report.getAvgRescuePerDay()), 40, yPosition, paint);
-        yPosition += 40;
-
-        // Draw rescue chart
-        Bitmap rescueChartBitmap = createChartBitmap(rescueLogs, new Date(report.getStartDate()), report.getDays(), true);
-        if (rescueChartBitmap != null) {
-            canvas.drawBitmap(rescueChartBitmap, 40, yPosition, paint);
-            yPosition += rescueChartBitmap.getHeight() + 40;
+    private void showLoading() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.dialog_loading, null);
+        builder.setView(view);
+        builder.setCancelable(false);
+        progressDialog = builder.create();
+        if (progressDialog.getWindow() != null) {
+            progressDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
+        progressDialog.show();
+    }
 
-        // Controller Medicine Section
-        paint.setTextSize(18f);
-        paint.setFakeBoldText(true);
-        canvas.drawText("Controller Medicine", 40, yPosition, paint);
-        yPosition += 30;
-
-        paint.setTextSize(12f);
-        paint.setFakeBoldText(false);
-        canvas.drawText("Total doses: " + report.getTotalControllerDoses(), 40, yPosition, paint);
-        yPosition += 20;
-        canvas.drawText("Average per day: " + String.format("%.2f", report.getAvgControllerPerDay()), 40, yPosition, paint);
-        yPosition += 40;
-
-        // Draw controller chart
-        Bitmap controllerChartBitmap = createChartBitmap(controllerLogs, new Date(report.getStartDate()), report.getDays(), false);
-        if (controllerChartBitmap != null) {
-            canvas.drawBitmap(controllerChartBitmap, 40, yPosition, paint);
-        }
-
-        document.finishPage(page);
-
-        // Save PDF
-        String fileName = "report_" + report.getDays() + "days_" + System.currentTimeMillis() + ".pdf";
-        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
-
-        try {
-            document.writeTo(new FileOutputStream(file));
-            document.close();
-            sharePDF(file);
-        } catch (Exception e) {
-            Toast.makeText(context, "Failed to generate PDF: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+    private void dismissLoading() {
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
         }
     }
 
-    private Bitmap createChartBitmap(List<?> logs, Date startDate, int totalDays, boolean isRescue) {
-        final int chartWidth = 480;
-        final int chartHeight = 180;
-        final int bitmapHeight = 220; // extra space for month labels
+    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
+        Log.d(TAG, "generatePDF: Starting generation");
+        
+        String htmlContent = buildReportHtml(report, rescueLogs, controllerLogs);
+        Log.d(TAG, "generatePDF: HTML generated, length: " + htmlContent.length());
 
-        BarChart chart = new BarChart(context);
-        chart.setLayoutParams(new android.view.ViewGroup.LayoutParams(chartWidth, chartHeight));
-        chart.measure(
-            View.MeasureSpec.makeMeasureSpec(chartWidth, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(chartHeight, View.MeasureSpec.EXACTLY)
-        );
-        chart.layout(0, 0, chartWidth, chartHeight);
-        chart.setXAxisRenderer(new TinyXAxisRenderer(chart.getViewPortHandler(), chart.getXAxis(), chart.getTransformer(YAxis.AxisDependency.LEFT), TINY_AXIS_TEXT_DP));
-        chart.setRendererLeftYAxis(new TinyYAxisRenderer(chart.getViewPortHandler(), chart.getAxisLeft(), chart.getTransformer(YAxis.AxisDependency.LEFT), TINY_AXIS_TEXT_DP));
+        String fileName = "AsthmaReport_" + report.getDays() + "days_" + System.currentTimeMillis() + ".pdf";
+        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
+        Log.d(TAG, "generatePDF: Output file path: " + file.getAbsolutePath());
+        renderHtmlToPdf(htmlContent, file);
+    }
 
-        // Aggregate data by day
-        Map<String, Integer> dailyCounts = new HashMap<>();
-        Map<Date, Integer> dateToCount = new HashMap<>();
-        SimpleDateFormat dayFormat = new SimpleDateFormat("d", Locale.getDefault()); // Just the day number
-
-        if (isRescue) {
-            for (Object obj : logs) {
-                RescueInhalerLog log = (RescueInhalerLog) obj;
-                if (log.getTimestamp() != null) {
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(log.getTimestamp());
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
-                    Date dayDate = cal.getTime();
-                    dateToCount.put(dayDate, dateToCount.getOrDefault(dayDate, 0) + log.getDoseCount());
-                }
-            }
-        } else {
-            for (Object obj : logs) {
-                ControllerMedicineLog log = (ControllerMedicineLog) obj;
-                if (log.getTimestamp() != null) {
-                    Calendar cal = Calendar.getInstance();
-                    cal.setTime(log.getTimestamp());
-                    cal.set(Calendar.HOUR_OF_DAY, 0);
-                    cal.set(Calendar.MINUTE, 0);
-                    cal.set(Calendar.SECOND, 0);
-                    cal.set(Calendar.MILLISECOND, 0);
-                    Date dayDate = cal.getTime();
-                    dateToCount.put(dayDate, dateToCount.getOrDefault(dayDate, 0) + log.getDoseCount());
-                }
-            }
-        }
-
-        // Create bar entries based on report period
-        List<BarEntry> entries = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
+    private String buildReportHtml(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+        String dateRange = sdf.format(new Date(report.getStartDate())) + " - " + sdf.format(new Date(report.getEndDate()));
+        String patientName = FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getEmail() : "Patient";
+        
+        StringBuilder rows = new StringBuilder();
+        Map<Long, Integer> rescueDaily = aggregateLogsByDay(rescueLogs, true);
+        Map<Long, Integer> controllerDaily = aggregateLogsByDay(controllerLogs, false);
+        
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startDate);
+        calendar.setTime(new Date(report.getStartDate()));
+        SimpleDateFormat rowDateFmt = new SimpleDateFormat("MMM d", Locale.getDefault());
+        SimpleDateFormat chartLabelFmt = new SimpleDateFormat("d", Locale.getDefault());
+        SimpleDateFormat monthFmt = new SimpleDateFormat("MMMM", Locale.getDefault());
 
-        for (int i = 0; i < totalDays; i++) {
-            calendar.set(Calendar.HOUR_OF_DAY, 0);
-            calendar.set(Calendar.MINUTE, 0);
-            calendar.set(Calendar.SECOND, 0);
-            calendar.set(Calendar.MILLISECOND, 0);
-            Date currentDate = calendar.getTime();
-            
-            String dayLabel = dayFormat.format(currentDate);
-            labels.add(dayLabel);
-            
-            int count = dateToCount.getOrDefault(currentDate, 0);
-            entries.add(new BarEntry(i, count));
-            calendar.add(Calendar.DAY_OF_YEAR, 1);
-        }
-
-        BarDataSet dataSet = new BarDataSet(entries, "");
-        dataSet.setColor(Color.parseColor("#1976D2"));
-        dataSet.setDrawValues(false); // Hide values on top of bars
-
-        BarData barData = new BarData(dataSet);
-        barData.setBarWidth(0.8f);
-
-        chart.setData(barData);
-        chart.getDescription().setEnabled(false);
-        chart.getLegend().setEnabled(false);
-        chart.setDrawGridBackground(false);
-        chart.setDrawBarShadow(false);
-        chart.setFitBars(true);
-
-        // X Axis
-        XAxis xAxis = chart.getXAxis();
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setGranularity(1f);
-        xAxis.setDrawGridLines(false);
-        xAxis.setTextSize(6f);
-        xAxis.setLabelCount(totalDays, false);
-
-        // Y Axis
-        chart.getAxisLeft().setAxisMinimum(0f);
-        chart.getAxisLeft().setGranularity(1f);
-        chart.getAxisLeft().setTextSize(6f);
-        chart.getAxisRight().setEnabled(false);
-
-        chart.invalidate();
-
-        Bitmap bitmap = Bitmap.createBitmap(chartWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
-        Canvas bitmapCanvas = new Canvas(bitmap);
-        chart.draw(bitmapCanvas);
-
-        // Draw month labels below
-        Paint monthPaint = new Paint();
-        monthPaint.setColor(Color.BLACK);
-        monthPaint.setTextSize(14f);
-        monthPaint.setAntiAlias(true);
+        List<String> chartLabels = new ArrayList<>();
+        List<Integer> rescueData = new ArrayList<>();
+        List<Integer> controllerData = new ArrayList<>();
         
-        SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.getDefault());
-        calendar.setTime(startDate);
-        
+        // For month grouping
+        List<String> monthLabels = new ArrayList<>();
         String currentMonth = "";
-        int monthStartIndex = 0;
-        
-        for (int i = 0; i < totalDays; i++) {
-            String monthName = monthFormat.format(calendar.getTime());
+        int currentMonthStart = 0;
+
+        for(int i=0; i<report.getDays(); i++) {
+            long key = normalizeDate(calendar.getTime());
+            int rCount = rescueDaily.getOrDefault(key, 0);
+            int cCount = controllerDaily.getOrDefault(key, 0);
             
+            chartLabels.add("'" + chartLabelFmt.format(calendar.getTime()) + "'");
+            rescueData.add(rCount);
+            controllerData.add(cCount);
+
+            String monthName = monthFmt.format(calendar.getTime());
             if (!monthName.equals(currentMonth)) {
-                // Draw previous month label if exists
-                if (!currentMonth.isEmpty() && i > 0) {
-                    float monthStartX = 50 + (monthStartIndex * (380f / totalDays));
-                    float monthEndX = 50 + (i * (380f / totalDays));
-                    float monthCenterX = (monthStartX + monthEndX) / 2;
-                    bitmapCanvas.drawText(currentMonth, monthCenterX - (monthPaint.measureText(currentMonth) / 2), 205, monthPaint);
+                if (!currentMonth.isEmpty()) {
+                    // Add previous month
+                    // We need to know start index and end index (i-1)
+                    // But Chart.js doesn't support multi-level axis easily without plugins.
+                    // We will use a simpler approach: just label the days, and maybe add month to the first day of month?
+                    // Or use the user's request: "label the months in the x-axis similarly to the attached image"
+                    // The attached image has a second x-axis for months.
                 }
                 currentMonth = monthName;
-                monthStartIndex = i;
+                currentMonthStart = i;
             }
+
+            String rStyle = rCount > 4 ? "color: #dc3545; font-weight: bold;" : "";
             
+            rows.append("<tr>")
+                .append("<td>").append(rowDateFmt.format(calendar.getTime())).append("</td>")
+                .append("<td style='").append(rStyle).append("'>").append(rCount).append("</td>")
+                .append("<td>").append(cCount).append("</td>")
+                .append("</tr>");
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
+
+        // Re-loop to build the month ranges for the JS
+        // We will inject a custom plugin script into the HTML to draw the month labels
+        StringBuilder monthRangesJs = new StringBuilder("[");
+        calendar.setTime(new Date(report.getStartDate()));
+        currentMonth = "";
+        currentMonthStart = 0;
         
-        // Draw the last month label
-        if (!currentMonth.isEmpty()) {
-            float monthStartX = 50 + (monthStartIndex * (380f / totalDays));
-            float monthEndX = 430;
-            float monthCenterX = (monthStartX + monthEndX) / 2;
-            bitmapCanvas.drawText(currentMonth, monthCenterX - (monthPaint.measureText(currentMonth) / 2), 205, monthPaint);
+        for(int i=0; i<report.getDays(); i++) {
+            String monthName = monthFmt.format(calendar.getTime());
+            if (!monthName.equals(currentMonth)) {
+                if (!currentMonth.isEmpty()) {
+                    monthRangesJs.append("{label:'").append(currentMonth).append("', start:").append(currentMonthStart).append(", end:").append(i-1).append("},");
+                }
+                currentMonth = monthName;
+                currentMonthStart = i;
+            }
+            calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
+        // Add last month
+        monthRangesJs.append("{label:'").append(currentMonth).append("', start:").append(currentMonthStart).append(", end:").append(report.getDays()-1).append("}");
+        monthRangesJs.append("]");
 
-        return bitmap;
-    }
-
-    private int drawSimpleBarChart(Canvas canvas, List<RescueInhalerLog> logs, int startY, String type) {
-        Paint paint = new Paint();
-        paint.setColor(Color.parseColor("#1976D2"));
-
-        Map<String, Integer> dailyData = new HashMap<>();
-        SimpleDateFormat dayFormat = new SimpleDateFormat("dd", Locale.getDefault());
-
-        for (RescueInhalerLog log : logs) {
-            if (log.getTimestamp() != null) {
-                String day = dayFormat.format(log.getTimestamp());
-                dailyData.put(day, dailyData.getOrDefault(day, 0) + log.getDoseCount());
+        StringBuilder labelsJs = new StringBuilder("[");
+        StringBuilder rescueJs = new StringBuilder("[");
+        StringBuilder controllerJs = new StringBuilder("[");
+        
+        for (int i = 0; i < chartLabels.size(); i++) {
+            labelsJs.append(chartLabels.get(i));
+            rescueJs.append(rescueData.get(i));
+            controllerJs.append(controllerData.get(i));
+            if (i < chartLabels.size() - 1) {
+                labelsJs.append(",");
+                rescueJs.append(",");
+                controllerJs.append(",");
             }
         }
+        labelsJs.append("]");
+        rescueJs.append("]");
+        controllerJs.append("]");
 
-        int barWidth = 15;
-        int spacing = 20;
-        int xPosition = 40;
-        int maxHeight = 100;
+        // Determine font size based on density
+        int tickFontSize = report.getDays() > 30 ? 8 : 10;
 
-        // Find max value for scaling
-        int maxValue = dailyData.values().stream().max(Integer::compareTo).orElse(1);
+        return "<!DOCTYPE html><html><head>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                // Use UMD build to ensure global 'Chart' variable is available
+                "<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script>" +
+                "<style>" +
+                "body { font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 40px 0 40px; color: #333; }" +
+                ".header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #4F46E5; padding-bottom: 20px; }" +
+                ".header h1 { color: #4F46E5; margin: 0; font-size: 28px; }" +
+                ".meta { color: #666; margin-top: 10px; font-size: 14px; }" +
+                ".metrics { display: flex; gap: 20px; margin-bottom: 40px; }" +
+                ".card { flex: 1; background: #F3F4F6; padding: 20px; border-radius: 10px; text-align: center; }" +
+                ".card h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; color: #6B7280; letter-spacing: 1px; }" +
+                ".card .val { font-size: 24px; font-weight: bold; color: #111827; }" +
+                ".charts { margin-bottom: 40px; }" +
+                ".chart-box { margin-bottom: 30px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px; }" +
+                ".chart-box h2 { font-size: 18px; color: #111827; border-left: 4px solid #4F46E5; padding-left: 10px; margin-bottom: 15px; }" +
+                "canvas { width: 100% !important; height: 250px !important; }" +
+                "table { width: 100%; border-collapse: collapse; font-size: 13px; }" +
+                "th { text-align: left; padding: 12px; background: #F9FAFB; color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E5E7EB; }" +
+                "td { padding: 12px; border-bottom: 1px solid #E5E7EB; }" +
+                "tr:nth-child(even) { background: #F9FAFB; }" +
+                "</style></head><body>" +
+                "<div class='header'>" +
+                "<h1>Asthma Control Report</h1>" +
+                "<div class='meta'>" + patientName + " &bull; " + dateRange + "</div>" +
+                "</div>" +
+                "<div class='metrics'>" +
+                "<div class='card'><h3>Total Rescue</h3><div class='val'>" + report.getTotalRescueUses() + "</div></div>" +
+                "<div class='card'><h3>Total Controller</h3><div class='val'>" + report.getTotalControllerDoses() + "</div></div>" +
+                "<div class='card'><h3>Avg Rescue/Day</h3><div class='val'>" + String.format(Locale.US, "%.1f", report.getAvgRescuePerDay()) + "</div></div>" +
+                "</div>" +
+                "<div class='charts'>" +
+                "<div class='chart-box'><h2>Rescue Inhaler Trends</h2><canvas id='rescueChart'></canvas></div>" +
+                "<div class='chart-box'><h2>Controller Medicine Trends</h2><canvas id='controllerChart'></canvas></div>" +
+                "</div>" +
+                "<div class='chart-box daily-breakdown'>" +
+                "<h2>Daily Breakdown</h2>" +
+                "<table><thead><tr><th>Date</th><th>Rescue Puffs</th><th>Controller Doses</th></tr></thead>" +
+                "<tbody>" + rows.toString() + "</tbody></table>" +
+                "</div>" +
+                "<script>" +
+                "try {" +
+                "  const monthRanges = " + monthRangesJs.toString() + ";" +
+                "  const monthLabelPlugin = {" +
+                "    id: 'monthLabels'," +
+                "    afterDraw: (chart) => {" +
+                "      try {" +
+                "        const ctx = chart.ctx;" +
+                "        const xAxis = chart.scales.x;" +
+                "        if (!xAxis) return;" +
+                "        const yBottom = xAxis.bottom;" +
+                "        ctx.save();" +
+                "        ctx.font = '12px Arial';" +
+                "        ctx.fillStyle = '#666';" +
+                "        ctx.textAlign = 'center';" +
+                "        monthRanges.forEach(range => {" +
+                "          const startX = xAxis.getPixelForValue(range.start);" +
+                "          const endX = xAxis.getPixelForValue(range.end);" +
+                "          const width = endX - startX;" +
+                "          const x = startX + (width / 2);" +
+                "          ctx.fillText(range.label, x, yBottom + 25);" +
+                "          if (range.end < " + (report.getDays() - 1) + ") {" +
+                "             const lineX = (xAxis.getPixelForValue(range.end) + xAxis.getPixelForValue(range.end + 1)) / 2;" +
+                "             ctx.beginPath();" +
+                "             ctx.moveTo(lineX, yBottom);" +
+                "             ctx.lineTo(lineX, yBottom + 30);" +
+                "             ctx.strokeStyle = '#ddd';" +
+                "             ctx.stroke();" +
+                "          }" +
+                "        });" +
+                "        ctx.restore();" +
+                "      } catch(e) { console.error('Plugin error:', e); }" +
+                "    }" +
+                "  };" +
+                "  if (typeof Chart === 'undefined') { throw new Error('Chart.js library not loaded. Check internet connection.'); }" +
+                "  const commonOptions = {" +
+                "    animation: false," +
+                "    responsive: true," +
+                "    maintainAspectRatio: false," +
+                "    layout: { padding: { bottom: 30 } }," +
+                "    scales: {" +
+                "      y: { beginAtZero: true, ticks: { stepSize: 1 } }," +
+                "      x: { grid: { display: false }, ticks: { font: { size: " + tickFontSize + " } } }" +
+                "    }," +
+                "    plugins: { legend: { display: false } }" +
+                "  };" +
+                "  new Chart(document.getElementById('rescueChart'), { type: 'bar', data: { labels: " + labelsJs + ", datasets: [{ label: 'Puffs', data: " + rescueJs + ", backgroundColor: '#3B82F6', borderRadius: 4 }] }, options: commonOptions, plugins: [monthLabelPlugin] });" +
+                "  new Chart(document.getElementById('controllerChart'), { type: 'bar', data: { labels: " + labelsJs + ", datasets: [{ label: 'Doses', data: " + controllerJs + ", backgroundColor: '#10B981', borderRadius: 4 }] }, options: commonOptions, plugins: [monthLabelPlugin] });" +
+                "  setTimeout(applyPagination, 100);" +
+                "} catch(e) {" +
+                "  console.error('Chart Init Error:', e);" +
+                "}" +
+                "function applyPagination() {" +
+                "  const density = window.devicePixelRatio || 1;" +
+                "  const pageHeightPx = 1754;" +
+                "  const pageHeight = pageHeightPx / density;" +
+                "  const elements = Array.from(document.querySelectorAll('.header, .metrics, .chart-box:not(.daily-breakdown), .daily-breakdown h2, tr'));" +
+                "  for (let i = 0; i < elements.length; i++) {" +
+                "    const el = elements[i];" +
+                "    if (el.offsetParent === null) continue;" +
+                "    if (el.tagName === 'TH' || el.closest('thead')) continue;" +
+                "    const rect = el.getBoundingClientRect();" +
+                "    const top = rect.top + window.scrollY;" +
+                "    const height = rect.height;" +
+                "    const startPage = Math.floor(top / pageHeight);" +
+                "    const endPage = Math.floor((top + height - 1) / pageHeight);" +
+                "    if (startPage !== endPage) {" +
+                "      const nextPageStart = (startPage + 1) * pageHeight;" +
+                "      const spacerHeight = nextPageStart - top;" +
+                "      if (el.tagName === 'TR') {" +
+                "        const spacerRow = document.createElement('tr');" +
+                "        spacerRow.style.height = spacerHeight + 'px';" +
+                "        spacerRow.style.border = 'none';" +
+                "        spacerRow.style.background = 'transparent';" +
+                "        const cell = document.createElement('td');" +
+                "        cell.colSpan = 3;" +
+                "        cell.style.border = 'none';" +
+                "        spacerRow.appendChild(cell);" +
+                "        el.parentNode.insertBefore(spacerRow, el);" +
+                "      } else if (el.tagName === 'H2' && el.closest('.daily-breakdown')) {" +
+                "        const container = el.closest('.daily-breakdown');" +
+                "        const style = window.getComputedStyle(container);" +
+                "        const currentMargin = parseFloat(style.marginTop) || 0;" +
+                "        container.style.marginTop = (currentMargin + spacerHeight) + 'px';" +
+                "      } else {" +
+                "        const style = window.getComputedStyle(el);" +
+                "        const currentMargin = parseFloat(style.marginTop) || 0;" +
+                "        el.style.marginTop = (currentMargin + spacerHeight) + 'px';" +
+                "      }" +
+                "    }" +
+                "  }" +
+                "}" +
+                "</script>" +
+                "</body></html>";
+    }
 
-        for (Map.Entry<String, Integer> entry : dailyData.entrySet()) {
-            int barHeight = (int) ((entry.getValue() / (double) maxValue) * maxHeight);
-            canvas.drawRect(xPosition, startY + maxHeight - barHeight, xPosition + barWidth, startY + maxHeight, paint);
+    private void renderHtmlToPdf(String html, File outputFile) {
+        Log.d(TAG, "renderHtmlToPdf: Initializing WebView on Main Thread");
+        new Handler(Looper.getMainLooper()).post(() -> {
+            WebView webView = new WebView(context);
+            WebSettings settings = webView.getSettings();
+            settings.setJavaScriptEnabled(true);
+            settings.setDomStorageEnabled(true);
+            settings.setAllowFileAccess(true);
+            settings.setAllowContentAccess(true);
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
             
-            // Draw value on top
-            paint.setTextSize(10f);
-            paint.setColor(Color.BLACK);
-            canvas.drawText(String.valueOf(entry.getValue()), xPosition, startY + maxHeight - barHeight - 5, paint);
-            paint.setColor(Color.parseColor("#1976D2"));
+            webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null); // Crucial for off-screen
+            Log.d(TAG, "renderHtmlToPdf: WebView created, JS enabled");
             
-            xPosition += barWidth + spacing;
-            if (xPosition > 500) break; // Don't overflow page
-        }
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    Log.d(TAG, "onPageFinished: Web page finished loading");
+                    
+                    // Use higher resolution for better quality (approx 2x A4 at 72dpi)
+                    // A4 at ~150dpi: 1240 x 1754
+                    int pageHeight = 1754;
+                    int pageWidth = 1240;
 
-        return startY + maxHeight + 20;
+                    // Measure and Layout IMMEDIATELY to trigger rendering pipeline
+                    view.measure(View.MeasureSpec.makeMeasureSpec(pageWidth, View.MeasureSpec.EXACTLY),
+                                 View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+                    
+                    // Initial layout to ensure rendering starts
+                    view.layout(0, 0, pageWidth, Math.max(view.getMeasuredHeight(), pageHeight));
+                    Log.d(TAG, "onPageFinished: Initial layout applied. Waiting for render...");
+
+                    // Delay to allow the WebView to rasterize the new layout and JS charts
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        // Re-measure the true content height after JS has run and layout settled
+                        int contentHeightVal = (int) (view.getContentHeight() * context.getResources().getDisplayMetrics().density);
+                        int measuredHeight = view.getMeasuredHeight();
+                        
+                        Log.d(TAG, "onPageFinished: Delayed Measure - ContentHeight*Density: " + contentHeightVal + ", Measured: " + measuredHeight);
+
+                        // Use the content height, but ensure it's at least the page height
+                        int calculatedHeight = contentHeightVal > 0 ? contentHeightVal : measuredHeight;
+                        if (calculatedHeight <= 0) calculatedHeight = pageHeight;
+                        
+                        final int finalContentHeight = calculatedHeight;
+
+                        // Force layout to the exact content height to ensure all content is rendered
+                        view.layout(0, 0, pageWidth, finalContentHeight);
+                        
+                        // Small delay to allow the WebView to update its internal viewport/buffers after resize
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            Log.d(TAG, "onPageFinished: Starting PDF capture. Final Height: " + finalContentHeight);
+                            PdfDocument document = new PdfDocument();
+                            
+                            int totalPages = (int) Math.ceil((double) finalContentHeight / pageHeight);
+                            Log.d(TAG, "onPageFinished: Total pages to generate: " + totalPages);
+                            
+                            for (int i = 0; i < totalPages; i++) {
+                                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
+                                PdfDocument.Page page = document.startPage(pageInfo);
+                                Canvas canvas = page.getCanvas();
+                                
+                                // Translate the canvas to draw the correct portion of the WebView
+                                canvas.save();
+                                canvas.translate(0, -i * pageHeight);
+                                // Clip to ensure we don't draw garbage from outside the page bounds (though translate handles most)
+                                canvas.clipRect(0, i * pageHeight, pageWidth, (i + 1) * pageHeight);
+                                
+                                view.draw(canvas);
+                                canvas.restore();
+                                
+                                document.finishPage(page);
+                            }
+                            
+                            try {
+                                Log.d(TAG, "onPageFinished: Writing document to file: " + outputFile.getAbsolutePath());
+                                FileOutputStream fos = new FileOutputStream(outputFile);
+                                document.writeTo(fos);
+                                fos.close();
+                                Log.d(TAG, "onPageFinished: Document written successfully");
+                                sharePDF(outputFile);
+                            } catch (IOException e) {
+                                Log.e(TAG, "onPageFinished: Error writing PDF", e);
+                                e.printStackTrace();
+                                Toast.makeText(context, "Error saving PDF", Toast.LENGTH_SHORT).show();
+                            } finally {
+                                document.close();
+                                Log.d(TAG, "onPageFinished: Document closed");
+                                dismissLoading();
+                            }
+                        }, 250); // Short delay for resize to take effect
+                    }, 1500); // 1.5 seconds delay for JS charts
+                }
+            });
+            
+            Log.d(TAG, "renderHtmlToPdf: Loading HTML data");
+            webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+        });
     }
 
     private void sharePDF(File file) {
@@ -425,37 +529,35 @@ public class ReportGenerator {
         context.startActivity(Intent.createChooser(intent, "Share Report"));
     }
 
-    private static class TinyXAxisRenderer extends XAxisRenderer {
-        private final float textSizeDp;
-
-        TinyXAxisRenderer(ViewPortHandler viewPortHandler, XAxis xAxis, Transformer trans, float textSizeDp) {
-            super(viewPortHandler, xAxis, trans);
-            this.textSizeDp = textSizeDp;
+    private Map<Long, Integer> aggregateLogsByDay(List<?> logs, boolean isRescue) {
+        Map<Long, Integer> counts = new HashMap<>();
+        if (isRescue) {
+            for (Object obj : logs) {
+                RescueInhalerLog log = (RescueInhalerLog) obj;
+                if (log.getTimestamp() != null) {
+                    long key = normalizeDate(log.getTimestamp());
+                    counts.put(key, counts.getOrDefault(key, 0) + log.getDoseCount());
+                }
+            }
+        } else {
+            for (Object obj : logs) {
+                ControllerMedicineLog log = (ControllerMedicineLog) obj;
+                if (log.getTimestamp() != null) {
+                    long key = normalizeDate(log.getTimestamp());
+                    counts.put(key, counts.getOrDefault(key, 0) + log.getDoseCount());
+                }
+            }
         }
-
-        @Override
-        protected void drawLabel(Canvas c, String formattedLabel, float x, float y, MPPointF anchor, float angleDegrees) {
-            float originalSize = mAxisLabelPaint.getTextSize();
-            mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(textSizeDp));
-            super.drawLabel(c, formattedLabel, x, y, anchor, angleDegrees);
-            mAxisLabelPaint.setTextSize(originalSize);
-        }
+        return counts;
     }
 
-    private static class TinyYAxisRenderer extends YAxisRenderer {
-        private final float textSizeDp;
-
-        TinyYAxisRenderer(ViewPortHandler viewPortHandler, YAxis yAxis, Transformer trans, float textSizeDp) {
-            super(viewPortHandler, yAxis, trans);
-            this.textSizeDp = textSizeDp;
-        }
-
-        @Override
-        public void renderAxisLabels(Canvas c) {
-            float originalSize = mAxisLabelPaint.getTextSize();
-            mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(textSizeDp));
-            super.renderAxisLabels(c);
-            mAxisLabelPaint.setTextSize(originalSize);
-        }
+    private long normalizeDate(Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTimeInMillis();
     }
 }
