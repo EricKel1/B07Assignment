@@ -51,6 +51,11 @@ public class ReportGenerator {
     private static final float TINY_AXIS_TEXT_DP = 2.5f;
     private AlertDialog progressDialog;
 
+    public enum ReportAction {
+        SHARE,
+        DOWNLOAD
+    }
+
     public interface ReportCallback {
         void onSuccess(Report report);
         void onFailure(String error);
@@ -122,7 +127,15 @@ public class ReportGenerator {
         );
     }
 
-    public void viewReport(Report report) {
+    public void shareReport(Report report) {
+        processReport(report, ReportAction.SHARE);
+    }
+
+    public void downloadReport(Report report) {
+        processReport(report, ReportAction.DOWNLOAD);
+    }
+
+    private void processReport(Report report, ReportAction action) {
         showLoading();
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         Date startDate = new Date(report.getStartDate());
@@ -134,7 +147,7 @@ public class ReportGenerator {
                 controllerRepository.getLogsForUserInDateRange(userId, startDate, endDate, new ControllerMedicineRepository.LoadCallback() {
                     @Override
                     public void onSuccess(List<ControllerMedicineLog> controllerLogs) {
-                        generatePDF(report, rescueLogs, controllerLogs);
+                        generatePDF(report, rescueLogs, controllerLogs, action);
                     }
 
                     @Override
@@ -172,7 +185,7 @@ public class ReportGenerator {
         }
     }
 
-    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
+    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs, ReportAction action) {
         Log.d(TAG, "generatePDF: Starting generation");
         
         String htmlContent = buildReportHtml(report, rescueLogs, controllerLogs);
@@ -181,7 +194,7 @@ public class ReportGenerator {
         String fileName = "AsthmaReport_" + report.getDays() + "days_" + System.currentTimeMillis() + ".pdf";
         File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
         Log.d(TAG, "generatePDF: Output file path: " + file.getAbsolutePath());
-        renderHtmlToPdf(htmlContent, file);
+        renderHtmlToPdf(htmlContent, file, action);
     }
 
     private String buildReportHtml(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
@@ -420,7 +433,7 @@ public class ReportGenerator {
                 "</body></html>";
     }
 
-    private void renderHtmlToPdf(String html, File outputFile) {
+    private void renderHtmlToPdf(String html, File outputFile, ReportAction action) {
         Log.d(TAG, "renderHtmlToPdf: Initializing WebView on Main Thread");
         new Handler(Looper.getMainLooper()).post(() -> {
             WebView webView = new WebView(context);
@@ -500,7 +513,11 @@ public class ReportGenerator {
                                 document.writeTo(fos);
                                 fos.close();
                                 Log.d(TAG, "onPageFinished: Document written successfully");
-                                sharePDF(outputFile);
+                                if (action == ReportAction.SHARE) {
+                                    sharePDF(outputFile);
+                                } else {
+                                    Toast.makeText(context, "Report saved to Documents", Toast.LENGTH_LONG).show();
+                                }
                             } catch (IOException e) {
                                 Log.e(TAG, "onPageFinished: Error writing PDF", e);
                                 e.printStackTrace();

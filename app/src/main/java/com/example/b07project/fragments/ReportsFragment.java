@@ -53,7 +53,17 @@ public class ReportsFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        reportAdapter = new ReportAdapter(new ArrayList<>(), this::viewReport, this::confirmDeleteReport);
+        reportAdapter = new ReportAdapter(new ArrayList<>(), new ReportAdapter.OnReportActionListener() {
+            @Override
+            public void onShareReport(Report report) {
+                shareReport(report);
+            }
+
+            @Override
+            public void onDownloadReport(Report report) {
+                downloadReport(report);
+            }
+        }, this::confirmDeleteReport);
         rvReports.setLayoutManager(new LinearLayoutManager(getContext()));
         rvReports.setAdapter(reportAdapter);
     }
@@ -142,9 +152,14 @@ public class ReportsFragment extends Fragment {
                 });
     }
 
-    private void viewReport(Report report) {
+    private void shareReport(Report report) {
         ReportGenerator generator = new ReportGenerator(getContext());
-        generator.viewReport(report);
+        generator.shareReport(report);
+    }
+
+    private void downloadReport(Report report) {
+        ReportGenerator generator = new ReportGenerator(getContext());
+        generator.downloadReport(report);
     }
 
     private void confirmDeleteReport(Report report, int position) {

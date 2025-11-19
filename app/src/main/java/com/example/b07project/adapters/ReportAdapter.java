@@ -17,19 +17,20 @@ import java.util.Locale;
 public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportViewHolder> {
 
     private List<Report> reports;
-    private OnReportClickListener listener;
+    private OnReportActionListener listener;
     private OnReportDeleteListener deleteListener;
     private SimpleDateFormat dateFormat;
 
-    public interface OnReportClickListener {
-        void onReportClick(Report report);
+    public interface OnReportActionListener {
+        void onShareReport(Report report);
+        void onDownloadReport(Report report);
     }
 
     public interface OnReportDeleteListener {
         void onReportDelete(Report report, int position);
     }
 
-    public ReportAdapter(List<Report> reports, OnReportClickListener listener, OnReportDeleteListener deleteListener) {
+    public ReportAdapter(List<Report> reports, OnReportActionListener listener, OnReportDeleteListener deleteListener) {
         this.reports = reports;
         this.listener = listener;
         this.deleteListener = deleteListener;
@@ -51,9 +52,15 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         holder.tvReportTitle.setText("Usage report - " + report.getDays() + " days");
         holder.tvReportDate.setText("Generated on " + dateFormat.format(new Date(report.getGeneratedDate())));
         
-        holder.btnViewReport.setOnClickListener(v -> {
+        holder.btnShareReport.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onReportClick(report);
+                listener.onShareReport(report);
+            }
+        });
+
+        holder.btnDownloadReport.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onDownloadReport(report);
             }
         });
 
@@ -77,14 +84,16 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
     static class ReportViewHolder extends RecyclerView.ViewHolder {
         TextView tvReportTitle;
         TextView tvReportDate;
-        Button btnViewReport;
+        Button btnShareReport;
+        Button btnDownloadReport;
         Button btnDeleteReport;
 
         ReportViewHolder(View itemView) {
             super(itemView);
             tvReportTitle = itemView.findViewById(R.id.tvReportTitle);
             tvReportDate = itemView.findViewById(R.id.tvReportDate);
-            btnViewReport = itemView.findViewById(R.id.btnViewReport);
+            btnShareReport = itemView.findViewById(R.id.btnShareReport);
+            btnDownloadReport = itemView.findViewById(R.id.btnDownloadReport);
             btnDeleteReport = itemView.findViewById(R.id.btnDeleteReport);
         }
     }
