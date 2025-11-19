@@ -44,7 +44,6 @@
     <string name="hint_confirm_password">Confirm Password</string>
     <string name="password_hint">At least 6 characters</string>
     <string name="btn_signup">Sign Up</string>
-    <string name="already_have_account">Already have an account?</string>
     <string name="link_signin">Sign In</string>
     <string name="dont_have_account">Don\'t have an account?</string>
     <string name="link_signup">Sign Up</string>
