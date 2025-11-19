@@ -1,4 +1,28 @@
+<!-- res/values/strings.xml -->
 <resources>
+    <string name="welcome_app_name">SMART AIR</string>
+    <string name="welcome_blurb">SMART AIR helps kids with asthma learn technique, track symptoms/meds, and share provider-approved info.</string>
+    <string name="join_as_parent">Join as a Parent</string>
+    <string name="join_as_provider">Join as a Provider</string>
+    <string name="already_have_account">Already have an account? Log in.</string>
+
+    <!-- Parent Signup -->
+    <string name="parent_signup_step1_title">Step 1 of 3: Parent Information</string>
+    <string name="parent_signup_step2_title">Step 2 of 3: Add Children</string>
+    <string name="parent_signup_step3_title">Step 3 of 3: Confirm Details</string>
+
+    <string name="full_name">Full Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="password_8_chars">Password (8+ characters)</string>
+    <string name="how_many_children">How many children would you like to add?</string>
+    <string name="child_s_full_name">Child\'s Full Name</string>
+    <string name="date_of_birth">Date of Birth</string>
+    <string name="optional_notes">Optional Notes (e.g., doctor\'s plan, allergies)</string>
+    <string name="next">Next</string>
+    <string name="back">Back</string>
+    <string name="create_account">Create Account</string>
+    <string name="child_details_header">Child %1$d of %2$d</string>
+
     <string name="app_name">SMART AIR</string>
     
     <!-- Home Screen -->

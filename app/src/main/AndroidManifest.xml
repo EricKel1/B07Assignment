@@ -37,11 +37,13 @@
         <activity android:name=".MotivationActivity" />
         <activity android:name=".MotivationSettingsActivity" />
         <activity android:name=".StatisticsReportsActivity" />
+        <activity android:name=".MainActivity" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".ParentSignupActivity" />
+        <activity android:name=".ProviderSignupActivity" />
         <activity
-            android:name=".MainActivity"
+            android:name=".main.WelcomeActivity"
             android:exported="true">
-        </activity>
-        <activity android:name=".LoginActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
