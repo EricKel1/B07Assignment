@@ -396,6 +396,16 @@
                     android:layout_marginTop="16dp"
                     android:paddingVertical="12dp"/>
 
+                <Button
+                    android:id="@+id/btnStatisticsReports"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Statistics &amp; Reports"
+                    android:textSize="16sp"
+                    android:backgroundTint="#1976D2"
+                    android:layout_marginTop="8dp"
+                    android:paddingVertical="12dp"/>
+
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>

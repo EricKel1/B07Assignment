@@ -12,6 +12,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.B07Project">
+        
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
         <activity android:name=".HomeActivity" />
         <activity android:name=".SignUpActivity" android:exported="true" />
         <activity android:name=".LogRescueInhalerActivity" />
@@ -25,6 +36,7 @@
         <activity android:name=".InhalerTechniqueActivity" />
         <activity android:name=".MotivationActivity" />
         <activity android:name=".MotivationSettingsActivity" />
+        <activity android:name=".StatisticsReportsActivity" />
         <activity
             android:name=".MainActivity"
             android:exported="true">

@@ -1,0 +1,75 @@
+package com.example.b07project;
+
+import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
+import com.example.b07project.fragments.ReportsFragment;
+import com.example.b07project.fragments.StatisticsFragment;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
+
+public class StatisticsReportsActivity extends AppCompatActivity {
+
+    private TabLayout tabLayout;
+    private ViewPager2 viewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_statistics_reports);
+
+        initializeViews();
+        setupViewPager();
+    }
+
+    private void initializeViews() {
+        tabLayout = findViewById(R.id.tabLayout);
+        viewPager = findViewById(R.id.viewPager);
+    }
+
+    private void setupViewPager() {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(this);
+        viewPager.setAdapter(adapter);
+
+        new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
+            switch (position) {
+                case 0:
+                    tab.setText("Statistics");
+                    break;
+                case 1:
+                    tab.setText("Reports");
+                    break;
+            }
+        }).attach();
+    }
+
+    private static class ViewPagerAdapter extends FragmentStateAdapter {
+
+        public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+            super(fragmentActivity);
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
+            switch (position) {
+                case 0:
+                    return new StatisticsFragment();
+                case 1:
+                    return new ReportsFragment();
+                default:
+                    return new StatisticsFragment();
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return 2;
+        }
+    }
+}
