@@ -18,15 +18,21 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
 
     private List<Report> reports;
     private OnReportClickListener listener;
+    private OnReportDeleteListener deleteListener;
     private SimpleDateFormat dateFormat;
 
     public interface OnReportClickListener {
         void onReportClick(Report report);
     }
 
-    public ReportAdapter(List<Report> reports, OnReportClickListener listener) {
+    public interface OnReportDeleteListener {
+        void onReportDelete(Report report, int position);
+    }
+
+    public ReportAdapter(List<Report> reports, OnReportClickListener listener, OnReportDeleteListener deleteListener) {
         this.reports = reports;
         this.listener = listener;
+        this.deleteListener = deleteListener;
         this.dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
     }
 
@@ -50,6 +56,12 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
                 listener.onReportClick(report);
             }
         });
+
+        holder.btnDeleteReport.setOnClickListener(v -> {
+            if (deleteListener != null) {
+                deleteListener.onReportDelete(report, holder.getAdapterPosition());
+            }
+        });
     }
 
     @Override
@@ -66,12 +78,14 @@ public class ReportAdapter extends RecyclerView.Adapter<ReportAdapter.ReportView
         TextView tvReportTitle;
         TextView tvReportDate;
         Button btnViewReport;
+        Button btnDeleteReport;
 
         ReportViewHolder(View itemView) {
             super(itemView);
             tvReportTitle = itemView.findViewById(R.id.tvReportTitle);
             tvReportDate = itemView.findViewById(R.id.tvReportDate);
             btnViewReport = itemView.findViewById(R.id.btnViewReport);
+            btnDeleteReport = itemView.findViewById(R.id.btnDeleteReport);
         }
     }
 }

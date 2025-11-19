@@ -17,7 +17,6 @@ public class StatisticsReportsActivity extends AppCompatActivity {
 
     private TabLayout tabLayout;
     private ViewPager2 viewPager;
-    private FloatingActionButton fabClose;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,13 +25,11 @@ public class StatisticsReportsActivity extends AppCompatActivity {
 
         initializeViews();
         setupViewPager();
-        setupListeners();
     }
 
     private void initializeViews() {
         tabLayout = findViewById(R.id.tabLayout);
         viewPager = findViewById(R.id.viewPager);
-        fabClose = findViewById(R.id.fabClose);
     }
 
     private void setupViewPager() {
@@ -49,10 +46,6 @@ public class StatisticsReportsActivity extends AppCompatActivity {
                     break;
             }
         }).attach();
-    }
-
-    private void setupListeners() {
-        fabClose.setOnClickListener(v -> finish());
     }
 
     private static class ViewPagerAdapter extends FragmentStateAdapter {

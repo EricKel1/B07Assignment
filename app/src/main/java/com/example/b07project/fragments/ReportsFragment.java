@@ -53,7 +53,7 @@ public class ReportsFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        reportAdapter = new ReportAdapter(new ArrayList<>(), this::viewReport);
+        reportAdapter = new ReportAdapter(new ArrayList<>(), this::viewReport, this::confirmDeleteReport);
         rvReports.setLayoutManager(new LinearLayoutManager(getContext()));
         rvReports.setAdapter(reportAdapter);
     }
@@ -145,5 +145,27 @@ public class ReportsFragment extends Fragment {
     private void viewReport(Report report) {
         ReportGenerator generator = new ReportGenerator(getContext());
         generator.viewReport(report);
+    }
+
+    private void confirmDeleteReport(Report report, int position) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Report?")
+                .setMessage("Are you sure you want to delete this report? This cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteReport(report, position))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteReport(Report report, int position) {
+        db.collection("reports")
+                .document(report.getId())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(getContext(), "Report deleted successfully", Toast.LENGTH_SHORT).show();
+                    loadReports(); // Refresh the list
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(getContext(), "Failed to delete report: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }
