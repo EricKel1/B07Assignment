@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Badge Icon -->
+        <TextView
+            android:id="@+id/tvBadgeIcon"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:text="🏆"
+            android:textSize="40sp"
+            android:gravity="center"
+            android:background="#F5F5F5"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <TextView
+                android:id="@+id/tvBadgeName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Badge Name"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#212121"/>
+
+            <TextView
+                android:id="@+id/tvBadgeDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Badge description"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"/>
+
+            <ProgressBar
+                android:id="@+id/progressBadge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_marginTop="8dp"
+                android:max="100"/>
+
+            <TextView
+                android:id="@+id/tvBadgeProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 / 10"
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:layout_marginTop="4dp"/>
+
+            <TextView
+                android:id="@+id/tvBadgeEarned"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="✓ Earned!"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#4CAF50"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

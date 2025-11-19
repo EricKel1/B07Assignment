@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Enter Peak Flow Reading"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#E53935"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Record your peak expiratory flow (PEF) measurement"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- PEF Value Input -->
+        <TextView
+            android:id="@+id/tvPEFLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Peak Flow Value (L/min)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etPEFValue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:hint="e.g., 450"
+            android:inputType="number"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvPEFLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Medication Context -->
+        <TextView
+            android:id="@+id/tvMedicationLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Medication Context (optional)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/etPEFValue"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <RadioGroup
+            android:id="@+id/rgMedicationContext"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvMedicationLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <RadioButton
+                android:id="@+id/rbNoContext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No specific context"
+                android:checked="true"
+                android:paddingVertical="8dp"/>
+
+            <RadioButton
+                android:id="@+id/rbPreMedication"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Before taking rescue inhaler"
+                android:paddingVertical="8dp"/>
+
+            <RadioButton
+                android:id="@+id/rbPostMedication"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="After taking rescue inhaler (15-20 min)"
+                android:paddingVertical="8dp"/>
+
+        </RadioGroup>
+
+        <!-- Notes -->
+        <TextView
+            android:id="@+id/tvNotesLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Notes (optional)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/rgMedicationContext"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <EditText
+            android:id="@+id/etNotes"
+            android:layout_width="0dp"
+            android:layout_height="120dp"
+            android:hint="Any additional details..."
+            android:gravity="top|start"
+            android:inputType="textMultiLine"
+            android:padding="16dp"
+            android:background="@android:drawable/edit_text"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvNotesLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Zone Display -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardZoneDisplay"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:visibility="gone"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/etNotes"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your Zone"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:id="@+id/tvZoneResult"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Green Zone"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvZonePercentage"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="90% of your Personal Best"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvZoneGuidance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your asthma is well controlled. Continue your usual medications."
+                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#757575"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Personal Best Info -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPersonalBestInfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="#FFF9C4"
+            app:layout_constraintTop_toBottomOf="@id/cardZoneDisplay"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="ℹ️ No Personal Best Set"
+                    android:textSize="14sp"
+                    android:textStyle="bold"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Your personal best value needs to be set by a parent or guardian to calculate your zone. Your reading will still be saved."
+                    android:textSize="12sp"
+                    android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Save Peak Flow Reading"
+            android:textSize="16sp"
+            android:backgroundTint="#E53935"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/cardPersonalBestInfo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textSize="16sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/btnSave"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

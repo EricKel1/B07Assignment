@@ -29,6 +29,8 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
     private TextView tvDate, tvSymptomLevelValue, tvMessage;
     private Slider sliderSymptomLevel;
     private CheckBox cbWheezing, cbCoughing, cbShortnessOfBreath, cbChestTightness, cbNighttimeSymptoms;
+    private CheckBox cbTriggerExercise, cbTriggerColdAir, cbTriggerPets, cbTriggerPollen;
+    private CheckBox cbTriggerStress, cbTriggerSmoke, cbTriggerWeather, cbTriggerDust;
     private EditText etNotes;
     private Button btnSave;
     private ProgressBar progress;
@@ -69,6 +71,14 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         cbShortnessOfBreath = findViewById(R.id.cbShortnessOfBreath);
         cbChestTightness = findViewById(R.id.cbChestTightness);
         cbNighttimeSymptoms = findViewById(R.id.cbNighttimeSymptoms);
+        cbTriggerExercise = findViewById(R.id.cbTriggerExercise);
+        cbTriggerColdAir = findViewById(R.id.cbTriggerColdAir);
+        cbTriggerPets = findViewById(R.id.cbTriggerPets);
+        cbTriggerPollen = findViewById(R.id.cbTriggerPollen);
+        cbTriggerStress = findViewById(R.id.cbTriggerStress);
+        cbTriggerSmoke = findViewById(R.id.cbTriggerSmoke);
+        cbTriggerWeather = findViewById(R.id.cbTriggerWeather);
+        cbTriggerDust = findViewById(R.id.cbTriggerDust);
         etNotes = findViewById(R.id.etNotes);
         btnSave = findViewById(R.id.btnSave);
         progress = findViewById(R.id.progress);
@@ -135,12 +145,23 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         tvSymptomLevelValue.setText(String.valueOf(checkIn.getSymptomLevel()));
         updateSymptomLevelColor(checkIn.getSymptomLevel());
 
+        if (checkIn.getSymptoms() != null) {
+            cbWheezing.setChecked(checkIn.getSymptoms().contains("wheezing"));
+            cbCoughing.setChecked(checkIn.getSymptoms().contains("coughing"));
+            cbShortnessOfBreath.setChecked(checkIn.getSymptoms().contains("shortness of breath"));
+            cbChestTightness.setChecked(checkIn.getSymptoms().contains("chest tightness"));
+            cbNighttimeSymptoms.setChecked(checkIn.getSymptoms().contains("nighttime symptoms"));
+        }
+
         if (checkIn.getTriggers() != null) {
-            cbWheezing.setChecked(checkIn.getTriggers().contains("Wheezing"));
-            cbCoughing.setChecked(checkIn.getTriggers().contains("Coughing"));
-            cbShortnessOfBreath.setChecked(checkIn.getTriggers().contains("Shortness of breath"));
-            cbChestTightness.setChecked(checkIn.getTriggers().contains("Chest tightness"));
-            cbNighttimeSymptoms.setChecked(checkIn.getTriggers().contains("Nighttime symptoms"));
+            cbTriggerExercise.setChecked(checkIn.getTriggers().contains("exercise"));
+            cbTriggerColdAir.setChecked(checkIn.getTriggers().contains("cold air"));
+            cbTriggerPets.setChecked(checkIn.getTriggers().contains("pets"));
+            cbTriggerPollen.setChecked(checkIn.getTriggers().contains("pollen"));
+            cbTriggerStress.setChecked(checkIn.getTriggers().contains("stress"));
+            cbTriggerSmoke.setChecked(checkIn.getTriggers().contains("smoke"));
+            cbTriggerWeather.setChecked(checkIn.getTriggers().contains("weather change"));
+            cbTriggerDust.setChecked(checkIn.getTriggers().contains("dust"));
         }
 
         if (checkIn.getNotes() != null) {
@@ -158,6 +179,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         showLoading(true);
 
         int symptomLevel = (int) sliderSymptomLevel.getValue();
+        List<String> symptoms = getSelectedSymptoms();
         List<String> triggers = getSelectedTriggers();
         String notes = etNotes.getText().toString().trim();
 
@@ -165,6 +187,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
             currentUser.getUid(),
             todayDate,
             symptomLevel,
+            symptoms,
             triggers,
             notes.isEmpty() ? null : notes,
             new Date()
@@ -188,13 +211,26 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         });
     }
 
+    private List<String> getSelectedSymptoms() {
+        List<String> symptoms = new ArrayList<>();
+        if (cbWheezing.isChecked()) symptoms.add("wheezing");
+        if (cbCoughing.isChecked()) symptoms.add("coughing");
+        if (cbShortnessOfBreath.isChecked()) symptoms.add("shortness of breath");
+        if (cbChestTightness.isChecked()) symptoms.add("chest tightness");
+        if (cbNighttimeSymptoms.isChecked()) symptoms.add("nighttime symptoms");
+        return symptoms;
+    }
+
     private List<String> getSelectedTriggers() {
         List<String> triggers = new ArrayList<>();
-        if (cbWheezing.isChecked()) triggers.add("Wheezing");
-        if (cbCoughing.isChecked()) triggers.add("Coughing");
-        if (cbShortnessOfBreath.isChecked()) triggers.add("Shortness of breath");
-        if (cbChestTightness.isChecked()) triggers.add("Chest tightness");
-        if (cbNighttimeSymptoms.isChecked()) triggers.add("Nighttime symptoms");
+        if (cbTriggerExercise.isChecked()) triggers.add("exercise");
+        if (cbTriggerColdAir.isChecked()) triggers.add("cold air");
+        if (cbTriggerPets.isChecked()) triggers.add("pets");
+        if (cbTriggerPollen.isChecked()) triggers.add("pollen");
+        if (cbTriggerStress.isChecked()) triggers.add("stress");
+        if (cbTriggerSmoke.isChecked()) triggers.add("smoke");
+        if (cbTriggerWeather.isChecked()) triggers.add("weather change");
+        if (cbTriggerDust.isChecked()) triggers.add("dust");
         return triggers;
     }
 

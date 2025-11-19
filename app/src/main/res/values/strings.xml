@@ -1,6 +1,5 @@
 <!-- res/values/strings.xml -->
 <resources>
-    <string name="app_name">B07Project</string>
     <string name="welcome_app_name">SMART AIR</string>
     <string name="welcome_blurb">SMART AIR helps kids with asthma learn technique, track symptoms/meds, and share provider-approved info.</string>
     <string name="join_as_parent">Join as a Parent</string>
@@ -23,4 +22,111 @@
     <string name="back">Back</string>
     <string name="create_account">Create Account</string>
     <string name="child_details_header">Child %1$d of %2$d</string>
+
+    <string name="app_name">SMART AIR</string>
+    
+    <!-- Home Screen -->
+    <string name="home_title">SMART AIR</string>
+    <string name="home_subtitle">Track your asthma journey</string>
+    <string name="rescue_inhaler_title">Rescue Inhaler</string>
+    <string name="rescue_inhaler_description">Quick-relief medicine for sudden symptoms</string>
+    <string name="controller_medicine_title">Controller Medicine</string>
+    <string name="controller_medicine_description">Daily prevention medicine to keep asthma under control</string>
+    <string name="btn_log_rescue_inhaler">Log Rescue Inhaler Use</string>
+    <string name="btn_log_controller_medicine">Log Controller Medicine</string>
+    <string name="btn_view_history">View History</string>
+    <string name="btn_sign_out">Sign Out</string>
+    
+    <!-- Sign Up Screen -->
+    <string name="signup_title">Create Account</string>
+    <string name="signup_subtitle">Join SMART AIR to start tracking your asthma</string>
+    <string name="hint_full_name">Full Name</string>
+    <string name="hint_confirm_password">Confirm Password</string>
+    <string name="password_hint">At least 6 characters</string>
+    <string name="btn_signup">Sign Up</string>
+    <string name="already_have_account">Already have an account?</string>
+    <string name="link_signin">Sign In</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="link_signup">Sign Up</string>
+    
+    <!-- Log Rescue Inhaler Screen -->
+    <string name="log_rescue_title">Log Rescue Inhaler Use</string>
+    <string name="log_rescue_subtitle">Record when you use your quick-relief medicine</string>
+    <string name="label_time">Time</string>
+    <string name="label_dose_count">Number of Puffs</string>
+    <string name="label_notes">Notes (Optional)</string>
+    <string name="hint_notes">How are you feeling? What were you doing?</string>
+    <string name="btn_save_log">Save Log</string>
+    <string name="btn_increase">+</string>
+    <string name="btn_decrease">-</string>
+    
+    <!-- Log Controller Medicine Screen -->
+    <string name="log_controller_title">Log Controller Medicine</string>
+    <string name="log_controller_subtitle">Record your daily prevention medicine</string>
+    <string name="label_scheduled_time">Scheduled Time</string>
+    <string name="label_taken_on_time">Taken on time</string>
+    <string name="btn_select_time">Select Time</string>
+    <string name="hint_controller_notes">Any side effects or observations?</string>
+    
+    <!-- History Screen -->
+    <string name="history_title">Rescue Inhaler History</string>
+    <string name="history_subtitle">View your past rescue inhaler uses</string>
+    <string name="history_empty_message">No rescue inhaler logs yet.\nStart logging your inhaler use!</string>
+    <string name="controller_history_title">Controller Medicine History</string>
+    <string name="controller_history_subtitle">Your daily prevention medicine logs</string>
+    <string name="controller_history_empty_message">No controller medicine logs yet.\nStart logging your daily medicine!</string>
+    
+    <!-- Daily Symptom Check-In -->
+    <string name="symptom_checkin_title">Daily Symptom Check-In</string>
+    <string name="symptom_checkin_subtitle">Track how you\'re feeling today</string>
+    <string name="symptom_history_title">Symptom History</string>
+    <string name="symptom_history_subtitle">View your daily symptom check-ins</string>
+    <string name="symptom_history_empty">No symptom check-ins yet.\nStart tracking your daily symptoms!</string>
+    <string name="label_symptom_level">How severe are your symptoms today?</string>
+    <string name="symptom_level_description">1 = No symptoms, 5 = Severe</string>
+    <string name="label_symptoms">What symptoms did you experience?</string>
+    <string name="symptom_wheezing">Wheezing</string>
+    <string name="symptom_coughing">Coughing</string>
+    <string name="symptom_shortness_breath">Shortness of breath</string>
+    <string name="symptom_chest_tightness">Chest tightness</string>
+    <string name="symptom_nighttime">Nighttime symptoms</string>
+    <string name="label_triggers">What might have triggered your symptoms?</string>
+    <string name="trigger_exercise">Exercise</string>
+    <string name="trigger_cold_air">Cold air</string>
+    <string name="trigger_pets">Pets</string>
+    <string name="trigger_pollen">Pollen</string>
+    <string name="trigger_stress">Stress</string>
+    <string name="trigger_smoke">Smoke</string>
+    <string name="trigger_weather">Weather change</string>
+    <string name="trigger_dust">Dust</string>
+    <string name="btn_daily_checkin">Daily Check-In</string>
+    <string name="btn_save_checkin">Save Check-In</string>
+    <string name="msg_checkin_saved">Symptom check-in saved successfully!</string>
+    <string name="msg_already_checked_in">You already checked in today. You can update your check-in.</string>
+    
+    <!-- Messages -->
+    <string name="msg_log_saved">Rescue inhaler use logged successfully!</string>
+    <string name="msg_controller_log_saved">Controller medicine logged successfully!</string>
+    <string name="msg_save_failed">Failed to save log: %s</string>
+    <string name="msg_load_failed">Failed to load logs: %s</string>
+    <string name="msg_sign_in_required">Please sign in to save logs</string>
+    <string name="msg_sign_in_required_view">Please sign in to view logs</string>
+    <string name="msg_account_created">Account created successfully!</string>
+    <string name="msg_signup_failed">Sign up failed</string>
+    <string name="msg_select_time_first">Please select a scheduled time</string>
+    
+    <!-- Validation Messages -->
+    <string name="error_empty_name">Please enter your name</string>
+    <string name="error_empty_email">Please enter your email</string>
+    <string name="error_invalid_email">Please enter a valid email address</string>
+    <string name="error_empty_password">Please enter a password</string>
+    <string name="error_password_length">Password must be at least 6 characters</string>
+    <string name="error_empty_confirm_password">Please confirm your password</string>
+    <string name="error_passwords_mismatch">Passwords do not match</string>
+    <string name="error_email_already_registered">This email is already registered</string>
+    <string name="error_network">Network error. Please check your connection</string>
+    
+    <!-- Format strings -->
+    <string name="format_puff_count_singular">%d puff</string>
+    <string name="format_puff_count_plural">%d puffs</string>
 </resources>

@@ -47,4 +47,7 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+    implementation("com.pierfrancescosoffritti.androidyoutubeplayer:core:13.0.0")
+    implementation("nl.dionsegijn:konfetti-xml:2.0.4")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

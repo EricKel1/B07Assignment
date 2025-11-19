@@ -33,6 +33,7 @@ public class RescueInhalerRepository {
         data.put("userId", log.getUserId());
         data.put("timestamp", log.getTimestamp());
         data.put("doseCount", log.getDoseCount());
+        data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
 
         db.collection(COLLECTION_NAME)
@@ -62,6 +63,7 @@ public class RescueInhalerRepository {
                     log.setTimestamp(document.getDate("timestamp"));
                     Long doseCountLong = document.getLong("doseCount");
                     log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                    log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
                     logs.add(log);
                 }
@@ -98,6 +100,7 @@ public class RescueInhalerRepository {
                     log.setTimestamp(document.getDate("timestamp"));
                     Long doseCountLong = document.getLong("doseCount");
                     log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                    log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
                     logs.add(log);
                 }

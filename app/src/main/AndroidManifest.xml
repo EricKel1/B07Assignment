@@ -12,7 +12,35 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.B07Project">
-
+        
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+        
+        <activity android:name=".HomeActivity" />
+        <activity android:name=".SignUpActivity" android:exported="true" />
+        <activity android:name=".LogRescueInhalerActivity" />
+        <activity android:name=".RescueInhalerHistoryActivity" />
+        <activity android:name=".DailySymptomCheckInActivity" />
+        <activity android:name=".SymptomHistoryActivity" />
+        <activity android:name=".TriggerPatternsActivity" />
+        <activity android:name=".PEFEntryActivity" />
+        <activity android:name=".TriageActivity" />
+        <activity android:name=".IncidentHistoryActivity" />
+        <activity android:name=".InhalerTechniqueActivity" />
+        <activity android:name=".MotivationActivity" />
+        <activity android:name=".MotivationSettingsActivity" />
+        <activity android:name=".StatisticsReportsActivity" />
+        <activity android:name=".MainActivity" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".ParentSignupActivity" />
+        <activity android:name=".ProviderSignupActivity" />
         <activity
             android:name=".main.WelcomeActivity"
             android:exported="true">
@@ -21,18 +49,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".HomeActivity" />
-        <activity android:name=".SignUpActivity" />
-        <activity android:name=".LogRescueInhalerActivity" />
-        <activity android:name=".RescueInhalerHistoryActivity" />
-        <activity android:name=".DailySymptomCheckInActivity" />
-        <activity android:name=".SymptomHistoryActivity" />
-        <activity android:name=".MainActivity" />
-        <activity android:name=".LoginActivity" />
-        <activity android:name=".ParentSignupActivity" />
-        <activity android:name=".ProviderSignupActivity" />
-
     </application>
 
 </manifest>

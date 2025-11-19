@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Inhaler Technique Guide"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#1976D2"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Learn the proper way to use your inhaler"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Video Section -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardVideo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#E3F2FD"
+            app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📹 Video Tutorial"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#1565C0"/>
+
+                <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
+                    android:id="@+id/youtubePlayerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:enableAutomaticInitialization="false"
+                    app:handleNetworkEvents="true"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Watch this demonstration for proper MDI (metered-dose inhaler) technique"
+                    android:textSize="12sp"
+                    android:layout_marginTop="8dp"
+                    android:textColor="#757575"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Step-by-Step Instructions -->
+        <TextView
+            android:id="@+id/tvStepsTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Step-by-Step Instructions"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#1976D2"
+            android:layout_marginTop="32dp"
+            app:layout_constraintTop_toBottomOf="@id/cardVideo"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <!-- Step 1 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardStep1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvStepsTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="1"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:gravity="center"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Shake and Prepare"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Remove cap and shake inhaler well\n• Check the dose counter\n• Breathe out fully (away from inhaler)"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Step 2 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardStep2"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/cardStep1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="2"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:gravity="center"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Seal Lips Around Mouthpiece"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Form a tight seal with your lips\n• Keep tongue flat, below mouthpiece\n• Tilt head back slightly"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Step 3 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardStep3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/cardStep2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="3"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:gravity="center"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Press and Breathe In Slowly"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Press down on canister once\n• Start breathing in SLOWLY and deeply\n• Continue breathing in for 3-5 seconds"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Step 4 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardStep4"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/cardStep3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="4"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:gravity="center"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Hold Your Breath"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Remove inhaler from mouth\n• Hold breath for ~10 seconds (or as long as comfortable)\n• This lets medicine reach deep into lungs"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Step 5 -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardStep5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:layout_constraintTop_toBottomOf="@id/cardStep4"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:text="5"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:gravity="center"/>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wait Between Puffs"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Breathe out slowly\n• If taking another puff, wait 30-60 seconds\n• Repeat steps 1-4 if directed"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"/>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Spacer/Mask Tips -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardSpacerTips"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#FFF3E0"
+            app:layout_constraintTop_toBottomOf="@id/cardStep5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="💡 Using a Spacer or Mask"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#E65100"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="A spacer makes it easier to use your inhaler correctly:"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="• Attach inhaler to spacer\n• Shake and press canister into spacer\n• Seal lips around spacer mouthpiece (or place mask over nose/mouth)\n• Breathe in slowly, hold for 10 seconds\n• Younger children: Take 5-6 normal breaths through mask\n• Clean spacer weekly with mild soap"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="4dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="✓ Spacers help more medicine reach your lungs and reduce side effects"
+                    android:textSize="12sp"
+                    android:layout_marginTop="12dp"
+                    android:textStyle="italic"
+                    android:textColor="#4CAF50"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- Practice Timer -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardPracticeTimer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#F3E5F5"
+            app:layout_constraintTop_toBottomOf="@id/cardSpacerTips"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="⏱️ Practice Timer"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#6A1B9A"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Use this timer to practice holding your breath for 10 seconds"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvTimerDisplay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="10"
+                    android:textSize="48sp"
+                    android:textStyle="bold"
+                    android:textColor="#6A1B9A"
+                    android:gravity="center"
+                    android:layout_marginTop="16dp"/>
+
+                <Button
+                    android:id="@+id/btnStartTimer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Start 10-Second Timer"
+                    android:backgroundTint="#9C27B0"
+                    android:layout_marginTop="16dp"/>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+        <Button
+            android:id="@+id/btnClose"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Close"
+            android:textSize="16sp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:paddingVertical="16dp"
+            android:layout_marginTop="24dp"
+            app:layout_constraintTop_toBottomOf="@id/cardPracticeTimer"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

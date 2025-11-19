@@ -39,6 +39,7 @@ public class SymptomCheckInRepository {
         data.put("userId", checkIn.getUserId());
         data.put("date", checkIn.getDate());
         data.put("symptomLevel", checkIn.getSymptomLevel());
+        data.put("symptoms", checkIn.getSymptoms());
         data.put("triggers", checkIn.getTriggers());
         data.put("notes", checkIn.getNotes());
         data.put("timestamp", checkIn.getTimestamp());
@@ -70,6 +71,7 @@ public class SymptomCheckInRepository {
                     checkIn.setDate(document.getDate("date"));
                     Long symptomLevelLong = document.getLong("symptomLevel");
                     checkIn.setSymptomLevel(symptomLevelLong != null ? symptomLevelLong.intValue() : 1);
+                    checkIn.setSymptoms((List<String>) document.get("symptoms"));
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
@@ -124,6 +126,7 @@ public class SymptomCheckInRepository {
                     checkIn.setDate(document.getDate("date"));
                     Long symptomLevelLong = document.getLong("symptomLevel");
                     checkIn.setSymptomLevel(symptomLevelLong != null ? symptomLevelLong.intValue() : 1);
+                    checkIn.setSymptoms((List<String>) document.get("symptoms"));
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
