@@ -1,10 +1,12 @@
 package com.example.b07project;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -13,9 +15,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.b07project.models.ChildDraft;
+
 public class ConfirmFragment extends Fragment {
 
     private ParentSignupViewModel viewModel;
+    private ProgressBar progressBar;
 
     @Nullable
     @Override
@@ -27,6 +32,7 @@ public class ConfirmFragment extends Fragment {
         TextView tvParentName = view.findViewById(R.id.tvParentName);
         TextView tvParentEmail = view.findViewById(R.id.tvParentEmail);
         LinearLayout llChildrenList = view.findViewById(R.id.llChildrenList);
+        progressBar = view.findViewById(R.id.progressBar);
 
         tvParentName.setText(viewModel.parentName.getValue());
         tvParentEmail.setText(viewModel.email.getValue());
@@ -45,13 +51,39 @@ public class ConfirmFragment extends Fragment {
         }
 
         view.findViewById(R.id.btnCreateAccount).setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Will create account next", Toast.LENGTH_SHORT).show();
+            viewModel.createParentAccount();
         });
 
         view.findViewById(R.id.btnBack).setOnClickListener(v -> {
             requireActivity().getSupportFragmentManager().popBackStack();
         });
 
+        observeViewModel();
+
         return view;
+    }
+
+    private void observeViewModel() {
+        viewModel.getSignupState().observe(getViewLifecycleOwner(), state -> {
+            switch (state) {
+                case LOADING:
+                    progressBar.setVisibility(View.VISIBLE);
+                    break;
+                case SUCCESS:
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Account created successfully!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getActivity(), HomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    break;
+                case ERROR:
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(getContext(), "Error: " + viewModel.getErrorMessage().getValue(), Toast.LENGTH_LONG).show();
+                    break;
+                default:
+                    progressBar.setVisibility(View.GONE);
+                    break;
+            }
+        });
     }
 }
