@@ -57,6 +57,14 @@
             android:textColor="@color/primary_blue"
             style="@style/Widget.Material3.Button.TextButton"/>
 
+        <Button
+            android:id="@+id/btnDeleteReport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Delete"
+            android:textColor="#F44336"
+            style="@style/Widget.Material3.Button.TextButton"/>
+
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>
