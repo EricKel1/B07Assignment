@@ -19,10 +19,17 @@ import com.example.b07project.repository.ControllerMedicineRepository;
 import com.example.b07project.repository.RescueInhalerRepository;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.renderer.XAxisRenderer;
+import com.github.mikephil.charting.renderer.YAxisRenderer;
+import com.github.mikephil.charting.utils.MPPointF;
+import com.github.mikephil.charting.utils.Transformer;
+import com.github.mikephil.charting.utils.Utils;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 import com.google.firebase.auth.FirebaseAuth;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,6 +48,7 @@ public class ReportGenerator {
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
     private SimpleDateFormat dateFormat;
+    private static final float TINY_AXIS_TEXT_DP = 4f;
 
     public interface ReportCallback {
         void onSuccess(Report report);
@@ -223,14 +231,19 @@ public class ReportGenerator {
     }
 
     private Bitmap createChartBitmap(List<?> logs, Date startDate, int totalDays, boolean isRescue) {
-        // Create chart with compact dimensions - extra height for month labels
+        final int chartWidth = 480;
+        final int chartHeight = 180;
+        final int bitmapHeight = 220; // extra space for month labels
+
         BarChart chart = new BarChart(context);
-        chart.setLayoutParams(new android.view.ViewGroup.LayoutParams(480, 180));
+        chart.setLayoutParams(new android.view.ViewGroup.LayoutParams(chartWidth, chartHeight));
         chart.measure(
-            View.MeasureSpec.makeMeasureSpec(480, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(180, View.MeasureSpec.EXACTLY)
+            View.MeasureSpec.makeMeasureSpec(chartWidth, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(chartHeight, View.MeasureSpec.EXACTLY)
         );
-        chart.layout(0, 0, 480, 180);
+        chart.layout(0, 0, chartWidth, chartHeight);
+        chart.setXAxisRenderer(new TinyXAxisRenderer(chart.getViewPortHandler(), chart.getXAxis(), chart.getTransformer(YAxis.AxisDependency.LEFT), TINY_AXIS_TEXT_DP));
+        chart.setRendererLeftYAxis(new TinyYAxisRenderer(chart.getViewPortHandler(), chart.getAxisLeft(), chart.getTransformer(YAxis.AxisDependency.LEFT), TINY_AXIS_TEXT_DP));
 
         // Aggregate data by day
         Map<String, Integer> dailyCounts = new HashMap<>();
@@ -308,28 +321,25 @@ public class ReportGenerator {
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setGranularity(1f);
         xAxis.setDrawGridLines(false);
-        xAxis.setTextSize(5f);
+        xAxis.setTextSize(6f);
         xAxis.setLabelCount(totalDays, false);
 
         // Y Axis
         chart.getAxisLeft().setAxisMinimum(0f);
         chart.getAxisLeft().setGranularity(1f);
-        chart.getAxisLeft().setTextSize(5f);
+        chart.getAxisLeft().setTextSize(6f);
         chart.getAxisRight().setEnabled(false);
 
         chart.invalidate();
 
-        // Convert to bitmap with extra space for month labels
-        Bitmap bitmap = Bitmap.createBitmap(480, 220, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(chartWidth, bitmapHeight, Bitmap.Config.ARGB_8888);
         Canvas bitmapCanvas = new Canvas(bitmap);
-        
-        // Draw the chart
         chart.draw(bitmapCanvas);
-        
+
         // Draw month labels below
         Paint monthPaint = new Paint();
-        monthPaint.setColor(Color.GRAY);
-        monthPaint.setTextSize(11f);
+        monthPaint.setColor(Color.BLACK);
+        monthPaint.setTextSize(14f);
         monthPaint.setAntiAlias(true);
         
         SimpleDateFormat monthFormat = new SimpleDateFormat("MMMM", Locale.getDefault());
@@ -413,5 +423,39 @@ public class ReportGenerator {
         intent.putExtra(Intent.EXTRA_STREAM, uri);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         context.startActivity(Intent.createChooser(intent, "Share Report"));
+    }
+
+    private static class TinyXAxisRenderer extends XAxisRenderer {
+        private final float textSizeDp;
+
+        TinyXAxisRenderer(ViewPortHandler viewPortHandler, XAxis xAxis, Transformer trans, float textSizeDp) {
+            super(viewPortHandler, xAxis, trans);
+            this.textSizeDp = textSizeDp;
+        }
+
+        @Override
+        protected void drawLabel(Canvas c, String formattedLabel, float x, float y, MPPointF anchor, float angleDegrees) {
+            float originalSize = mAxisLabelPaint.getTextSize();
+            mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(textSizeDp));
+            super.drawLabel(c, formattedLabel, x, y, anchor, angleDegrees);
+            mAxisLabelPaint.setTextSize(originalSize);
+        }
+    }
+
+    private static class TinyYAxisRenderer extends YAxisRenderer {
+        private final float textSizeDp;
+
+        TinyYAxisRenderer(ViewPortHandler viewPortHandler, YAxis yAxis, Transformer trans, float textSizeDp) {
+            super(viewPortHandler, yAxis, trans);
+            this.textSizeDp = textSizeDp;
+        }
+
+        @Override
+        public void renderAxisLabels(Canvas c) {
+            float originalSize = mAxisLabelPaint.getTextSize();
+            mAxisLabelPaint.setTextSize(Utils.convertDpToPixel(textSizeDp));
+            super.renderAxisLabels(c);
+            mAxisLabelPaint.setTextSize(originalSize);
+        }
     }
 }
