@@ -41,6 +41,7 @@
         <activity android:name=".LoginActivity" />
         <activity android:name=".ParentSignupActivity" />
         <activity android:name=".ProviderSignupActivity" />
+        <activity android:name=".ProviderHomeActivity" />
         <activity
             android:name=".main.WelcomeActivity"
             android:exported="true">

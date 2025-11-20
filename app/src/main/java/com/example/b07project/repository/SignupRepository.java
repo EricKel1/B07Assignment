@@ -84,4 +84,44 @@ public class SignupRepository {
             }
         });
     }
+
+    public void createProviderAccount(String email, String password, String displayName, OnSignupCompleteListener listener) {
+        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
+            listener.onFailure("Email and password cannot be empty.");
+            return;
+        }
+
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        if (user != null) {
+                            Log.d(TAG, "Provider auth account created successfully. UID: " + user.getUid());
+                            saveProviderData(user.getUid(), email, displayName, listener);
+                        }
+                    } else {
+                        Log.w(TAG, "Provider auth account creation failed", task.getException());
+                        listener.onFailure(task.getException().getMessage());
+                    }
+                });
+    }
+
+    private void saveProviderData(String uid, String email, String displayName, OnSignupCompleteListener listener) {
+        DocumentReference userRef = firestore.collection("users").document(uid);
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("role", "provider");
+        userData.put("displayName", displayName);
+        userData.put("email", email);
+        userData.put("createdAt", new Date());
+
+        userRef.set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Provider Firestore data saved.");
+                    listener.onSuccess();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Provider Firestore save failed.", e);
+                    listener.onFailure(e.getMessage());
+                });
+    }
 }

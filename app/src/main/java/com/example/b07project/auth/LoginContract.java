@@ -5,6 +5,7 @@ public interface LoginContract {
         void showLoading(boolean show);
         void showError(String message);
         void navigateToHome();
+        void navigateToProviderHome();
         String getEmailInput();
         String getPasswordInput();
     }

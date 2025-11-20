@@ -23,10 +23,29 @@ public class LoginPresenter implements LoginContract.Presenter {
         view.showLoading(true);
         repo.signIn(email, pass, new AuthRepo.Callback() {
             @Override public void onSuccess() {
-                if (view != null) {
-                    view.showLoading(false);
-                    view.navigateToHome();
-                }
+                // Fetch role
+                String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
+                repo.getUserRole(uid, new AuthRepo.RoleCallback() {
+                    @Override
+                    public void onRole(String role) {
+                        if (view != null) {
+                            view.showLoading(false);
+                            if ("provider".equals(role)) {
+                                view.navigateToProviderHome();
+                            } else {
+                                view.navigateToHome();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        if (view != null) {
+                            view.showLoading(false);
+                            view.showError("Failed to get user role: " + e.getMessage());
+                        }
+                    }
+                });
             }
             @Override public void onError(Exception e) {
                 if (view != null) {
