@@ -50,6 +50,12 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         finish();
     }
 
+    @Override public void navigateToProviderHome() {
+        tvError.setVisibility(View.GONE);
+        startActivity(new Intent(this, ProviderHomeActivity.class));
+        finish();
+    }
+
     @Override public String getEmailInput() { return etEmail.getText().toString().trim(); }
     @Override public String getPasswordInput() { return etPassword.getText().toString(); }
 
