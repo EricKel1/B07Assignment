@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,11 +16,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class DeviceChooserActivity extends AppCompatActivity {
 
     private ProgressBar progressBar;
     private Button btnParent;
+    private LinearLayout llChildrenButtons;
+    private TextView tvNoChildren;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,17 +32,22 @@ public class DeviceChooserActivity extends AppCompatActivity {
 
         progressBar = findViewById(R.id.progressBar);
         btnParent = findViewById(R.id.btnParent);
+        llChildrenButtons = findViewById(R.id.llChildrenButtons);
+        tvNoChildren = findViewById(R.id.tvNoChildren);
 
         btnParent.setVisibility(View.GONE);
         progressBar.setVisibility(View.VISIBLE);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) {
-            // This should not happen if the login flow is correct
             navigateToLogin();
             return;
         }
 
+        loadParentInfo(currentUser);
+    }
+
+    private void loadParentInfo(FirebaseUser currentUser) {
         String uid = currentUser.getUid();
         DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("users").document(uid);
 
@@ -45,17 +55,15 @@ public class DeviceChooserActivity extends AppCompatActivity {
             if (documentSnapshot.exists()) {
                 String displayName = documentSnapshot.getString("displayName");
                 if (displayName == null || displayName.isEmpty()) {
-                    // Fallback to "name" field if "displayName" does not exist
                     displayName = documentSnapshot.getString("name");
                 }
                 if (displayName == null || displayName.isEmpty()) {
-                    // Fallback to email if no name is present
                     displayName = currentUser.getEmail();
                 }
 
                 btnParent.setText(getString(R.string.im_the_parent, displayName));
-                progressBar.setVisibility(View.GONE);
                 btnParent.setVisibility(View.VISIBLE);
+                loadChildren(uid);
             } else {
                 Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show();
                 logout();
@@ -70,13 +78,51 @@ public class DeviceChooserActivity extends AppCompatActivity {
         });
     }
 
+    private void loadChildren(String parentId) {
+        FirebaseFirestore.getInstance().collection("children")
+                .whereEqualTo("parentId", parentId)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        tvNoChildren.setVisibility(View.VISIBLE);
+                    } else {
+                        for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            String childName = document.getString("name");
+                            if (childName != null && !childName.isEmpty()) {
+                                addChildButton(childName);
+                            }
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Failed to load children.", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void addChildButton(String childName) {
+        Button childButton = new Button(this);
+        childButton.setText("I'm " + childName + " (Child)");
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(0, 8, 0, 8);
+        childButton.setLayoutParams(params);
+        childButton.setOnClickListener(v -> {
+            Toast.makeText(this, "Child selection for " + childName + " not implemented yet", Toast.LENGTH_SHORT).show();
+        });
+        llChildrenButtons.addView(childButton);
+    }
+
     private void logout() {
         FirebaseAuth.getInstance().signOut();
         navigateToLogin();
     }
 
     private void navigateToLogin() {
-        Intent intent = new Intent(DeviceChooserActivity.this, WelcomeActivity.class); // Or your main login entry point
+        Intent intent = new Intent(DeviceChooserActivity.this, WelcomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
