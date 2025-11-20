@@ -246,6 +246,19 @@
                     android:textSize="14sp"
                     android:layout_marginTop="4dp"/>
 
+                <!-- Call 911 Button -->
+                <Button
+                    android:id="@+id/btnCall911"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="📞 Call 911 Now"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:backgroundTint="#D32F2F"
+                    android:paddingVertical="16dp"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone"/>
+
                 <!-- Timer Display (for home monitoring) -->
                 <LinearLayout
                     android:id="@+id/layoutTimer"
@@ -272,6 +285,31 @@
                         android:textColor="#1976D2"
                         android:gravity="center"
                         android:layout_marginTop="8dp"/>
+
+                    <!-- Breathing Pacer -->
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp"
+                        android:layout_marginTop="16dp">
+                        
+                        <View
+                            android:id="@+id/viewBreathingPacer"
+                            android:layout_width="80dp"
+                            android:layout_height="80dp"
+                            android:background="@drawable/circle_shape"
+                            android:backgroundTint="#81D4FA"
+                            android:layout_gravity="center"/>
+                            
+                        <TextView
+                            android:id="@+id/tvBreathingInstruction"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Breathe In"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="#01579B"
+                            android:layout_gravity="center"/>
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="match_parent"
