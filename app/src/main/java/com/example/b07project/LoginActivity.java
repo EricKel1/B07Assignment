@@ -7,6 +7,7 @@ import android.widget.*;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.b07project.auth.*;
+import com.example.b07project.main.WelcomeActivity;
 
 public class LoginActivity extends AppCompatActivity implements LoginContract.View {
 
@@ -32,7 +33,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         btnLogin.setOnClickListener(v -> presenter.onLoginClicked());
         
         tvSignUp.setOnClickListener(v -> {
-            startActivity(new Intent(this, SignUpActivity.class));
+            startActivity(new Intent(this, WelcomeActivity.class));
         });
     }
 

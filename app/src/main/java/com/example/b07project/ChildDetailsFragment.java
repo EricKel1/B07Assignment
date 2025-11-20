@@ -66,7 +66,7 @@ public class ChildDetailsFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                btnNext.setEnabled(!s.toString().trim().isEmpty());
+                validateInputs();
             }
         });
 
@@ -107,6 +107,12 @@ public class ChildDetailsFragment extends Fragment {
         return view;
     }
 
+    private void validateInputs() {
+        boolean nameIsReady = !Objects.requireNonNull(tietChildFullName.getText()).toString().trim().isEmpty();
+        boolean dobIsReady = !etDob.getText().toString().trim().isEmpty();
+        btnNext.setEnabled(nameIsReady && dobIsReady);
+    }
+
     private void showDatePickerDialog() {
         Calendar calendar = Calendar.getInstance();
         int year = calendar.get(Calendar.YEAR);
@@ -116,6 +122,7 @@ public class ChildDetailsFragment extends Fragment {
         new DatePickerDialog(requireContext(), (view, year1, month1, dayOfMonth) -> {
             String selectedDate = (month1 + 1) + "/" + dayOfMonth + "/" + year1;
             etDob.setText(selectedDate);
+            validateInputs();
         }, year, month, day).show();
     }
 }
