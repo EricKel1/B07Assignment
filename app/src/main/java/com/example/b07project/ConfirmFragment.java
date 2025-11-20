@@ -72,24 +72,29 @@ public class ConfirmFragment extends Fragment {
 
     private void observeViewModel() {
         viewModel.getSignupState().observe(getViewLifecycleOwner(), state -> {
-            switch (state) {
-                case LOADING:
-                    progressBar.setVisibility(View.VISIBLE);
-                    btnCreateAccount.setEnabled(false);
-                    break;
-                case SUCCESS:
-                    progressBar.setVisibility(View.GONE);
+            if (state == ParentSignupViewModel.SignupState.SUCCESS) {
+                progressBar.setVisibility(View.GONE);
+                Boolean bypassed = viewModel.getVerificationBypassed().getValue();
+                if (bypassed != null && bypassed) {
+                    // Bypass is active, go straight to the dashboard
+                    Toast.makeText(getContext(), "Test account created!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getActivity(), DeviceChooserActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                } else {
+                    // Normal flow, show verification dialog
                     showSuccessDialog();
-                    break;
-                case ERROR:
-                    progressBar.setVisibility(View.GONE);
-                    btnCreateAccount.setEnabled(true);
-                    Toast.makeText(getContext(), "Error: " + viewModel.getErrorMessage().getValue(), Toast.LENGTH_LONG).show();
-                    break;
-                default:
-                    progressBar.setVisibility(View.GONE);
-                    btnCreateAccount.setEnabled(true);
-                    break;
+                }
+            } else if (state == ParentSignupViewModel.SignupState.LOADING) {
+                progressBar.setVisibility(View.VISIBLE);
+                btnCreateAccount.setEnabled(false);
+            } else if (state == ParentSignupViewModel.SignupState.ERROR) {
+                progressBar.setVisibility(View.GONE);
+                btnCreateAccount.setEnabled(true);
+                Toast.makeText(getContext(), "Error: " + viewModel.getErrorMessage().getValue(), Toast.LENGTH_LONG).show();
+            } else {
+                progressBar.setVisibility(View.GONE);
+                btnCreateAccount.setEnabled(true);
             }
         });
     }

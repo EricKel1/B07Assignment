@@ -24,8 +24,9 @@ public class SignupRepository {
 
     public enum EmailCheckResult { AVAILABLE, EXISTS, ERROR }
 
+    // The onSuccess callback now includes a boolean to indicate if verification was bypassed.
     public interface OnSignupCompleteListener {
-        void onSuccess();
+        void onSuccess(boolean verificationBypassed);
         void onFailure(String errorMessage);
     }
 
@@ -111,7 +112,13 @@ public class SignupRepository {
         batch.commit().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Log.d(TAG, "Firestore batch write successful.");
-                sendVerificationEmail(user, listener);
+
+                if (user.getEmail() != null && user.getEmail().endsWith("@test.com")) {
+                    Log.d(TAG, "Bypassing email verification for test account: " + user.getEmail());
+                    listener.onSuccess(true); // Bypass is TRUE
+                } else {
+                    sendVerificationEmail(user, listener);
+                }
             } else {
                 Log.e(TAG, "Firestore batch write failed.", task.getException());
                 listener.onFailure(task.getException().getMessage());
@@ -124,7 +131,7 @@ public class SignupRepository {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "Verification email sent successfully.");
-                        listener.onSuccess();
+                        listener.onSuccess(false); // Bypass is FALSE
                     } else {
                         Log.e(TAG, "Failed to send verification email.", task.getException());
                         listener.onFailure("Couldn't send verification email. Please try again.");
@@ -133,10 +140,44 @@ public class SignupRepository {
     }
 
     public void createProviderAccount(String email, String password, String displayName, OnSignupCompleteListener listener) {
-        // This method remains unchanged
+        // This method remains unchanged, but we must call the updated listener
+        if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
+            listener.onFailure("Email and password cannot be empty.");
+            return;
+        }
+
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = firebaseAuth.getCurrentUser();
+                        if (user != null) {
+                            Log.d(TAG, "Provider auth account created successfully. UID: " + user.getUid());
+                            saveProviderData(user.getUid(), email, displayName, listener);
+                        }
+                    } else {
+                        Log.w(TAG, "Provider auth account creation failed", task.getException());
+                        listener.onFailure(task.getException().getMessage());
+                    }
+                });
     }
 
     private void saveProviderData(String uid, String email, String displayName, OnSignupCompleteListener listener) {
-        // This method remains unchanged
+        // This method remains unchanged, but we must call the updated listener
+        DocumentReference userRef = firestore.collection("users").document(uid);
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("role", "provider");
+        userData.put("displayName", displayName);
+        userData.put("email", email);
+        userData.put("createdAt", new Date());
+
+        userRef.set(userData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Provider Firestore data saved.");
+                    listener.onSuccess(false);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Provider Firestore save failed.", e);
+                    listener.onFailure(e.getMessage());
+                });
     }
 }
