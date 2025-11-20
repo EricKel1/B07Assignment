@@ -1,8 +1,14 @@
 package com.example.b07project;
 
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -15,8 +21,8 @@ import com.example.b07project.models.PersonalBest;
 import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.PEFRepository;
 import com.example.b07project.repository.TriageRepository;
+import com.example.b07project.utils.NotificationHelper;
 import com.google.firebase.auth.FirebaseAuth;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,17 +31,19 @@ public class TriageActivity extends AppCompatActivity {
 
     private CheckBox cbCantSpeak, cbChestRetractions, cbBlueLips;
     private EditText etRescueAttempts, etCurrentPEF;
-    private Button btnGetGuidance, btnCancel;
+    private Button btnGetGuidance, btnCancel, btnCall911;
     private Button btnFeelingBetter, btnNotBetter, btnEmergencyNow;
     private CardView cardDecision;
     private TextView tvDecisionTitle, tvDecisionGuidance, tvActionSteps;
     private LinearLayout layoutTimer, layoutResponseButtons;
-    private TextView tvTimerDisplay;
+    private TextView tvTimerDisplay, tvBreathingInstruction;
+    private View viewBreathingPacer;
 
     private TriageRepository triageRepository;
     private PEFRepository pefRepository;
     private TriageSession currentSession;
     private CountDownTimer countDownTimer;
+    private ObjectAnimator breathingAnimator;
     private static final long TIMER_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
     @Override
@@ -58,6 +66,7 @@ public class TriageActivity extends AppCompatActivity {
         etCurrentPEF = findViewById(R.id.etCurrentPEF);
         btnGetGuidance = findViewById(R.id.btnGetGuidance);
         btnCancel = findViewById(R.id.btnCancel);
+        btnCall911 = findViewById(R.id.btnCall911);
         cardDecision = findViewById(R.id.cardDecision);
         tvDecisionTitle = findViewById(R.id.tvDecisionTitle);
         tvDecisionGuidance = findViewById(R.id.tvDecisionGuidance);
@@ -65,6 +74,8 @@ public class TriageActivity extends AppCompatActivity {
         layoutTimer = findViewById(R.id.layoutTimer);
         layoutResponseButtons = findViewById(R.id.layoutResponseButtons);
         tvTimerDisplay = findViewById(R.id.tvTimerDisplay);
+        viewBreathingPacer = findViewById(R.id.viewBreathingPacer);
+        tvBreathingInstruction = findViewById(R.id.tvBreathingInstruction);
         btnFeelingBetter = findViewById(R.id.btnFeelingBetter);
         btnNotBetter = findViewById(R.id.btnNotBetter);
         btnEmergencyNow = findViewById(R.id.btnEmergencyNow);
@@ -73,6 +84,7 @@ public class TriageActivity extends AppCompatActivity {
     private void setupListeners() {
         btnGetGuidance.setOnClickListener(v -> performTriage());
         btnCancel.setOnClickListener(v -> finish());
+        btnCall911.setOnClickListener(v -> callEmergency());
         
         btnFeelingBetter.setOnClickListener(v -> handleUserImproved());
         btnNotBetter.setOnClickListener(v -> handleStillTrouble());
@@ -128,18 +140,13 @@ public class TriageActivity extends AppCompatActivity {
     private void makeTriageDecision() {
         // Check for critical red flags
         boolean hasCriticalFlags = currentSession.hasCriticalFlags();
-        boolean highRescueUse = currentSession.getRescueAttemptsLast3Hours() >= 3;
-        boolean redZone = "red".equals(currentSession.getCurrentZone());
         
         if (hasCriticalFlags) {
             // EMERGENCY: Any red flag = immediate emergency
             showEmergencyDecision();
-        } else if (highRescueUse || redZone) {
-            // MONITOR: High rescue use or red zone = home monitoring with timer
-            showHomeMonitoringDecision();
         } else {
-            // HOME STEPS: Low risk = home management
-            showHomeStepsDecision();
+            // MONITOR: All non-emergency cases get monitored with timer
+            showHomeMonitoringDecision();
         }
         
         // Save session
@@ -147,6 +154,14 @@ public class TriageActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String documentId) {
                 currentSession.setId(documentId);
+                
+                // Send Parent Alert
+                String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+                if (userName == null || userName.isEmpty()) userName = "User";
+                
+                String alertTitle = "Triage Started";
+                String alertMessage = userName + " started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
+                NotificationHelper.sendAlert(TriageActivity.this, currentSession.getUserId(), alertTitle, alertMessage);
             }
 
             @Override
@@ -180,9 +195,12 @@ public class TriageActivity extends AppCompatActivity {
         
         layoutTimer.setVisibility(View.GONE);
         layoutResponseButtons.setVisibility(View.GONE);
+        btnCall911.setVisibility(View.VISIBLE);
         
         cardDecision.setVisibility(View.VISIBLE);
         btnGetGuidance.setVisibility(View.GONE);
+        
+        stopBreathingPacer();
     }
 
     private void showHomeMonitoringDecision() {
@@ -210,37 +228,10 @@ public class TriageActivity extends AppCompatActivity {
         tvActionSteps.setText(stepsText.toString().trim());
         
         layoutTimer.setVisibility(View.VISIBLE);
-        startCountdownTimer();
-        
-        cardDecision.setVisibility(View.VISIBLE);
-        btnGetGuidance.setVisibility(View.GONE);
-    }
-
-    private void showHomeStepsDecision() {
-        currentSession.setDecision("monitor");
-        
-        List<String> steps = new ArrayList<>();
-        steps.add("1. Take your rescue inhaler if needed");
-        steps.add("2. Rest in a comfortable position");
-        steps.add("3. Avoid triggers if known");
-        steps.add("4. Monitor your symptoms");
-        steps.add("5. Contact your doctor if symptoms persist");
-        
-        currentSession.setGuidanceShown("Follow your asthma action plan and monitor symptoms.");
-        currentSession.setActionSteps(steps);
-        
-        tvDecisionTitle.setText("🏠 HOME MANAGEMENT");
-        tvDecisionTitle.setTextColor(getColor(android.R.color.holo_blue_dark));
-        tvDecisionGuidance.setText("Your symptoms can likely be managed at home. Follow these steps:");
-        
-        StringBuilder stepsText = new StringBuilder();
-        for (String step : steps) {
-            stepsText.append(step).append("\n");
-        }
-        tvActionSteps.setText(stepsText.toString().trim());
-        
-        layoutTimer.setVisibility(View.GONE);
         layoutResponseButtons.setVisibility(View.VISIBLE);
+        btnCall911.setVisibility(View.GONE);
+        startCountdownTimer();
+        startBreathingPacer();
         
         cardDecision.setVisibility(View.VISIBLE);
         btnGetGuidance.setVisibility(View.GONE);
@@ -262,13 +253,67 @@ public class TriageActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 tvTimerDisplay.setText("00:00");
-                layoutTimer.setVisibility(View.GONE);
-                layoutResponseButtons.setVisibility(View.VISIBLE);
+                stopBreathingPacer();
                 Toast.makeText(TriageActivity.this, "Time's up! How are you feeling?", Toast.LENGTH_LONG).show();
             }
         };
         
         countDownTimer.start();
+    }
+
+    private void startBreathingPacer() {
+        if (breathingAnimator != null) {
+            breathingAnimator.cancel();
+        }
+        
+        // Reset view state
+        viewBreathingPacer.setScaleX(1.0f);
+        viewBreathingPacer.setScaleY(1.0f);
+
+        // 4-7-8 Breathing Technique (approximate for visual simplicity: 4s in, 4s out)
+        // Scale from 1.0 to 1.5
+        breathingAnimator = ObjectAnimator.ofPropertyValuesHolder(
+                viewBreathingPacer,
+                PropertyValuesHolder.ofFloat("scaleX", 1.0f, 1.5f),
+                PropertyValuesHolder.ofFloat("scaleY", 1.0f, 1.5f)
+        );
+        
+        breathingAnimator.setDuration(4000); // 4 seconds per phase
+        breathingAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        breathingAnimator.setRepeatMode(ValueAnimator.REVERSE);
+        breathingAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        
+        breathingAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            private boolean isBreatheIn = true;
+
+            @Override
+            public void onAnimationStart(android.animation.Animator animation) {
+                isBreatheIn = true;
+                tvBreathingInstruction.setText("Breathe In");
+            }
+
+            @Override
+            public void onAnimationRepeat(android.animation.Animator animation) {
+                isBreatheIn = !isBreatheIn;
+                tvBreathingInstruction.setText(isBreatheIn ? "Breathe In" : "Breathe Out");
+            }
+        });
+        
+        breathingAnimator.start();
+    }
+
+    private void stopBreathingPacer() {
+        if (breathingAnimator != null) {
+            breathingAnimator.cancel();
+            viewBreathingPacer.setScaleX(1f);
+            viewBreathingPacer.setScaleY(1f);
+        }
+    }
+
+    private void callEmergency() {
+        Intent intent = new Intent(Intent.ACTION_DIAL);
+        intent.setData(Uri.parse("tel:911"));
+        startActivity(intent);
     }
 
     private void handleUserImproved() {
@@ -296,6 +341,12 @@ public class TriageActivity extends AppCompatActivity {
         currentSession.setDecision("emergency");
         
         triageRepository.saveTriageSession(currentSession, null);
+        
+        // Send Parent Alert
+        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+        if (userName == null || userName.isEmpty()) userName = "User";
+        
+        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", userName + " requested emergency assistance during triage.");
         
         // Show emergency guidance
         showEmergencyDecision();
