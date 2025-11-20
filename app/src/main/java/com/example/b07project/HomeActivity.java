@@ -12,6 +12,10 @@ import com.example.b07project.repository.PEFRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
 import android.widget.ImageButton;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
 
 public class HomeActivity extends AppCompatActivity {
     
@@ -31,6 +35,15 @@ public class HomeActivity extends AppCompatActivity {
         initializeViews();
         setupListeners();
         loadZoneStatus();
+        checkNotificationPermission();
+    }
+
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            }
+        }
     }
     
     private void initializeViews() {

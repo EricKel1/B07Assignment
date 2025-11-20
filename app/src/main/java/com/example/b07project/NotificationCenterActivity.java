@@ -17,6 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.widget.Toast;
+
+import androidx.recyclerview.widget.ItemTouchHelper;
+import com.google.android.material.snackbar.Snackbar;
+
 public class NotificationCenterActivity extends AppCompatActivity {
 
     private RecyclerView rvNotifications;
@@ -37,7 +42,46 @@ public class NotificationCenterActivity extends AppCompatActivity {
         adapter = new NotificationAdapter();
         rvNotifications.setAdapter(adapter);
 
+        setupSwipeToDelete();
         loadNotifications();
+    }
+
+    private void setupSwipeToDelete() {
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                int position = viewHolder.getAdapterPosition();
+                AppNotification notification = adapter.getNotification(position);
+                
+                // Optimistically remove from UI
+                adapter.removeItem(position);
+                if (adapter.getItemCount() == 0) {
+                    tvEmpty.setVisibility(View.VISIBLE);
+                    rvNotifications.setVisibility(View.GONE);
+                }
+
+                repository.deleteNotification(notification.getId(), new NotificationRepository.DeleteCallback() {
+                    @Override
+                    public void onSuccess() {
+                        Snackbar.make(rvNotifications, "Notification deleted", Snackbar.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        // Re-add item if deletion fails
+                        adapter.addItem(position, notification);
+                        tvEmpty.setVisibility(View.GONE);
+                        rvNotifications.setVisibility(View.VISIBLE);
+                        Toast.makeText(NotificationCenterActivity.this, "Failed to delete: " + error, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }).attachToRecyclerView(rvNotifications);
     }
 
     private void loadNotifications() {
@@ -57,7 +101,7 @@ public class NotificationCenterActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String error) {
-                // Handle error
+                Toast.makeText(NotificationCenterActivity.this, "Error loading notifications: " + error, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -69,6 +113,20 @@ public class NotificationCenterActivity extends AppCompatActivity {
         public void setNotifications(List<AppNotification> notifications) {
             this.notifications = notifications;
             notifyDataSetChanged();
+        }
+
+        public AppNotification getNotification(int position) {
+            return notifications.get(position);
+        }
+
+        public void removeItem(int position) {
+            notifications.remove(position);
+            notifyItemRemoved(position);
+        }
+
+        public void addItem(int position, AppNotification notification) {
+            notifications.add(position, notification);
+            notifyItemInserted(position);
         }
 
         @NonNull
