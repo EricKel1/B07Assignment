@@ -72,7 +72,7 @@ public class ConfirmFragment extends Fragment {
                 case SUCCESS:
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(getContext(), "Account created successfully!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(getActivity(), HomeActivity.class);
+                    Intent intent = new Intent(getActivity(), DeviceChooserActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     break;

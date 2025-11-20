@@ -1,5 +1,7 @@
 package com.example.b07project.auth;
 
+import com.example.b07project.DeviceChooserActivity;
+
 public class LoginPresenter implements LoginContract.Presenter {
     private LoginContract.View view;
     private final AuthRepo repo;
@@ -30,7 +32,9 @@ public class LoginPresenter implements LoginContract.Presenter {
                     public void onRole(String role) {
                         if (view != null) {
                             view.showLoading(false);
-                            if ("provider".equals(role)) {
+                            if ("parent".equals(role)) {
+                                view.navigateToDeviceChooser();
+                            } else if ("provider".equals(role)) {
                                 view.navigateToProviderHome();
                             } else {
                                 view.navigateToHome();
