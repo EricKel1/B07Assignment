@@ -14,12 +14,7 @@ import androidx.cardview.widget.CardView;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.PEFRepository;
-import com.example.b07project.repository.TriageRepository;
-import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.example.b07project.utils.NotificationHelper;
 
 public class TriageActivity extends AppCompatActivity {
 
@@ -147,6 +142,11 @@ public class TriageActivity extends AppCompatActivity {
             @Override
             public void onSuccess(String documentId) {
                 currentSession.setId(documentId);
+                
+                // Send Parent Alert
+                String alertTitle = "Triage Started";
+                String alertMessage = "A triage session has been started. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
+                NotificationHelper.sendAlert(TriageActivity.this, currentSession.getUserId(), alertTitle, alertMessage);
             }
 
             @Override
@@ -296,6 +296,9 @@ public class TriageActivity extends AppCompatActivity {
         currentSession.setDecision("emergency");
         
         triageRepository.saveTriageSession(currentSession, null);
+        
+        // Send Parent Alert
+        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", "Emergency assistance requested during triage.");
         
         // Show emergency guidance
         showEmergencyDecision();
