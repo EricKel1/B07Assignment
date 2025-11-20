@@ -11,6 +11,12 @@ public class Report {
     private int totalControllerDoses;
     private double avgRescuePerDay;
     private double avgControllerPerDay;
+    private double controllerAdherence;
+    private int symptomBurdenDays;
+    private int greenZoneCount;
+    private int yellowZoneCount;
+    private int redZoneCount;
+    private int triageIncidentsCount;
 
     public Report() {
         // Required empty constructor for Firestore
@@ -18,7 +24,9 @@ public class Report {
 
     public Report(String userId, int days, long generatedDate, long startDate, long endDate,
                   int totalRescueUses, int totalControllerDoses, 
-                  double avgRescuePerDay, double avgControllerPerDay) {
+                  double avgRescuePerDay, double avgControllerPerDay,
+                  double controllerAdherence, int symptomBurdenDays,
+                  int greenZoneCount, int yellowZoneCount, int redZoneCount, int triageIncidentsCount) {
         this.userId = userId;
         this.days = days;
         this.generatedDate = generatedDate;
@@ -28,6 +36,12 @@ public class Report {
         this.totalControllerDoses = totalControllerDoses;
         this.avgRescuePerDay = avgRescuePerDay;
         this.avgControllerPerDay = avgControllerPerDay;
+        this.controllerAdherence = controllerAdherence;
+        this.symptomBurdenDays = symptomBurdenDays;
+        this.greenZoneCount = greenZoneCount;
+        this.yellowZoneCount = yellowZoneCount;
+        this.redZoneCount = redZoneCount;
+        this.triageIncidentsCount = triageIncidentsCount;
     }
 
     // Getters and setters
@@ -60,4 +74,22 @@ public class Report {
 
     public double getAvgControllerPerDay() { return avgControllerPerDay; }
     public void setAvgControllerPerDay(double avgControllerPerDay) { this.avgControllerPerDay = avgControllerPerDay; }
+
+    public double getControllerAdherence() { return controllerAdherence; }
+    public void setControllerAdherence(double controllerAdherence) { this.controllerAdherence = controllerAdherence; }
+
+    public int getSymptomBurdenDays() { return symptomBurdenDays; }
+    public void setSymptomBurdenDays(int symptomBurdenDays) { this.symptomBurdenDays = symptomBurdenDays; }
+
+    public int getGreenZoneCount() { return greenZoneCount; }
+    public void setGreenZoneCount(int greenZoneCount) { this.greenZoneCount = greenZoneCount; }
+
+    public int getYellowZoneCount() { return yellowZoneCount; }
+    public void setYellowZoneCount(int yellowZoneCount) { this.yellowZoneCount = yellowZoneCount; }
+
+    public int getRedZoneCount() { return redZoneCount; }
+    public void setRedZoneCount(int redZoneCount) { this.redZoneCount = redZoneCount; }
+
+    public int getTriageIncidentsCount() { return triageIncidentsCount; }
+    public void setTriageIncidentsCount(int triageIncidentsCount) { this.triageIncidentsCount = triageIncidentsCount; }
 }

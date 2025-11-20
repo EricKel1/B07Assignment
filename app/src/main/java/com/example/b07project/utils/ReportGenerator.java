@@ -24,10 +24,16 @@ import android.widget.Toast;
 import androidx.core.content.FileProvider;
 import com.example.b07project.R;
 import com.example.b07project.models.ControllerMedicineLog;
+import com.example.b07project.models.PEFReading;
 import com.example.b07project.models.Report;
 import com.example.b07project.models.RescueInhalerLog;
+import com.example.b07project.models.SymptomCheckIn;
+import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.ControllerMedicineRepository;
+import com.example.b07project.repository.PEFRepository;
 import com.example.b07project.repository.RescueInhalerRepository;
+import com.example.b07project.repository.SymptomCheckInRepository;
+import com.example.b07project.repository.TriageRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,6 +41,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +54,9 @@ public class ReportGenerator {
     private Context context;
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
+    private TriageRepository triageRepository;
+    private PEFRepository pefRepository;
+    private SymptomCheckInRepository symptomRepository;
     private SimpleDateFormat dateFormat;
     private static final float TINY_AXIS_TEXT_DP = 2.5f;
     private AlertDialog progressDialog;
@@ -65,6 +75,9 @@ public class ReportGenerator {
         this.context = context;
         this.rescueRepository = new RescueInhalerRepository();
         this.controllerRepository = new ControllerMedicineRepository();
+        this.triageRepository = new TriageRepository();
+        this.pefRepository = new PEFRepository();
+        this.symptomRepository = new SymptomCheckInRepository();
         this.dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
     }
 
@@ -74,15 +87,14 @@ public class ReportGenerator {
         calendar.add(Calendar.DAY_OF_YEAR, -(days - 1));
         Date startDate = calendar.getTime();
 
-        // Fetch data for both rescue and controller
+        // Fetch data from all repositories
         rescueRepository.getLogsForUserInDateRange(userId, startDate, endDate, new RescueInhalerRepository.LoadCallback() {
             @Override
             public void onSuccess(List<RescueInhalerLog> rescueLogs) {
                 controllerRepository.getLogsForUserInDateRange(userId, startDate, endDate, new ControllerMedicineRepository.LoadCallback() {
                     @Override
                     public void onSuccess(List<ControllerMedicineLog> controllerLogs) {
-                        Report report = createReport(userId, days, startDate, endDate, rescueLogs, controllerLogs);
-                        callback.onSuccess(report);
+                        fetchOptionalData(userId, startDate, endDate, days, rescueLogs, controllerLogs, callback);
                     }
 
                     @Override
@@ -99,8 +111,101 @@ public class ReportGenerator {
         });
     }
 
+    private void fetchOptionalData(String userId, Date startDate, Date endDate, int days,
+                                   List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                   ReportCallback callback) {
+        triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
+            @Override
+            public void onSuccess(List<TriageSession> allTriageSessions) {
+                fetchPEF(userId, startDate, endDate, days, rescueLogs, controllerLogs, allTriageSessions, callback);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Triage fetch failed: " + error);
+                fetchPEF(userId, startDate, endDate, days, rescueLogs, controllerLogs, new ArrayList<>(), callback);
+            }
+        });
+    }
+
+    private void fetchPEF(String userId, Date startDate, Date endDate, int days,
+                          List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                          List<TriageSession> triageSessions, ReportCallback callback) {
+        pefRepository.getPEFReadingsForUser(userId, new PEFRepository.LoadCallback<List<PEFReading>>() {
+            @Override
+            public void onSuccess(List<PEFReading> allPefReadings) {
+                fetchSymptoms(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, allPefReadings, callback);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "PEF fetch failed: " + error);
+                fetchSymptoms(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, new ArrayList<>(), callback);
+            }
+        });
+    }
+
+    private void fetchSymptoms(String userId, Date startDate, Date endDate, int days,
+                               List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                               List<TriageSession> triageSessions, List<PEFReading> pefReadings,
+                               ReportCallback callback) {
+        symptomRepository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<SymptomCheckIn> allSymptomCheckIns) {
+                finalizeReport(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, pefReadings, allSymptomCheckIns, callback);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Symptom fetch failed: " + error);
+                finalizeReport(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, pefReadings, new ArrayList<>(), callback);
+            }
+        });
+    }
+
+    private void finalizeReport(String userId, Date startDate, Date endDate, int days,
+                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                List<TriageSession> allTriageSessions, List<PEFReading> allPefReadings,
+                                List<SymptomCheckIn> allSymptomCheckIns, ReportCallback callback) {
+        // Filter data by date range
+        List<TriageSession> triageSessions = filterByDate(allTriageSessions, startDate, endDate);
+        List<PEFReading> pefReadings = filterByDate(allPefReadings, startDate, endDate);
+        List<SymptomCheckIn> symptomCheckIns = filterByDate(allSymptomCheckIns, startDate, endDate);
+
+        Report report = createReport(userId, days, startDate, endDate, 
+            rescueLogs, controllerLogs, triageSessions, pefReadings, symptomCheckIns);
+        callback.onSuccess(report);
+    }
+
+    private <T> List<T> filterByDate(List<T> items, Date startDate, Date endDate) {
+        List<T> filtered = new ArrayList<>();
+        long start = normalizeDate(startDate);
+        long end = normalizeDate(endDate) + (24 * 60 * 60 * 1000) - 1; // End of day
+
+        for (T item : items) {
+            Date date = null;
+            if (item instanceof TriageSession) {
+                date = ((TriageSession) item).getStartTime();
+            } else if (item instanceof PEFReading) {
+                date = ((PEFReading) item).getTimestamp();
+            } else if (item instanceof SymptomCheckIn) {
+                date = ((SymptomCheckIn) item).getDate();
+            }
+
+            if (date != null) {
+                long time = date.getTime();
+                if (time >= start && time <= end) {
+                    filtered.add(item);
+                }
+            }
+        }
+        return filtered;
+    }
+
     private Report createReport(String userId, int days, Date startDate, Date endDate,
-                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
+                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                List<TriageSession> triageSessions, List<PEFReading> pefReadings,
+                                List<SymptomCheckIn> symptomCheckIns) {
         int totalRescue = 0;
         for (RescueInhalerLog log : rescueLogs) {
             totalRescue += log.getDoseCount();
@@ -114,6 +219,38 @@ public class ReportGenerator {
         double avgRescue = totalRescue / (double) days;
         double avgController = totalController / (double) days;
 
+        // Calculate Controller Adherence (% of days with at least one dose)
+        Map<Long, Boolean> controllerDays = new HashMap<>();
+        for (ControllerMedicineLog log : controllerLogs) {
+            controllerDays.put(normalizeDate(log.getTimestamp()), true);
+        }
+        double controllerAdherence = (controllerDays.size() / (double) days) * 100.0;
+
+        // Calculate Symptom Burden (days with symptom level > 1)
+        Map<Long, Boolean> symptomDays = new HashMap<>();
+        for (SymptomCheckIn checkIn : symptomCheckIns) {
+            if (checkIn.getSymptomLevel() > 1) {
+                symptomDays.put(normalizeDate(checkIn.getDate()), true);
+            }
+        }
+        int symptomBurdenDays = symptomDays.size();
+
+        // Calculate Zone Distribution
+        int green = 0, yellow = 0, red = 0;
+        for (PEFReading reading : pefReadings) {
+            if ("green".equalsIgnoreCase(reading.getZone())) green++;
+            else if ("yellow".equalsIgnoreCase(reading.getZone())) yellow++;
+            else if ("red".equalsIgnoreCase(reading.getZone())) red++;
+        }
+
+        // Count Triage Incidents
+        int triageIncidents = 0;
+        for (TriageSession session : triageSessions) {
+            if ("emergency".equalsIgnoreCase(session.getDecision()) || session.isEscalated()) {
+                triageIncidents++;
+            }
+        }
+
         return new Report(
                 userId,
                 days,
@@ -123,7 +260,13 @@ public class ReportGenerator {
                 totalRescue,
                 totalController,
                 avgRescue,
-                avgController
+                avgController,
+                controllerAdherence,
+                symptomBurdenDays,
+                green,
+                yellow,
+                red,
+                triageIncidents
         );
     }
 
@@ -147,13 +290,13 @@ public class ReportGenerator {
                 controllerRepository.getLogsForUserInDateRange(userId, startDate, endDate, new ControllerMedicineRepository.LoadCallback() {
                     @Override
                     public void onSuccess(List<ControllerMedicineLog> controllerLogs) {
-                        generatePDF(report, rescueLogs, controllerLogs, action);
+                        fetchOptionalDataForPdf(userId, startDate, endDate, report, rescueLogs, controllerLogs, action);
                     }
 
                     @Override
                     public void onFailure(String error) {
                         dismissLoading();
-                        Toast.makeText(context, "Failed to load data", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "Failed to load controller data", Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -161,9 +304,72 @@ public class ReportGenerator {
             @Override
             public void onFailure(String error) {
                 dismissLoading();
-                Toast.makeText(context, "Failed to load data", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "Failed to load rescue data", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void fetchOptionalDataForPdf(String userId, Date startDate, Date endDate, Report report,
+                                         List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                         ReportAction action) {
+        triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
+            @Override
+            public void onSuccess(List<TriageSession> allTriageSessions) {
+                fetchPEFForPdf(userId, startDate, endDate, report, rescueLogs, controllerLogs, allTriageSessions, action);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Triage fetch failed: " + error);
+                fetchPEFForPdf(userId, startDate, endDate, report, rescueLogs, controllerLogs, new ArrayList<>(), action);
+            }
+        });
+    }
+
+    private void fetchPEFForPdf(String userId, Date startDate, Date endDate, Report report,
+                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                List<TriageSession> triageSessions, ReportAction action) {
+        pefRepository.getPEFReadingsForUser(userId, new PEFRepository.LoadCallback<List<PEFReading>>() {
+            @Override
+            public void onSuccess(List<PEFReading> allPefReadings) {
+                fetchSymptomsForPdf(userId, startDate, endDate, report, rescueLogs, controllerLogs, triageSessions, allPefReadings, action);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "PEF fetch failed: " + error);
+                fetchSymptomsForPdf(userId, startDate, endDate, report, rescueLogs, controllerLogs, triageSessions, new ArrayList<>(), action);
+            }
+        });
+    }
+
+    private void fetchSymptomsForPdf(String userId, Date startDate, Date endDate, Report report,
+                                     List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                     List<TriageSession> triageSessions, List<PEFReading> pefReadings,
+                                     ReportAction action) {
+        symptomRepository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<SymptomCheckIn> allSymptomCheckIns) {
+                finalizePdfGeneration(startDate, endDate, report, rescueLogs, controllerLogs, triageSessions, pefReadings, allSymptomCheckIns, action);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Log.e(TAG, "Symptom fetch failed: " + error);
+                finalizePdfGeneration(startDate, endDate, report, rescueLogs, controllerLogs, triageSessions, pefReadings, new ArrayList<>(), action);
+            }
+        });
+    }
+
+    private void finalizePdfGeneration(Date startDate, Date endDate, Report report,
+                                       List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                       List<TriageSession> allTriageSessions, List<PEFReading> allPefReadings,
+                                       List<SymptomCheckIn> allSymptomCheckIns, ReportAction action) {
+        List<TriageSession> triageSessions = filterByDate(allTriageSessions, startDate, endDate);
+        List<PEFReading> pefReadings = filterByDate(allPefReadings, startDate, endDate);
+        List<SymptomCheckIn> symptomCheckIns = filterByDate(allSymptomCheckIns, startDate, endDate);
+
+        generatePDF(report, rescueLogs, controllerLogs, triageSessions, pefReadings, symptomCheckIns, action);
     }
 
     private void showLoading() {
@@ -185,10 +391,12 @@ public class ReportGenerator {
         }
     }
 
-    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs, ReportAction action) {
+    private void generatePDF(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                             List<TriageSession> triageSessions, List<PEFReading> pefReadings, List<SymptomCheckIn> symptomCheckIns,
+                             ReportAction action) {
         Log.d(TAG, "generatePDF: Starting generation");
         
-        String htmlContent = buildReportHtml(report, rescueLogs, controllerLogs);
+        String htmlContent = buildReportHtml(report, rescueLogs, controllerLogs, triageSessions, pefReadings, symptomCheckIns);
         Log.d(TAG, "generatePDF: HTML generated, length: " + htmlContent.length());
 
         String fileName = "AsthmaReport_" + report.getDays() + "days_" + System.currentTimeMillis() + ".pdf";
@@ -197,7 +405,8 @@ public class ReportGenerator {
         renderHtmlToPdf(htmlContent, file, action);
     }
 
-    private String buildReportHtml(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs) {
+    private String buildReportHtml(Report report, List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
+                                   List<TriageSession> triageSessions, List<PEFReading> pefReadings, List<SymptomCheckIn> symptomCheckIns) {
         SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
         String dateRange = sdf.format(new Date(report.getStartDate())) + " - " + sdf.format(new Date(report.getEndDate()));
         String patientName = FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getEmail() : "Patient";
@@ -217,7 +426,6 @@ public class ReportGenerator {
         List<Integer> controllerData = new ArrayList<>();
         
         // For month grouping
-        List<String> monthLabels = new ArrayList<>();
         String currentMonth = "";
         int currentMonthStart = 0;
 
@@ -232,14 +440,6 @@ public class ReportGenerator {
 
             String monthName = monthFmt.format(calendar.getTime());
             if (!monthName.equals(currentMonth)) {
-                if (!currentMonth.isEmpty()) {
-                    // Add previous month
-                    // We need to know start index and end index (i-1)
-                    // But Chart.js doesn't support multi-level axis easily without plugins.
-                    // We will use a simpler approach: just label the days, and maybe add month to the first day of month?
-                    // Or use the user's request: "label the months in the x-axis similarly to the attached image"
-                    // The attached image has a second x-axis for months.
-                }
                 currentMonth = monthName;
                 currentMonthStart = i;
             }
@@ -254,8 +454,29 @@ public class ReportGenerator {
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
 
-        // Re-loop to build the month ranges for the JS
-        // We will inject a custom plugin script into the HTML to draw the month labels
+        // Triage Incidents Table
+        StringBuilder triageRows = new StringBuilder();
+        SimpleDateFormat triageDateFmt = new SimpleDateFormat("MMM d, HH:mm", Locale.getDefault());
+        boolean hasTriageIncidents = false;
+        for (TriageSession session : triageSessions) {
+            if ("emergency".equalsIgnoreCase(session.getDecision()) || session.isEscalated()) {
+                hasTriageIncidents = true;
+                String reason = session.getEscalationReason() != null ? session.getEscalationReason() : session.getDecision();
+                triageRows.append("<tr>")
+                    .append("<td>").append(triageDateFmt.format(session.getStartTime())).append("</td>")
+                    .append("<td>").append(reason).append("</td>")
+                    .append("<td>").append(session.getUserResponse() != null ? session.getUserResponse() : "N/A").append("</td>")
+                    .append("</tr>");
+            }
+        }
+        String triageTableHtml = "";
+        if (hasTriageIncidents) {
+            triageTableHtml = "<div class='chart-box triage-incidents'><h2>Notable Triage Incidents</h2>" +
+                    "<table><thead><tr><th>Date/Time</th><th>Reason</th><th>Outcome</th></tr></thead>" +
+                    "<tbody>" + triageRows.toString() + "</tbody></table></div>";
+        }
+
+        // Month ranges JS
         StringBuilder monthRangesJs = new StringBuilder("[");
         calendar.setTime(new Date(report.getStartDate()));
         currentMonth = "";
@@ -272,7 +493,6 @@ public class ReportGenerator {
             }
             calendar.add(Calendar.DAY_OF_YEAR, 1);
         }
-        // Add last month
         monthRangesJs.append("{label:'").append(currentMonth).append("', start:").append(currentMonthStart).append(", end:").append(report.getDays()-1).append("}");
         monthRangesJs.append("]");
 
@@ -294,26 +514,32 @@ public class ReportGenerator {
         rescueJs.append("]");
         controllerJs.append("]");
 
-        // Determine font size based on density
+        // Zone Data for Pie Chart
+        int green = report.getGreenZoneCount();
+        int yellow = report.getYellowZoneCount();
+        int red = report.getRedZoneCount();
+        String zoneDataJs = "[" + green + "," + yellow + "," + red + "]";
+
         int tickFontSize = report.getDays() > 30 ? 8 : 10;
 
         return "<!DOCTYPE html><html><head>" +
                 "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
-                // Use UMD build to ensure global 'Chart' variable is available
                 "<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script>" +
                 "<style>" +
                 "body { font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 40px 0 40px; color: #333; }" +
                 ".header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #4F46E5; padding-bottom: 20px; }" +
                 ".header h1 { color: #4F46E5; margin: 0; font-size: 28px; }" +
                 ".meta { color: #666; margin-top: 10px; font-size: 14px; }" +
-                ".metrics { display: flex; gap: 20px; margin-bottom: 40px; }" +
-                ".card { flex: 1; background: #F3F4F6; padding: 20px; border-radius: 10px; text-align: center; }" +
-                ".card h3 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; color: #6B7280; letter-spacing: 1px; }" +
-                ".card .val { font-size: 24px; font-weight: bold; color: #111827; }" +
+                ".metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }" +
+                ".card { background: #F3F4F6; padding: 15px; border-radius: 10px; text-align: center; }" +
+                ".card h3 { margin: 0 0 5px; font-size: 11px; text-transform: uppercase; color: #6B7280; letter-spacing: 1px; }" +
+                ".card .val { font-size: 20px; font-weight: bold; color: #111827; }" +
                 ".charts { margin-bottom: 40px; }" +
-                ".chart-box { margin-bottom: 30px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px; }" +
+                ".chart-box { margin-bottom: 30px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px; page-break-inside: avoid; }" +
                 ".chart-box h2 { font-size: 18px; color: #111827; border-left: 4px solid #4F46E5; padding-left: 10px; margin-bottom: 15px; }" +
                 "canvas { width: 100% !important; height: 250px !important; }" +
+                ".pie-container { height: 300px !important; display: flex; justify-content: center; }" +
+                ".pie-container canvas { width: auto !important; height: 100% !important; }" +
                 "table { width: 100%; border-collapse: collapse; font-size: 13px; }" +
                 "th { text-align: left; padding: 12px; background: #F9FAFB; color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E5E7EB; }" +
                 "td { padding: 12px; border-bottom: 1px solid #E5E7EB; }" +
@@ -323,15 +549,17 @@ public class ReportGenerator {
                 "<h1>Asthma Control Report</h1>" +
                 "<div class='meta'>" + patientName + " &bull; " + dateRange + "</div>" +
                 "</div>" +
-                "<div class='metrics'>" +
-                "<div class='card'><h3>Total Rescue</h3><div class='val'>" + report.getTotalRescueUses() + "</div></div>" +
-                "<div class='card'><h3>Total Controller</h3><div class='val'>" + report.getTotalControllerDoses() + "</div></div>" +
+                "<div class='metrics-grid'>" +
                 "<div class='card'><h3>Avg Rescue/Day</h3><div class='val'>" + String.format(Locale.US, "%.1f", report.getAvgRescuePerDay()) + "</div></div>" +
+                "<div class='card'><h3>Controller Adherence</h3><div class='val'>" + String.format(Locale.US, "%.0f%%", report.getControllerAdherence()) + "</div></div>" +
+                "<div class='card'><h3>Symptom Burden</h3><div class='val'>" + report.getSymptomBurdenDays() + " days</div></div>" +
                 "</div>" +
                 "<div class='charts'>" +
                 "<div class='chart-box'><h2>Rescue Inhaler Trends</h2><canvas id='rescueChart'></canvas></div>" +
                 "<div class='chart-box'><h2>Controller Medicine Trends</h2><canvas id='controllerChart'></canvas></div>" +
+                "<div class='chart-box'><h2>Zone Distribution</h2><div class='pie-container'><canvas id='zoneChart'></canvas></div></div>" +
                 "</div>" +
+                triageTableHtml +
                 "<div class='chart-box daily-breakdown'>" +
                 "<h2>Daily Breakdown</h2>" +
                 "<table><thead><tr><th>Date</th><th>Rescue Puffs</th><th>Controller Doses</th></tr></thead>" +
@@ -385,6 +613,7 @@ public class ReportGenerator {
                 "  };" +
                 "  new Chart(document.getElementById('rescueChart'), { type: 'bar', data: { labels: " + labelsJs + ", datasets: [{ label: 'Puffs', data: " + rescueJs + ", backgroundColor: '#3B82F6', borderRadius: 4 }] }, options: commonOptions, plugins: [monthLabelPlugin] });" +
                 "  new Chart(document.getElementById('controllerChart'), { type: 'bar', data: { labels: " + labelsJs + ", datasets: [{ label: 'Doses', data: " + controllerJs + ", backgroundColor: '#10B981', borderRadius: 4 }] }, options: commonOptions, plugins: [monthLabelPlugin] });" +
+                "  new Chart(document.getElementById('zoneChart'), { type: 'pie', data: { labels: ['Green', 'Yellow', 'Red'], datasets: [{ data: " + zoneDataJs + ", backgroundColor: ['#4CAF50', '#FFC107', '#F44336'] }] }, options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });" +
                 "  setTimeout(applyPagination, 100);" +
                 "} catch(e) {" +
                 "  console.error('Chart Init Error:', e);" +
@@ -393,7 +622,7 @@ public class ReportGenerator {
                 "  const density = window.devicePixelRatio || 1;" +
                 "  const pageHeightPx = 1754;" +
                 "  const pageHeight = pageHeightPx / density;" +
-                "  const elements = Array.from(document.querySelectorAll('.header, .metrics, .chart-box:not(.daily-breakdown), .daily-breakdown h2, tr'));" +
+                "  const elements = Array.from(document.querySelectorAll('.header, .metrics-grid, .chart-box:not(.daily-breakdown), .daily-breakdown h2, tr'));" +
                 "  for (let i = 0; i < elements.length; i++) {" +
                 "    const el = elements[i];" +
                 "    if (el.offsetParent === null) continue;" +
