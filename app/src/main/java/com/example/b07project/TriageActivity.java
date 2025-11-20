@@ -14,7 +14,12 @@ import androidx.cardview.widget.CardView;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.PEFRepository;
+import com.example.b07project.repository.TriageRepository;
 import com.example.b07project.utils.NotificationHelper;
+import com.google.firebase.auth.FirebaseAuth;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class TriageActivity extends AppCompatActivity {
 
@@ -123,18 +128,13 @@ public class TriageActivity extends AppCompatActivity {
     private void makeTriageDecision() {
         // Check for critical red flags
         boolean hasCriticalFlags = currentSession.hasCriticalFlags();
-        boolean highRescueUse = currentSession.getRescueAttemptsLast3Hours() >= 3;
-        boolean redZone = "red".equals(currentSession.getCurrentZone());
         
         if (hasCriticalFlags) {
             // EMERGENCY: Any red flag = immediate emergency
             showEmergencyDecision();
-        } else if (highRescueUse || redZone) {
-            // MONITOR: High rescue use or red zone = home monitoring with timer
-            showHomeMonitoringDecision();
         } else {
-            // HOME STEPS: Low risk = home management
-            showHomeStepsDecision();
+            // MONITOR: All non-emergency cases get monitored with timer
+            showHomeMonitoringDecision();
         }
         
         // Save session
@@ -144,8 +144,11 @@ public class TriageActivity extends AppCompatActivity {
                 currentSession.setId(documentId);
                 
                 // Send Parent Alert
+                String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+                if (userName == null || userName.isEmpty()) userName = "User";
+                
                 String alertTitle = "Triage Started";
-                String alertMessage = "A triage session has been started. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
+                String alertMessage = userName + " started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
                 NotificationHelper.sendAlert(TriageActivity.this, currentSession.getUserId(), alertTitle, alertMessage);
             }
 
@@ -210,37 +213,8 @@ public class TriageActivity extends AppCompatActivity {
         tvActionSteps.setText(stepsText.toString().trim());
         
         layoutTimer.setVisibility(View.VISIBLE);
-        startCountdownTimer();
-        
-        cardDecision.setVisibility(View.VISIBLE);
-        btnGetGuidance.setVisibility(View.GONE);
-    }
-
-    private void showHomeStepsDecision() {
-        currentSession.setDecision("monitor");
-        
-        List<String> steps = new ArrayList<>();
-        steps.add("1. Take your rescue inhaler if needed");
-        steps.add("2. Rest in a comfortable position");
-        steps.add("3. Avoid triggers if known");
-        steps.add("4. Monitor your symptoms");
-        steps.add("5. Contact your doctor if symptoms persist");
-        
-        currentSession.setGuidanceShown("Follow your asthma action plan and monitor symptoms.");
-        currentSession.setActionSteps(steps);
-        
-        tvDecisionTitle.setText("🏠 HOME MANAGEMENT");
-        tvDecisionTitle.setTextColor(getColor(android.R.color.holo_blue_dark));
-        tvDecisionGuidance.setText("Your symptoms can likely be managed at home. Follow these steps:");
-        
-        StringBuilder stepsText = new StringBuilder();
-        for (String step : steps) {
-            stepsText.append(step).append("\n");
-        }
-        tvActionSteps.setText(stepsText.toString().trim());
-        
-        layoutTimer.setVisibility(View.GONE);
         layoutResponseButtons.setVisibility(View.VISIBLE);
+        startCountdownTimer();
         
         cardDecision.setVisibility(View.VISIBLE);
         btnGetGuidance.setVisibility(View.GONE);
@@ -298,7 +272,10 @@ public class TriageActivity extends AppCompatActivity {
         triageRepository.saveTriageSession(currentSession, null);
         
         // Send Parent Alert
-        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", "Emergency assistance requested during triage.");
+        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+        if (userName == null || userName.isEmpty()) userName = "User";
+        
+        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", userName + " requested emergency assistance during triage.");
         
         // Show emergency guidance
         showEmergencyDecision();
