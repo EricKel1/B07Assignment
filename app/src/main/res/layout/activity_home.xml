@@ -20,7 +20,17 @@
             android:textColor="#1976D2"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"/>
+            app:layout_constraintEnd_toStartOf="@id/btnNotifications"/>
+
+        <ImageButton
+            android:id="@+id/btnNotifications"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_popup_reminder"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:contentDescription="Notifications" />
 
         <TextView
             android:id="@+id/tvSubtitle"
@@ -82,6 +92,16 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="View History"
+                    android:textSize="16sp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_marginTop="8dp"
+                    android:paddingVertical="12dp"/>
+
+                <Button
+                    android:id="@+id/btnInventory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Inventory"
                     android:textSize="16sp"
                     style="@style/Widget.Material3.Button.OutlinedButton"
                     android:layout_marginTop="8dp"

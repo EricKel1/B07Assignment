@@ -21,6 +21,7 @@ import com.example.b07project.models.ControllerMedicineLog;
 import com.example.b07project.models.MedicineLog;
 import com.example.b07project.models.RescueInhalerLog;
 import com.example.b07project.repository.ControllerMedicineRepository;
+import com.example.b07project.repository.InventoryRepository;
 import com.example.b07project.repository.RescueInhalerRepository;
 import com.example.b07project.services.MotivationService;
 import com.google.firebase.auth.FirebaseAuth;
@@ -39,6 +40,13 @@ import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
 import nl.dionsegijn.konfetti.core.models.Shape;
 import nl.dionsegijn.konfetti.core.models.Size;
 
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import java.util.HashMap;
+import java.util.Map;
+
 public class LogRescueInhalerActivity extends AppCompatActivity {
     
     private RadioGroup rgMedicineType;
@@ -52,16 +60,21 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
+    private Spinner spUserSelector;
     
     private int doseCount = 1;
     private Date timestamp;
     private Date scheduledTime = null;
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
+    private InventoryRepository inventoryRepository;
     private MotivationService motivationService;
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     private KonfettiView konfettiView;
+    
+    private Map<String, String> childrenMap = new HashMap<>();
+    private List<String> childIds = new ArrayList<>();
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +84,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
         controllerRepository = new ControllerMedicineRepository();
+        inventoryRepository = new InventoryRepository(this);
         motivationService = new MotivationService(this);
         dateFormat = new SimpleDateFormat("MMM dd, yyyy 'at' hh:mm a", Locale.getDefault());
         timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
@@ -85,9 +99,11 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         updateDoseCountDisplay();
         
         setupListeners();
+        fetchChildren();
     }
     
     private void initializeViews() {
+        spUserSelector = findViewById(R.id.spUserSelector);
         rgMedicineType = findViewById(R.id.rgMedicineType);
         rbRescue = findViewById(R.id.rbRescue);
         rbController = findViewById(R.id.rbController);
@@ -112,6 +128,29 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
         progress = findViewById(R.id.progress);
     }
+
+    private void fetchChildren() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore.getInstance().collection("children")
+                .whereEqualTo("parentId", userId)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    List<String> names = new ArrayList<>();
+                    names.add("Log for: Me (Parent)");
+                    childIds.clear();
+                    childIds.add(null);
+                    
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        names.add("Log for: " + doc.getString("name"));
+                        childIds.add(doc.getId());
+                    }
+                    
+                    ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, names);
+                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                    spUserSelector.setAdapter(adapter);
+                });
+    }
+
     
     private void setupListeners() {
         rgMedicineType.setOnCheckedChangeListener((group, checkedId) -> {
@@ -210,6 +249,13 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
+        // Get selected child ID
+        String selectedChildId = null;
+        if (spUserSelector.getAdapter() != null && !childIds.isEmpty()) {
+            selectedChildId = childIds.get(spUserSelector.getSelectedItemPosition());
+        }
+        final String childIdToUse = selectedChildId;
+
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(
                 currentUser.getUid(),
@@ -224,13 +270,31 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             controllerRepository.saveLog(log, new ControllerMedicineRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
-                    // Update controller streak after successful save
-                    motivationService.updateControllerStreak(() -> {
-                        showLoading(false);
-                        Toast.makeText(LogRescueInhalerActivity.this, 
-                            "Controller medicine logged successfully! Streak updated.", 
-                            Toast.LENGTH_LONG).show();
-                        finish();
+                    // Decrement inventory
+                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Controller", doseCount, new InventoryRepository.SaveCallback() {
+                        @Override
+                        public void onSuccess() {
+                            // Continue with existing flow
+                            motivationService.updateControllerStreak(() -> {
+                                showLoading(false);
+                                Toast.makeText(LogRescueInhalerActivity.this, 
+                                    "Controller medicine logged successfully! Streak updated.", 
+                                    Toast.LENGTH_LONG).show();
+                                finish();
+                            });
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            // Log error but don't stop the flow
+                            android.util.Log.e("Inventory", "Failed to decrement: " + error);
+                            motivationService.updateControllerStreak(() -> {
+                                showLoading(false);
+                                Toast.makeText(LogRescueInhalerActivity.this, 
+                                    "Controller medicine logged successfully! Streak updated.", 
+                                    Toast.LENGTH_LONG).show();
+                                finish();
+                            });
+                        }
                     });
                 }
                 
@@ -252,13 +316,27 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             rescueRepository.saveLog(log, new RescueInhalerRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
-                    showLoading(false);
-                    // Check test badge after logging
-                    motivationService.checkFirstRescueBadge(() -> {
-                        // Check low rescue badge after test badge
-                        motivationService.checkLowRescueBadge(() -> {
-                            // Delay finish to allow dialog to show
-                        });
+                    // Decrement inventory
+                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
+                        @Override
+                        public void onSuccess() {
+                            showLoading(false);
+                            // Check test badge after logging
+                            motivationService.checkFirstRescueBadge(() -> {
+                                // Check low rescue badge after test badge
+                                motivationService.checkLowRescueBadge(() -> {
+                                    // Delay finish to allow dialog to show
+                                });
+                            });
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            android.util.Log.e("Inventory", "Failed to decrement: " + error);
+                            showLoading(false);
+                            motivationService.checkFirstRescueBadge(() -> {
+                                motivationService.checkLowRescueBadge(() -> {});
+                            });
+                        }
                     });
                 }
                 
