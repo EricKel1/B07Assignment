@@ -11,10 +11,14 @@ import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
 import com.google.firebase.auth.FirebaseAuth;
 
+import android.widget.ImageButton;
+
 public class HomeActivity extends AppCompatActivity {
     
     private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut;
     private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
+    private Button btnInventory;
+    private ImageButton btnNotifications;
     private TextView tvCurrentZone, tvZonePercentage;
     private PEFRepository pefRepository;
     
@@ -41,7 +45,9 @@ public class HomeActivity extends AppCompatActivity {
         btnInhalerTechnique = findViewById(R.id.btnInhalerTechnique);
         btnMotivation = findViewById(R.id.btnMotivation);
         btnStatisticsReports = findViewById(R.id.btnStatisticsReports);
+        btnInventory = findViewById(R.id.btnInventory);
         btnSignOut = findViewById(R.id.btnSignOut);
+        btnNotifications = findViewById(R.id.btnNotifications);
         
         tvCurrentZone = findViewById(R.id.tvCurrentZone);
         tvZonePercentage = findViewById(R.id.tvZonePercentage);
@@ -51,6 +57,18 @@ public class HomeActivity extends AppCompatActivity {
         btnLogRescueInhaler.setOnClickListener(v -> {
             startActivity(new Intent(this, LogRescueInhalerActivity.class));
         });
+
+        if (btnInventory != null) {
+            btnInventory.setOnClickListener(v -> {
+                startActivity(new Intent(this, InventoryActivity.class));
+            });
+        }
+
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                startActivity(new Intent(this, NotificationCenterActivity.class));
+            });
+        }
         
         btnViewHistory.setOnClickListener(v -> {
             startActivity(new Intent(this, RescueInhalerHistoryActivity.class));
