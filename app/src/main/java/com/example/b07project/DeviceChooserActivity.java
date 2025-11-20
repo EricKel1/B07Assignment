@@ -88,9 +88,10 @@ public class DeviceChooserActivity extends AppCompatActivity {
                         tvNoChildren.setVisibility(View.VISIBLE);
                     } else {
                         for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                            String childId = document.getId();
                             String childName = document.getString("name");
                             if (childName != null && !childName.isEmpty()) {
-                                addChildButton(childName);
+                                addChildButton(childId, childName);
                             }
                         }
                     }
@@ -101,7 +102,7 @@ public class DeviceChooserActivity extends AppCompatActivity {
                 });
     }
 
-    private void addChildButton(String childName) {
+    private void addChildButton(String childId, String childName) {
         Button childButton = new Button(this);
         childButton.setText("I'm " + childName + " (Child)");
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -111,7 +112,10 @@ public class DeviceChooserActivity extends AppCompatActivity {
         params.setMargins(0, 8, 0, 8);
         childButton.setLayoutParams(params);
         childButton.setOnClickListener(v -> {
-            Toast.makeText(this, "Child selection for " + childName + " not implemented yet", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(DeviceChooserActivity.this, HomeActivity.class);
+            intent.putExtra("EXTRA_CHILD_ID", childId);
+            intent.putExtra("EXTRA_CHILD_NAME", childName);
+            startActivity(intent);
         });
         llChildrenButtons.addView(childButton);
     }
