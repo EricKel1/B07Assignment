@@ -128,4 +128,13 @@
     <!-- Format strings -->
     <string name="format_puff_count_singular">%d puff</string>
     <string name="format_puff_count_plural">%d puffs</string>
+
+    <!-- Strings for Device Chooser Activity -->
+    <string name="device_chooser_title">Who is using SMART AIR on this device?</string>
+    <string name="device_chooser_subtitle">Choose who this device is for.</string>
+    <string name="im_the_parent">I\'m %1$s (Parent)</string>
+
+    <!-- Strings for Parent Dashboard Activity -->
+    <string name="parent_dashboard_title">This is the parent’s dashboard.</string>
+    <string name="log_out">Log Out</string>
 </resources>

@@ -6,6 +6,7 @@ public interface LoginContract {
         void showError(String message);
         void navigateToHome();
         void navigateToProviderHome();
+        void navigateToDeviceChooser();
         String getEmailInput();
         String getPasswordInput();
     }
