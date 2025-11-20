@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
@@ -31,6 +32,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 
 public class InventoryActivity extends AppCompatActivity {
 
@@ -58,7 +62,7 @@ public class InventoryActivity extends AppCompatActivity {
         adapter = new InventoryAdapter();
         rvInventory.setAdapter(adapter);
 
-        fabAdd.setOnClickListener(v -> showAddDialog());
+        fabAdd.setOnClickListener(v -> showMedicineDialog(null));
 
         fetchChildren();
         loadInventory();
@@ -93,17 +97,22 @@ public class InventoryActivity extends AppCompatActivity {
         });
     }
 
-    private void showAddDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    private void showMedicineDialog(MedicineInventory medicine) {
+        boolean isEditing = medicine != null;
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this, com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_add_medicine, null);
         builder.setView(view);
-        builder.setTitle("Add Medicine");
+        builder.setTitle(isEditing ? "Edit Medicine" : "Add Medicine");
 
-        EditText etName = view.findViewById(R.id.etName);
+        TextInputEditText etName = view.findViewById(R.id.etName);
         Spinner spChild = view.findViewById(R.id.spChild);
         Spinner spType = view.findViewById(R.id.spType);
-        EditText etTotalDoses = view.findViewById(R.id.etTotalDoses);
-        TextView tvExpiry = view.findViewById(R.id.tvExpiry);
+        TextInputEditText etTotalDoses = view.findViewById(R.id.etTotalDoses);
+        TextInputLayout tilRemainingDoses = view.findViewById(R.id.tilRemainingDoses);
+        TextInputEditText etRemainingDoses = view.findViewById(R.id.etRemainingDoses);
+        TextInputEditText etExpiry = view.findViewById(R.id.etExpiry);
+        Button btnDelete = view.findViewById(R.id.btnDelete);
         
         // Setup Child Spinner
         List<String> childNames = new ArrayList<>();
@@ -127,17 +136,78 @@ public class InventoryActivity extends AppCompatActivity {
 
         final Calendar calendar = Calendar.getInstance();
         final Date[] expiryDate = {null};
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
 
-        tvExpiry.setOnClickListener(v -> {
+        etExpiry.setOnClickListener(v -> {
             new DatePickerDialog(this, (view1, year, month, dayOfMonth) -> {
                 calendar.set(year, month, dayOfMonth);
                 expiryDate[0] = calendar.getTime();
-                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy", Locale.getDefault());
-                tvExpiry.setText(sdf.format(expiryDate[0]));
+                etExpiry.setText(sdf.format(expiryDate[0]));
             }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show();
         });
 
-        builder.setPositiveButton("Add", (dialog, which) -> {
+        AlertDialog dialog = builder.create();
+
+        // Pre-fill data if editing
+        if (isEditing) {
+            etName.setText(medicine.getName());
+            etTotalDoses.setText(String.valueOf(medicine.getTotalDoses()));
+            
+            tilRemainingDoses.setVisibility(View.VISIBLE);
+            etRemainingDoses.setText(String.valueOf(medicine.getRemainingDoses()));
+            
+            if (medicine.getExpiryDate() != null) {
+                expiryDate[0] = medicine.getExpiryDate();
+                calendar.setTime(expiryDate[0]);
+                etExpiry.setText(sdf.format(expiryDate[0]));
+            }
+            
+            // Set spinners
+            if (medicine.getChildId() != null) {
+                int index = childIds.indexOf(medicine.getChildId());
+                if (index >= 0) spChild.setSelection(index);
+            }
+            
+            if (medicine.getType() != null) {
+                int index = typeAdapter.getPosition(medicine.getType());
+                if (index >= 0) spType.setSelection(index);
+            }
+            
+            // Setup Delete Button
+            btnDelete.setVisibility(View.VISIBLE);
+            btnDelete.setOnClickListener(v -> {
+                new AlertDialog.Builder(this)
+                    .setTitle("Delete Medicine")
+                    .setMessage("Are you sure you want to delete " + medicine.getName() + "?")
+                    .setPositiveButton("Delete", (d, w) -> {
+                        repository.deleteMedicine(medicine.getId(), new InventoryRepository.SaveCallback() {
+                            @Override
+                            public void onSuccess() {
+                                loadInventory();
+                                dialog.dismiss();
+                                Toast.makeText(InventoryActivity.this, "Medicine deleted", Toast.LENGTH_SHORT).show();
+                            }
+                            @Override
+                            public void onFailure(String error) {
+                                Toast.makeText(InventoryActivity.this, "Failed to delete: " + error, Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            });
+        }
+
+        dialog.setButton(AlertDialog.BUTTON_POSITIVE, isEditing ? "Save" : "Add", (d, which) -> {
+            // This listener is overridden below to prevent auto-dismiss on validation error
+        });
+        
+        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, "Cancel", (d, which) -> dialog.dismiss());
+
+        dialog.show();
+        
+        // Override positive button to handle validation
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String type = spType.getSelectedItem().toString();
             String dosesStr = etTotalDoses.getText().toString().trim();
@@ -150,27 +220,47 @@ public class InventoryActivity extends AppCompatActivity {
                 return;
             }
 
-            int doses = Integer.parseInt(dosesStr);
-            MedicineInventory medicine = new MedicineInventory(userId, name, type, doses, doses, expiryDate[0], new Date());
-            medicine.setChildId(selectedChildId);
-            medicine.setChildName(selectedChildName);
+            int totalDoses = Integer.parseInt(dosesStr);
+            int remainingDoses = totalDoses;
+            
+            if (isEditing) {
+                String remainingStr = etRemainingDoses.getText().toString().trim();
+                if (!remainingStr.isEmpty()) {
+                    remainingDoses = Integer.parseInt(remainingStr);
+                }
+            }
 
-            repository.addMedicine(medicine, new InventoryRepository.SaveCallback() {
+            MedicineInventory newMedicine = isEditing ? medicine : new MedicineInventory();
+            newMedicine.setUserId(userId);
+            newMedicine.setName(name);
+            newMedicine.setType(type);
+            newMedicine.setTotalDoses(totalDoses);
+            newMedicine.setRemainingDoses(remainingDoses);
+            newMedicine.setExpiryDate(expiryDate[0]);
+            newMedicine.setChildId(selectedChildId);
+            newMedicine.setChildName(selectedChildName);
+            if (!isEditing) newMedicine.setPurchaseDate(new Date());
+
+            InventoryRepository.SaveCallback callback = new InventoryRepository.SaveCallback() {
                 @Override
                 public void onSuccess() {
                     loadInventory();
-                    Toast.makeText(InventoryActivity.this, "Medicine added", Toast.LENGTH_SHORT).show();
+                    dialog.dismiss();
+                    Toast.makeText(InventoryActivity.this, isEditing ? "Medicine updated" : "Medicine added", Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
                 public void onFailure(String error) {
-                    Toast.makeText(InventoryActivity.this, "Failed to add: " + error, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(InventoryActivity.this, "Failed: " + error, Toast.LENGTH_SHORT).show();
                 }
-            });
-        });
+            };
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+            if (isEditing) {
+                repository.updateMedicine(newMedicine, callback);
+            } else {
+                repository.addMedicine(newMedicine, callback);
+            }
+        });
     }
 
     private class InventoryAdapter extends RecyclerView.Adapter<InventoryAdapter.ViewHolder> {
@@ -211,26 +301,7 @@ public class InventoryActivity extends AppCompatActivity {
                 holder.tvAlert.setVisibility(View.GONE);
             }
             
-            holder.itemView.setOnLongClickListener(v -> {
-                new AlertDialog.Builder(InventoryActivity.this)
-                    .setTitle("Delete Medicine")
-                    .setMessage("Are you sure you want to delete " + med.getName() + "?")
-                    .setPositiveButton("Delete", (dialog, which) -> {
-                        repository.deleteMedicine(med.getId(), new InventoryRepository.SaveCallback() {
-                            @Override
-                            public void onSuccess() {
-                                loadInventory();
-                            }
-                            @Override
-                            public void onFailure(String error) {
-                                Toast.makeText(InventoryActivity.this, "Failed to delete", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-                return true;
-            });
+            holder.itemView.setOnClickListener(v -> showMedicineDialog(med));
         }
 
         @Override
