@@ -65,36 +65,35 @@
 
             <Button
                 android:id="@+id/btnShareReport"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Share"
                 android:textColor="@color/primary_blue"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:textSize="12sp"
-                android:minHeight="36dp"
-                android:paddingVertical="0dp"/>
+                android:minHeight="40dp"
+                android:layout_marginBottom="4dp"/>
 
             <Button
                 android:id="@+id/btnDownloadReport"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="View"
+                android:text="Download"
                 android:textColor="@color/primary_blue"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:textSize="12sp"
-                android:minHeight="36dp"
-                android:paddingVertical="0dp"/>
+                android:minHeight="40dp"
+                android:layout_marginBottom="4dp"/>
 
             <Button
                 android:id="@+id/btnDeleteReport"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Delete"
                 android:textColor="#F44336"
-                style="@style/Widget.Material3.Button.TextButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:textSize="12sp"
-                android:minHeight="36dp"
-                android:paddingVertical="0dp"/>
+                android:minHeight="40dp"/>
 
         </LinearLayout>
 

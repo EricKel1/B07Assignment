@@ -789,50 +789,7 @@ public class ReportGenerator {
                         
                         // Small delay to allow the WebView to update its internal viewport/buffers after resize
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            Log.d(TAG, "onPageFinished: Starting PDF capture. Final Height: " + finalContentHeight);
-                            PdfDocument document = new PdfDocument();
-                            
-                            int totalPages = (int) Math.ceil((double) finalContentHeight / pageHeight);
-                            Log.d(TAG, "onPageFinished: Total pages to generate: " + totalPages);
-                            
-                            for (int i = 0; i < totalPages; i++) {
-                                PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create();
-                                PdfDocument.Page page = document.startPage(pageInfo);
-                                Canvas canvas = page.getCanvas();
-                                
-                                // Translate the canvas to draw the correct portion of the WebView
-                                canvas.save();
-                                canvas.translate(0, -i * pageHeight);
-                                // Clip to ensure we don't draw garbage from outside the page bounds (though translate handles most)
-                                canvas.clipRect(0, i * pageHeight, pageWidth, (i + 1) * pageHeight);
-                                
-                                view.draw(canvas);
-                                canvas.restore();
-                                
-                                document.finishPage(page);
-                            }
-                            
-                            try {
-                                Log.d(TAG, "onPageFinished: Writing document to file: " + outputFile.getAbsolutePath());
-                                FileOutputStream fos = new FileOutputStream(outputFile);
-                                document.writeTo(fos);
-                                fos.close();
-                                Log.d(TAG, "onPageFinished: Document written successfully");
-                                
-                                if (action == ReportAction.SHARE) {
-                                    sharePDF(outputFile);
-                                } else {
-                                    saveToPublicDocuments(outputFile, outputFile.getName());
-                                }
-                            } catch (IOException e) {
-                                Log.e(TAG, "onPageFinished: Error writing PDF", e);
-                                e.printStackTrace();
-                                Toast.makeText(context, "Error saving PDF", Toast.LENGTH_SHORT).show();
-                            } finally {
-                                document.close();
-                                Log.d(TAG, "onPageFinished: Document closed");
-                                dismissLoading();
-                            }
+                            generatePdfPages(view, pageWidth, pageHeight, finalContentHeight, outputFile, action);
                         }, 250); // Short delay for resize to take effect
                     }, 1500); // 1.5 seconds delay for JS charts
                 }
@@ -841,6 +798,74 @@ public class ReportGenerator {
             Log.d(TAG, "renderHtmlToPdf: Loading HTML data");
             webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
         });
+    }
+
+    private void generatePdfPages(WebView view, int pageWidth, int pageHeight, int contentHeight, File outputFile, ReportAction action) {
+        Log.d(TAG, "generatePdfPages: Starting PDF capture. Content Height: " + contentHeight);
+        PdfDocument document = new PdfDocument();
+        int totalPages = (int) Math.ceil((double) contentHeight / pageHeight);
+        Log.d(TAG, "generatePdfPages: Total pages to generate: " + totalPages);
+        
+        generatePageRecursive(document, view, 0, totalPages, pageWidth, pageHeight, outputFile, action);
+    }
+
+    private void generatePageRecursive(PdfDocument document, WebView view, int pageIndex, int totalPages, int pageWidth, int pageHeight, File outputFile, ReportAction action) {
+        if (pageIndex >= totalPages) {
+            savePdfInBackground(document, outputFile, action);
+            return;
+        }
+
+        try {
+            PdfDocument.PageInfo pageInfo = new PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageIndex + 1).create();
+            PdfDocument.Page page = document.startPage(pageInfo);
+            Canvas canvas = page.getCanvas();
+            
+            canvas.save();
+            canvas.translate(0, -pageIndex * pageHeight);
+            canvas.clipRect(0, pageIndex * pageHeight, pageWidth, (pageIndex + 1) * pageHeight);
+            
+            view.draw(canvas);
+            canvas.restore();
+            
+            document.finishPage(page);
+        } catch (Exception e) {
+            Log.e(TAG, "Error drawing page " + pageIndex, e);
+        }
+
+        // Schedule next page with a small delay to let UI thread breathe
+        new Handler(Looper.getMainLooper()).postDelayed(() -> 
+            generatePageRecursive(document, view, pageIndex + 1, totalPages, pageWidth, pageHeight, outputFile, action),
+            10 // 10ms delay between pages
+        );
+    }
+
+    private void savePdfInBackground(PdfDocument document, File outputFile, ReportAction action) {
+        Log.d(TAG, "savePdfInBackground: Saving PDF to disk...");
+        new Thread(() -> {
+            try {
+                FileOutputStream fos = new FileOutputStream(outputFile);
+                document.writeTo(fos);
+                fos.close();
+                Log.d(TAG, "savePdfInBackground: Document written successfully");
+                
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    if (action == ReportAction.SHARE) {
+                        sharePDF(outputFile);
+                    } else {
+                        saveToPublicDocuments(outputFile, outputFile.getName());
+                    }
+                });
+            } catch (IOException e) {
+                Log.e(TAG, "Error saving PDF", e);
+                new Handler(Looper.getMainLooper()).post(() -> 
+                    Toast.makeText(context, "Error saving PDF", Toast.LENGTH_SHORT).show()
+                );
+            } finally {
+                document.close();
+                Log.d(TAG, "savePdfInBackground: Document closed");
+                new Handler(Looper.getMainLooper()).post(this::dismissLoading);
+            }
+        }).start();
     }
 
     private void saveToPublicDocuments(File tempFile, String fileName) {
