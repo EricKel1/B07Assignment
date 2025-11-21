@@ -23,6 +23,16 @@
         <activity android:name=".TriageActivity" />
         <activity android:name=".IncidentHistoryActivity" />
         <activity android:name=".InhalerTechniqueActivity" />
+        <activity android:name=".ParentHomeActivity" />
+        <activity android:name=".ParentAddNewChildActivity"/>
+        <activity android:name=".ParentAddNewExistingChildActivity" />
+        <activity android:name=".ParentChildLogsActivity" />
+        <activity android:name=".ParentCreateNewCodeActivity" />
+        <activity android:name=".ProviderUseInviteCodeActivity" />
+        <activity android:name=".ChildLoginConduitActivity" />
+        <activity android:name=".ChildLoginThroughParentActivity" />
+        <activity android:name=".ChildLoginThroughSelfActivity" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
