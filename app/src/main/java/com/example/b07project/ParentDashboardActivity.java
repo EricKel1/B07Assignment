@@ -111,6 +111,34 @@ public class ParentDashboardActivity extends AppCompatActivity {
             public void onSetMedicationSchedule(String childName, String childId) {
                 showSetMedicationScheduleDialog(childName, childId);
             }
+
+            @Override
+            public void onViewTriggerPatterns(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, TriggerPatternsActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onViewIncidentHistory(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, IncidentHistoryActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onViewDailyCheckinHistory(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, SymptomHistoryActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onViewMedicineLoggingHistory(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, RescueInhalerHistoryActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
         });
         rvChildren.setLayoutManager(new LinearLayoutManager(this));
         rvChildren.setAdapter(adapter);

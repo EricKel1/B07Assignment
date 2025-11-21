@@ -12,6 +12,7 @@ import com.example.b07project.adapters.IncidentAdapter;
 import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.TriageRepository;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,18 @@ public class IncidentHistoryActivity extends AppCompatActivity {
         rvIncidents.setVisibility(View.GONE);
         tvNoIncidents.setVisibility(View.GONE);
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                tvNoIncidents.setVisibility(View.VISIBLE);
+                tvNoIncidents.setText("Please sign in to view incidents");
+                return;
+            }
+            userId = currentUser.getUid();
+        }
 
         triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
             @Override

@@ -78,16 +78,22 @@ public class SymptomHistoryActivity extends AppCompatActivity {
     }
 
     private void loadCheckIns() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "Please sign in to view history", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(this, "Please sign in to view history", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            userId = currentUser.getUid();
         }
 
         showLoading(true);
 
-        repository.getCheckInsForUser(currentUser.getUid(), new SymptomCheckInRepository.LoadCallback() {
+        repository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
             @Override
             public void onSuccess(List<SymptomCheckIn> checkIns) {
                 showLoading(false);

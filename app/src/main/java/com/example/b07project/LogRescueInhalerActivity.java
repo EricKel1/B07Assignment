@@ -41,7 +41,6 @@ import nl.dionsegijn.konfetti.core.models.Shape;
 import nl.dionsegijn.konfetti.core.models.Size;
 
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.HashMap;
@@ -60,7 +59,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
-    private Spinner spUserSelector;
     
     private int doseCount = 1;
     private Date timestamp;
@@ -72,9 +70,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     private KonfettiView konfettiView;
-    
-    private Map<String, String> childrenMap = new HashMap<>();
-    private List<String> childIds = new ArrayList<>();
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,11 +94,9 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         updateDoseCountDisplay();
         
         setupListeners();
-        fetchChildren();
     }
     
     private void initializeViews() {
-        spUserSelector = findViewById(R.id.spUserSelector);
         rgMedicineType = findViewById(R.id.rgMedicineType);
         rbRescue = findViewById(R.id.rbRescue);
         rbController = findViewById(R.id.rbController);
@@ -129,29 +122,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         progress = findViewById(R.id.progress);
     }
 
-    private void fetchChildren() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        FirebaseFirestore.getInstance().collection("children")
-                .whereEqualTo("parentId", userId)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    List<String> names = new ArrayList<>();
-                    names.add("Log for: Me (Parent)");
-                    childIds.clear();
-                    childIds.add(null);
-                    
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        names.add("Log for: " + doc.getString("name"));
-                        childIds.add(doc.getId());
-                    }
-                    
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, names);
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spUserSelector.setAdapter(adapter);
-                });
-    }
-
-    
     private void setupListeners() {
         rgMedicineType.setOnCheckedChangeListener((group, checkedId) -> {
             boolean isController = checkedId == R.id.rbController;
@@ -249,12 +219,8 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
-        // Get selected child ID
-        String selectedChildId = null;
-        if (spUserSelector.getAdapter() != null && !childIds.isEmpty()) {
-            selectedChildId = childIds.get(spUserSelector.getSelectedItemPosition());
-        }
-        final String childIdToUse = selectedChildId;
+        // Always log for self (null childId)
+        final String childIdToUse = null;
 
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(

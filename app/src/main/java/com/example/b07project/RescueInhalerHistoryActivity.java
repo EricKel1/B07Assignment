@@ -86,11 +86,17 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
     }
     
     private void loadLogs() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "Please sign in to view logs", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(this, "Please sign in to view logs", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            userId = currentUser.getUid();
         }
         
         showLoading(true);
@@ -98,7 +104,7 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
         boolean isController = rbControllerHistory.isChecked();
         
         if (isController) {
-            controllerRepository.getLogsForUser(currentUser.getUid(), new ControllerMedicineRepository.LoadCallback() {
+            controllerRepository.getLogsForUser(userId, new ControllerMedicineRepository.LoadCallback() {
                 @Override
                 public void onSuccess(List<ControllerMedicineLog> logs) {
                     showLoading(false);
@@ -115,7 +121,7 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
                 }
             });
         } else {
-            rescueRepository.getLogsForUser(currentUser.getUid(), new RescueInhalerRepository.LoadCallback() {
+            rescueRepository.getLogsForUser(userId, new RescueInhalerRepository.LoadCallback() {
                 @Override
                 public void onSuccess(List<RescueInhalerLog> logs) {
                     showLoading(false);
