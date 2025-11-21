@@ -92,6 +92,26 @@ public class ReportsFragment extends Fragment {
         spinner.setAdapter(adapter);
         layout.addView(spinner);
 
+        CheckBox cbRescue = new CheckBox(requireContext());
+        cbRescue.setText("Include Rescue Inhaler Usage");
+        cbRescue.setChecked(true);
+        layout.addView(cbRescue);
+
+        CheckBox cbController = new CheckBox(requireContext());
+        cbController.setText("Include Controller Medication");
+        cbController.setChecked(true);
+        layout.addView(cbController);
+
+        CheckBox cbSymptoms = new CheckBox(requireContext());
+        cbSymptoms.setText("Include Symptom Burden");
+        cbSymptoms.setChecked(true);
+        layout.addView(cbSymptoms);
+
+        CheckBox cbZones = new CheckBox(requireContext());
+        cbZones.setText("Include Zone Distribution");
+        cbZones.setChecked(true);
+        layout.addView(cbZones);
+
         CheckBox cbTriage = new CheckBox(requireContext());
         cbTriage.setText("Include Notable Triage Incidents");
         cbTriage.setChecked(true);
@@ -109,17 +129,17 @@ public class ReportsFragment extends Fragment {
                         case 2: days = 90; break;
                         case 3: days = 180; break;
                     }
-                    createReport(days, cbTriage.isChecked());
+                    createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void createReport(int days, boolean includeTriage) {
+    private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
         Toast.makeText(getContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
         
         ReportGenerator generator = new ReportGenerator(getContext());
-        generator.generateReport(userId, days, includeTriage, new ReportGenerator.ReportCallback() {
+        generator.generateReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
             @Override
             public void onSuccess(Report report) {
                 saveReportToFirestore(report);
@@ -166,6 +186,9 @@ public class ReportsFragment extends Fragment {
                         tvEmptyState.setVisibility(View.VISIBLE);
                         rvReports.setVisibility(View.GONE);
                     } else {
+                        // Sort by generated date descending (newest first)
+                        reports.sort((r1, r2) -> Long.compare(r2.getGeneratedDate(), r1.getGeneratedDate()));
+                        
                         android.util.Log.d("RescueServiceChart", "Displaying " + reports.size() + " reports");
                         tvEmptyState.setVisibility(View.GONE);
                         rvReports.setVisibility(View.VISIBLE);

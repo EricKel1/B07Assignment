@@ -107,4 +107,16 @@ public class Report {
 
     public boolean isIncludeTriage() { return includeTriage; }
     public void setIncludeTriage(boolean includeTriage) { this.includeTriage = includeTriage; }
+
+    public boolean isIncludeRescue() { return includeRescue; }
+    public void setIncludeRescue(boolean includeRescue) { this.includeRescue = includeRescue; }
+
+    public boolean isIncludeController() { return includeController; }
+    public void setIncludeController(boolean includeController) { this.includeController = includeController; }
+
+    public boolean isIncludeSymptoms() { return includeSymptoms; }
+    public void setIncludeSymptoms(boolean includeSymptoms) { this.includeSymptoms = includeSymptoms; }
+
+    public boolean isIncludeZones() { return includeZones; }
+    public void setIncludeZones(boolean includeZones) { this.includeZones = includeZones; }
 }
