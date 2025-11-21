@@ -64,18 +64,49 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:gravity="center_vertical">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Weekly Rescues: "
+                android:text="Rescues: "
                 android:textStyle="bold"/>
             <TextView
                 android:id="@+id/tvWeeklyRescues"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:text="--"/>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleGroupRange"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/btn7Days">
+
+                <Button
+                    android:id="@+id/btn7Days"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="7d"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:minWidth="40dp"/>
+
+                <Button
+                    android:id="@+id/btn30Days"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="30d"
+                    android:textSize="10sp"
+                    android:padding="0dp"
+                    android:minWidth="40dp"/>
+            </com.google.android.material.button.MaterialButtonToggleGroup>
         </LinearLayout>
 
         <LinearLayout
@@ -89,8 +120,17 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Invite Code"
-                android:layout_marginEnd="8dp"/>
+                android:text="Invite"
+                android:layout_marginEnd="4dp"/>
+
+            <Button
+                android:id="@+id/btnSharing"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Share"
+                android:layout_marginEnd="4dp"/>
 
             <Button
                 android:id="@+id/btnViewReports"

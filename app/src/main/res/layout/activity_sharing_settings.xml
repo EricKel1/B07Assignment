@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sharing Settings"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Control what data is shared with linked providers."
+            android:layout_marginBottom="24dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchRescueLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rescue Logs"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchControllerAdherence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Controller Adherence"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchSymptoms"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Symptoms"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchTriggers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Triggers"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchPEF"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Peak Flow (PEF)"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchTriage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Triage Incidents"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchSummaryCharts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Summary Charts"
+            android:textSize="16sp"
+            android:padding="12dp"/>
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Settings"
+            android:layout_marginTop="24dp"/>
+
+    </LinearLayout>
+</ScrollView>

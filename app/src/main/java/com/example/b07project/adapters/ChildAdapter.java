@@ -11,6 +11,8 @@ import com.example.b07project.R;
 import java.util.List;
 import java.util.Map;
 
+import com.google.android.material.button.MaterialButtonToggleGroup;
+
 public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHolder> {
 
     private List<Map<String, String>> children;
@@ -19,6 +21,8 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
     public interface OnChildActionListener {
         void onGenerateCode(String childName, String childId);
         void onViewReports(String childName, String childId);
+        void onSharingSettings(String childName, String childId);
+        void onRangeChanged(String childId, int days);
     }
 
     public ChildAdapter(List<Map<String, String>> children, OnChildActionListener listener) {
@@ -57,6 +61,14 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
 
         holder.btnGenerateCode.setOnClickListener(v -> listener.onGenerateCode(name, id));
         holder.btnViewReports.setOnClickListener(v -> listener.onViewReports(name, id));
+        holder.btnSharing.setOnClickListener(v -> listener.onSharingSettings(name, id));
+        
+        holder.toggleGroupRange.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (isChecked) {
+                int days = (checkedId == R.id.btn30Days) ? 30 : 7;
+                listener.onRangeChanged(id, days);
+            }
+        });
     }
 
     @Override
@@ -71,6 +83,8 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         TextView tvWeeklyRescues;
         Button btnGenerateCode;
         Button btnViewReports;
+        Button btnSharing;
+        MaterialButtonToggleGroup toggleGroupRange;
 
         public ChildViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -80,6 +94,8 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
             tvWeeklyRescues = itemView.findViewById(R.id.tvWeeklyRescues);
             btnGenerateCode = itemView.findViewById(R.id.btnGenerateCode);
             btnViewReports = itemView.findViewById(R.id.btnViewReports);
+            btnSharing = itemView.findViewById(R.id.btnSharing);
+            toggleGroupRange = itemView.findViewById(R.id.toggleGroupRange);
         }
     }
 }
