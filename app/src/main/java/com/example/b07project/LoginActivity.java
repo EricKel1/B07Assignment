@@ -45,11 +45,8 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
     }
 
     @Override public void navigateToHome() {
-
         tvError.setVisibility(View.GONE);
-        //UNDO CHANGE
         startActivity(new Intent(this, HomeActivity.class));
-//        startActivity(new Intent(this, ProviderUseInviteCodeActivity.class));
         finish();
 
     }
