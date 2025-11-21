@@ -23,14 +23,84 @@
             android:textColor="@color/black"
             android:layout_marginBottom="12dp"/>
 
-        <Button
-            android:id="@+id/btnGenerateCode"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Generate Invite Code"
-            app:icon="@android:drawable/ic_menu_share"
-            app:iconGravity="textStart"/>
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current Zone: "
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/tvCurrentZone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Loading..."
+                android:textStyle="bold"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Last Rescue: "
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/tvLastRescue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Weekly Rescues: "
+                android:textStyle="bold"/>
+            <TextView
+                android:id="@+id/tvWeeklyRescues"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="--"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnGenerateCode"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Invite Code"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btnViewReports"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Reports"
+                android:backgroundTint="#1565C0"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
 
     </LinearLayout>
 

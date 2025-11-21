@@ -18,6 +18,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
 
     public interface OnChildActionListener {
         void onGenerateCode(String childName, String childId);
+        void onViewReports(String childName, String childId);
     }
 
     public ChildAdapter(List<Map<String, String>> children, OnChildActionListener listener) {
@@ -39,7 +40,23 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         String id = child.get("id");
 
         holder.tvChildName.setText(name);
+        
+        // Bind stats
+        String zone = child.getOrDefault("zone", "Unknown");
+        holder.tvCurrentZone.setText(zone);
+        
+        // Color code zone
+        int color = android.graphics.Color.BLACK;
+        if (zone.equalsIgnoreCase("Green")) color = android.graphics.Color.parseColor("#4CAF50");
+        else if (zone.equalsIgnoreCase("Yellow")) color = android.graphics.Color.parseColor("#FFC107");
+        else if (zone.equalsIgnoreCase("Red")) color = android.graphics.Color.parseColor("#F44336");
+        holder.tvCurrentZone.setTextColor(color);
+
+        holder.tvLastRescue.setText(child.getOrDefault("lastRescue", "None"));
+        holder.tvWeeklyRescues.setText(child.getOrDefault("weeklyRescues", "0"));
+
         holder.btnGenerateCode.setOnClickListener(v -> listener.onGenerateCode(name, id));
+        holder.btnViewReports.setOnClickListener(v -> listener.onViewReports(name, id));
     }
 
     @Override
@@ -49,12 +66,20 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
 
     static class ChildViewHolder extends RecyclerView.ViewHolder {
         TextView tvChildName;
+        TextView tvCurrentZone;
+        TextView tvLastRescue;
+        TextView tvWeeklyRescues;
         Button btnGenerateCode;
+        Button btnViewReports;
 
         public ChildViewHolder(@NonNull View itemView) {
             super(itemView);
             tvChildName = itemView.findViewById(R.id.tvChildName);
+            tvCurrentZone = itemView.findViewById(R.id.tvCurrentZone);
+            tvLastRescue = itemView.findViewById(R.id.tvLastRescue);
+            tvWeeklyRescues = itemView.findViewById(R.id.tvWeeklyRescues);
             btnGenerateCode = itemView.findViewById(R.id.btnGenerateCode);
+            btnViewReports = itemView.findViewById(R.id.btnViewReports);
         }
     }
 }
