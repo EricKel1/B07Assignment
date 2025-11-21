@@ -58,6 +58,14 @@ public class ParentChildLogsActivity extends AppCompatActivity{
     private void initializeViews(){
         btnCreateCode = findViewById(R.id.btnCreateCode);
         btnChildInfoGoBack = findViewById(R.id.btnChildInfoGoBack);
+        TextView tvTitle = findViewById(R.id.tvTitle2);
+        TextView tvSubtitle = findViewById(R.id.textView5);
+        
+        String childName = getIntent().getStringExtra("childName");
+        if (childName != null) {
+            tvTitle.setText("Generate Code for " + childName);
+            tvSubtitle.setText("Child: " + childName);
+        }
     }
 
     //setupListeners sets up eventlisteners for the relevant views in initializeViews.
@@ -78,33 +86,36 @@ public class ParentChildLogsActivity extends AppCompatActivity{
         String email = user.getEmail();
         //try creating code
             //recursively calls itself until a unique code is made
-        int code = generateInviteCode(name, email);
+        String code = generateInviteCode();
         makeCodeUnique(code, name, email);
     }
 
-    private int generateInviteCode(String name, String email){
-        long currentTime = System.currentTimeMillis();
-        int code = (name + email + currentTime).hashCode();
-        return Math.abs(code);
+    private String generateInviteCode(){
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 6; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
-    private void makeCodeUnique(int code, String name, String email){
+
+    private void makeCodeUnique(String code, String name, String email){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        String codeStr = Integer.toString(code);
-        //
-        checkIfCodeExists(codeStr, new InviteCodeInterface() {
+        
+        checkIfCodeExists(code, new InviteCodeInterface() {
             @Override
             public void onResult(boolean exists) {
                 if (exists) {
                     // code exists
-                    int newCode = generateInviteCode(name, email);
+                    String newCode = generateInviteCode();
                     makeCodeUnique(newCode, name, email);
                 } else {
                     // code does not exist
-                    addToDb(Integer.toString(code), name);
+                    addToDb(code, name);
                 }
             }
         });
-        //
     }
 
     private void checkIfCodeExists(String code, InviteCodeInterface inter){
