@@ -3,7 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="#F5F5F5"
+    android:clipToPadding="false"
+    android:paddingBottom="24dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,47 +13,55 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Medication Usage"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#424242"
+            android:layout_marginBottom="12dp"
+            android:layout_marginStart="4dp"/>
+
         <!-- Rescue Medications Section -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@android:color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Rescue Medications"
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="12dp"
                     android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:text="💊"
-                        android:textSize="30sp"
-                        android:gravity="center"/>
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/dialog_rounded_background"
+                        android:backgroundTint="#FFEBEE">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💊"
+                            android:textSize="24sp"
+                            android:layout_gravity="center"/>
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="16dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -59,15 +69,15 @@
                             android:layout_height="wrap_content"
                             android:text="Rescue Inhaler"
                             android:textColor="#212121"
-                            android:textSize="16sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Rescue"
-                            android:textColor="#9E9E9E"
-                            android:textSize="12sp"/>
+                            android:text="Emergency usage frequency"
+                            android:textColor="#757575"
+                            android:textSize="14sp"/>
 
                     </LinearLayout>
 
@@ -77,8 +87,8 @@
                 <com.github.mikephil.charting.charts.BarChart
                     android:id="@+id/rescueChart"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_marginTop="16dp"/>
+                    android:layout_height="220dp"
+                    android:layout_marginTop="24dp"/>
 
             </LinearLayout>
 
@@ -88,42 +98,40 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@android:color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Regular Medications"
-                    android:textColor="#9E9E9E"
-                    android:textSize="14sp"
-                    android:textStyle="bold"/>
+                android:padding="20dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginTop="12dp"
                     android:gravity="center_vertical">
 
-                    <TextView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:text="💊"
-                        android:textSize="30sp"
-                        android:gravity="center"/>
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/dialog_rounded_background"
+                        android:backgroundTint="#E3F2FD">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🔄"
+                            android:textSize="24sp"
+                            android:layout_gravity="center"/>
+                    </FrameLayout>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="16dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -131,15 +139,15 @@
                             android:layout_height="wrap_content"
                             android:text="Controller Medicine"
                             android:textColor="#212121"
-                            android:textSize="16sp"
+                            android:textSize="18sp"
                             android:textStyle="bold"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Regular"
-                            android:textColor="#9E9E9E"
-                            android:textSize="12sp"/>
+                            android:text="Daily adherence tracking"
+                            android:textColor="#757575"
+                            android:textSize="14sp"/>
 
                     </LinearLayout>
 
@@ -149,8 +157,8 @@
                 <com.github.mikephil.charting.charts.BarChart
                     android:id="@+id/controllerChart"
                     android:layout_width="match_parent"
-                    android:layout_height="200dp"
-                    android:layout_marginTop="16dp"/>
+                    android:layout_height="220dp"
+                    android:layout_marginTop="24dp"/>
 
             </LinearLayout>
 

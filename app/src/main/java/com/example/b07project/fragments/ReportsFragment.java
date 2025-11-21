@@ -31,7 +31,7 @@ import java.util.List;
 public class ReportsFragment extends Fragment {
 
     private RecyclerView rvReports;
-    private TextView tvEmptyState;
+    private View tvEmptyState;
     private FloatingActionButton fabCreateReport;
     private ReportAdapter reportAdapter;
     private FirebaseFirestore db;

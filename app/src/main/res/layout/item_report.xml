@@ -4,8 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    android:layout_marginHorizontal="4dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:cardBackgroundColor="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,13 +16,18 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
-        <TextView
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:text="📄"
-            android:textSize="30sp"
-            android:gravity="center"
-            android:background="#E3F2FD"/>
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/dialog_rounded_background"
+            android:backgroundTint="#E3F2FD">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📄"
+                android:textSize="28sp"
+                android:layout_gravity="center"/>
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -43,7 +50,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Generated on 01.02.2023"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:textColor="#757575"
                 android:layout_marginTop="4dp"/>
 
@@ -58,35 +65,36 @@
 
             <Button
                 android:id="@+id/btnShareReport"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Share"
                 android:textColor="@color/primary_blue"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:textSize="12sp"
-                android:minHeight="40dp"
-                android:layout_marginBottom="4dp"/>
+                android:minHeight="36dp"
+                android:paddingVertical="0dp"/>
 
             <Button
                 android:id="@+id/btnDownloadReport"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Download"
+                android:text="View"
                 android:textColor="@color/primary_blue"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:textSize="12sp"
-                android:minHeight="40dp"
-                android:layout_marginBottom="4dp"/>
+                android:minHeight="36dp"
+                android:paddingVertical="0dp"/>
 
             <Button
                 android:id="@+id/btnDeleteReport"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Delete"
                 android:textColor="#F44336"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                style="@style/Widget.Material3.Button.TextButton"
                 android:textSize="12sp"
-                android:minHeight="40dp"/>
+                android:minHeight="36dp"
+                android:paddingVertical="0dp"/>
 
         </LinearLayout>
 
