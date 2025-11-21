@@ -95,9 +95,11 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
                                child.put("createdAt", System.currentTimeMillis());
                                child.put("uid", childUid); // Link to the child's Auth UID
 
-                               db.collection("children").add(child)
-                                       .addOnSuccessListener(documentReference -> {
-                                           android.util.Log.d("childparentdatalink", "Linked existing child. DocID: " + documentReference.getId() + ", Linked UID: " + childUid);
+                               // Use the child's Auth UID as the Document ID in the 'children' collection
+                               // This ensures security rules (isParentOfChild) can find the document at /children/{childUid}
+                               db.collection("children").document(childUid).set(child)
+                                       .addOnSuccessListener(aVoid -> {
+                                           android.util.Log.d("childparentdatalink", "Linked existing child. DocID: " + childUid + ", Linked UID: " + childUid);
                                            bh.backTo(this);
                                        })
                                        .addOnFailureListener(e -> Toast.makeText(this,

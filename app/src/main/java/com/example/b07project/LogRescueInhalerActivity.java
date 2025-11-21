@@ -78,6 +78,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_log_rescue_inhaler);
         
         childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        android.util.Log.d("childparentdatalink", "LogRescueInhalerActivity onCreate: EXTRA_CHILD_ID=" + childId);
 
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
@@ -224,6 +225,8 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         
         // Determine target user ID (child if provided, else current user)
         final String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentdatalink", "Saving log for targetUserId: " + targetUserId);
+        
         // Inventory is managed by the parent (currentUser) for the child (childId)
         // If childId is null (self-logging), we pass null as childId to inventory
         final String inventoryChildId = childId;

@@ -139,7 +139,11 @@ public class HomeActivity extends AppCompatActivity {
 
     private void setupListeners() {
         btnLogRescueInhaler.setOnClickListener(v -> {
-            startActivity(new Intent(this, LogRescueInhalerActivity.class));
+            Intent intent = new Intent(this, LogRescueInhalerActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         if (btnInventory != null) {
@@ -155,43 +159,83 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         btnViewHistory.setOnClickListener(v -> {
-            startActivity(new Intent(this, RescueInhalerHistoryActivity.class));
+            Intent intent = new Intent(this, RescueInhalerHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnDailyCheckIn.setOnClickListener(v -> {
-            startActivity(new Intent(this, DailySymptomCheckInActivity.class));
+            Intent intent = new Intent(this, DailySymptomCheckInActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewSymptomHistory.setOnClickListener(v -> {
-            startActivity(new Intent(this, SymptomHistoryActivity.class));
+            Intent intent = new Intent(this, SymptomHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewPatterns.setOnClickListener(v -> {
-            startActivity(new Intent(this, TriggerPatternsActivity.class));
+            Intent intent = new Intent(this, TriggerPatternsActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnEmergencyTriage.setOnClickListener(v -> {
-            startActivity(new Intent(this, TriageActivity.class));
+            Intent intent = new Intent(this, TriageActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnEnterPEF.setOnClickListener(v -> {
-            startActivity(new Intent(this, PEFEntryActivity.class));
+            Intent intent = new Intent(this, PEFEntryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewIncidents.setOnClickListener(v -> {
-            startActivity(new Intent(this, IncidentHistoryActivity.class));
+            Intent intent = new Intent(this, IncidentHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnInhalerTechnique.setOnClickListener(v -> {
-            startActivity(new Intent(this, InhalerTechniqueActivity.class));
+            Intent intent = new Intent(this, InhalerTechniqueActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnMotivation.setOnClickListener(v -> {
-            startActivity(new Intent(this, MotivationActivity.class));
+            Intent intent = new Intent(this, MotivationActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnStatisticsReports.setOnClickListener(v -> {
-            startActivity(new Intent(this, StatisticsReportsActivity.class));
+            Intent intent = new Intent(this, StatisticsReportsActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnSignOut.setOnClickListener(v -> {

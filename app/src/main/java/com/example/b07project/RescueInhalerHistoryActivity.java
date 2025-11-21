@@ -99,6 +99,8 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
             userId = currentUser.getUid();
         }
         
+        android.util.Log.d("childparentdatalink", "RescueInhalerHistoryActivity: Loading logs for userId: " + userId);
+        
         showLoading(true);
         
         boolean isController = rbControllerHistory.isChecked();
