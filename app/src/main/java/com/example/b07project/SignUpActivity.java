@@ -112,7 +112,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 }
                             });
                     }
-                } else {
+                   } else {
                     showLoading(false);
                     String errorMessage = "Sign up failed";
                     if (task.getException() != null) {
