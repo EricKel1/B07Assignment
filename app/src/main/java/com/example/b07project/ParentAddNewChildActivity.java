@@ -30,7 +30,6 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
     private FirebaseAuth auth;
 
     private BackToParent bh = new BackToParent();
-    //onCreate sets up UI, listeners, adapters, etc. its called when the screen is attempted to load.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,8 +53,6 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
         progress3 = findViewById(R.id.progress3);
     }
 
-    //setupListeners sets up eventlisteners for the relevant views in initializeViews.
-    //InitializeViews should always be called before setupListeners.
     private void setupListeners(){
         btnAddChild.setOnClickListener(v -> attemptAddChild());
         btnCancelAddChild.setOnClickListener((v -> bh.backTo(this)));
@@ -63,8 +60,6 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
         CalendarPicker cp = new CalendarPicker();
         childDateOfBirth.setOnClickListener(v -> cp.openCalendar(this, childDateOfBirth));
     }
-    //attemptAddChild tries to add the child under the parent's name into firebase,
-    //if everything is set up correctly.
     private void attemptAddChild(){
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String name = childName.getText().toString().trim();
@@ -91,9 +86,7 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
 
 
     }
-    // brings you back to the parent home page
 
-    //validateInput
     private boolean validateInput(String name, String age){
         if(Objects.equals(name, "") || name == null){
             showError("Please enter your child's name");

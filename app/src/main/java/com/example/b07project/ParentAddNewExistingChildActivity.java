@@ -17,7 +17,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class ParentAddNewExistingChildActivity extends AppCompatActivity {
@@ -111,7 +110,6 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
           db.collection("users").whereEqualTo("email", email).get()
                   .addOnSuccessListener(querySnapshot->{
                       boolean valid = true;
-                    Toast.makeText(ParentAddNewExistingChildActivity.this, "DEBUG: reached this point", Toast.LENGTH_SHORT).show();
                     if (querySnapshot.isEmpty() ) {
                 runOnUiThread(() -> {
                     showError("Email may be incorrect");
@@ -155,7 +153,6 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
                         showError("Child's email doesn't exist.");
                         nceError.requestFocus();
                     });
-            Toast.makeText(ParentAddNewExistingChildActivity.this, "Firestore fials", Toast.LENGTH_SHORT).show();
                     callback.accept(false);
         });
 
