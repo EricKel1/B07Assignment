@@ -10,9 +10,13 @@
         android:id="@+id/header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/primary_blue"
+        android:background="@drawable/header_rounded_bottom"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp"
+        android:elevation="8dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -20,19 +24,21 @@
             android:layout_height="wrap_content"
             android:text="Statistics &amp; Reports"
             android:textColor="@android:color/white"
-            android:textSize="24sp"
-            android:textStyle="bold"/>
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:background="@android:color/transparent"
-            app:tabTextColor="@android:color/white"
+            app:tabTextColor="#B3FFFFFF"
             app:tabSelectedTextColor="@android:color/white"
             app:tabIndicatorColor="@android:color/white"
-            app:tabMode="fixed"/>
+            app:tabIndicatorHeight="3dp"
+            app:tabMode="fixed"
+            app:tabTextAppearance="@style/TextAppearance.AppCompat.Medium"/>
 
     </LinearLayout>
 
@@ -41,6 +47,7 @@
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="16dp"
         app:layout_constraintTop_toBottomOf="@id/header"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
