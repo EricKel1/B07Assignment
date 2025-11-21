@@ -49,8 +49,8 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
         tvError.setVisibility(View.GONE);
         //UNDO CHANGE
-//        startActivity(new Intent(this, HomeActivity.class));
-        startActivity(new Intent(this, ProviderUseInviteCodeActivity.class));
+        startActivity(new Intent(this, HomeActivity.class));
+//        startActivity(new Intent(this, ProviderUseInviteCodeActivity.class));
         finish();
 
     }
