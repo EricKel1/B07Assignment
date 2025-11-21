@@ -12,18 +12,17 @@ import java.util.List;
 
 public class ParentSignupViewModel extends ViewModel {
 
-    // Data for UI
     public final MutableLiveData<String> parentName = new MutableLiveData<>();
     public final MutableLiveData<String> email = new MutableLiveData<>();
     public final MutableLiveData<String> password = new MutableLiveData<>();
     public final MutableLiveData<Integer> childrenCount = new MutableLiveData<>();
     public final List<ChildDraft> children = new ArrayList<>();
 
-    // State for Signup Process
     public enum SignupState { IDLE, LOADING, SUCCESS, ERROR }
 
     private final MutableLiveData<SignupState> signupState = new MutableLiveData<>(SignupState.IDLE);
     private final MutableLiveData<String> errorMessage = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> verificationBypassed = new MutableLiveData<>(false);
 
     private final SignupRepository signupRepository;
 
@@ -39,6 +38,14 @@ public class ParentSignupViewModel extends ViewModel {
         return errorMessage;
     }
 
+    public LiveData<Boolean> getVerificationBypassed() {
+        return verificationBypassed;
+    }
+
+    public LiveData<SignupRepository.EmailCheckResult> checkIfEmailExists(String email) {
+        return signupRepository.checkIfEmailExists(email);
+    }
+
     public void createParentAccount() {
         signupState.setValue(SignupState.LOADING);
 
@@ -49,7 +56,8 @@ public class ParentSignupViewModel extends ViewModel {
                 children,
                 new SignupRepository.OnSignupCompleteListener() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(boolean bypassed) {
+                        verificationBypassed.setValue(bypassed);
                         signupState.setValue(SignupState.SUCCESS);
                     }
 

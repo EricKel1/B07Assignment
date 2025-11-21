@@ -1,6 +1,7 @@
 package com.example.b07project.auth;
 
-import com.example.b07project.DeviceChooserActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class LoginPresenter implements LoginContract.Presenter {
     private LoginContract.View view;
@@ -25,36 +26,53 @@ public class LoginPresenter implements LoginContract.Presenter {
         view.showLoading(true);
         repo.signIn(email, pass, new AuthRepo.Callback() {
             @Override public void onSuccess() {
-                // Fetch role
-                String uid = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid();
-                repo.getUserRole(uid, new AuthRepo.RoleCallback() {
-                    @Override
-                    public void onRole(String role) {
-                        if (view != null) {
-                            view.showLoading(false);
-                            if ("parent".equals(role)) {
-                                view.navigateToDeviceChooser();
-                            } else if ("provider".equals(role)) {
-                                view.navigateToProviderHome();
-                            } else {
-                                view.navigateToHome();
-                            }
-                        }
-                    }
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    // Bypass verification check for test accounts
+                    boolean isTestUser = user.getEmail() != null && user.getEmail().endsWith("@test.com");
 
-                    @Override
-                    public void onError(Exception e) {
+                    if (user.isEmailVerified() || isTestUser) {
+                        // Email is verified or is a test user, proceed with role check
+                        fetchUserRole(user.getUid());
+                    } else {
+                        // Email not verified, show dialog and sign out
                         if (view != null) {
                             view.showLoading(false);
-                            view.showError("Failed to get user role: " + e.getMessage());
+                            view.showEmailNotVerifiedDialog();
                         }
                     }
-                });
+                }
             }
             @Override public void onError(Exception e) {
                 if (view != null) {
                     view.showLoading(false);
                     view.showError(e.getMessage() != null ? e.getMessage() : "Login failed");
+                }
+            }
+        });
+    }
+
+    private void fetchUserRole(String uid) {
+        repo.getUserRole(uid, new AuthRepo.RoleCallback() {
+            @Override
+            public void onRole(String role) {
+                if (view != null) {
+                    view.showLoading(false);
+                    if ("parent".equals(role)) {
+                        view.navigateToDeviceChooser();
+                    } else if ("provider".equals(role)) {
+                        view.navigateToProviderHome();
+                    } else {
+                        view.navigateToHome();
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                if (view != null) {
+                    view.showLoading(false);
+                    view.showError("Failed to get user role: " + e.getMessage());
                 }
             }
         });

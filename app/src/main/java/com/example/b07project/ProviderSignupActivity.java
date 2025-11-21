@@ -65,7 +65,7 @@ public class ProviderSignupActivity extends AppCompatActivity {
 
         signupRepository.createProviderAccount(email, password, name, new SignupRepository.OnSignupCompleteListener() {
             @Override
-            public void onSuccess() {
+            public void onSuccess(boolean verificationBypassed) {
                 showLoading(false);
                 Toast.makeText(ProviderSignupActivity.this, "Provider account created!", Toast.LENGTH_SHORT).show();
                 // Navigate to Provider Home
