@@ -28,6 +28,14 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         void onEditProfile(String childName, String childId);
         void onSetPersonalBest(String childName, String childId);
         void onSetMedicationSchedule(String childName, String childId);
+        void onViewTriggerPatterns(String childName, String childId);
+        void onViewIncidentHistory(String childName, String childId);
+        void onViewDailyCheckinHistory(String childName, String childId);
+        void onViewMedicineLoggingHistory(String childName, String childId);
+        void onLogRescueInhaler(String childName, String childId);
+        void onLogDailyCheckIn(String childName, String childId);
+        void onLogPEF(String childName, String childId);
+        void onLogTriage(String childName, String childId);
     }
 
     public ChildAdapter(List<Map<String, String>> children, OnChildActionListener listener) {
@@ -80,6 +88,14 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
             popup.getMenu().add("Edit Profile");
             popup.getMenu().add("Set Personal Best");
             popup.getMenu().add("Medication Schedule");
+            popup.getMenu().add("Trigger Patterns");
+            popup.getMenu().add("Incident History");
+            popup.getMenu().add("Daily Check-in History");
+            popup.getMenu().add("Medicine Logging History");
+            popup.getMenu().add("Log Rescue Inhaler");
+            popup.getMenu().add("Log Daily Check-in");
+            popup.getMenu().add("Log PEF");
+            popup.getMenu().add("Start Triage");
             
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getTitle().equals("Edit Profile")) {
@@ -88,6 +104,22 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
                     listener.onSetPersonalBest(name, id);
                 } else if (item.getTitle().equals("Medication Schedule")) {
                     listener.onSetMedicationSchedule(name, id);
+                } else if (item.getTitle().equals("Trigger Patterns")) {
+                    listener.onViewTriggerPatterns(name, id);
+                } else if (item.getTitle().equals("Incident History")) {
+                    listener.onViewIncidentHistory(name, id);
+                } else if (item.getTitle().equals("Daily Check-in History")) {
+                    listener.onViewDailyCheckinHistory(name, id);
+                } else if (item.getTitle().equals("Medicine Logging History")) {
+                    listener.onViewMedicineLoggingHistory(name, id);
+                } else if (item.getTitle().equals("Log Rescue Inhaler")) {
+                    listener.onLogRescueInhaler(name, id);
+                } else if (item.getTitle().equals("Log Daily Check-in")) {
+                    listener.onLogDailyCheckIn(name, id);
+                } else if (item.getTitle().equals("Log PEF")) {
+                    listener.onLogPEF(name, id);
+                } else if (item.getTitle().equals("Start Triage")) {
+                    listener.onLogTriage(name, id);
                 }
                 return true;
             });

@@ -45,11 +45,14 @@ public class TriageActivity extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private ObjectAnimator breathingAnimator;
     private static final long TIMER_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+    private String childId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_triage);
+
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
 
         triageRepository = new TriageRepository();
         pefRepository = new PEFRepository();
@@ -93,6 +96,7 @@ public class TriageActivity extends AppCompatActivity {
 
     private void performTriage() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String targetUserId = (childId != null) ? childId : userId;
         
         // Gather data
         boolean cantSpeak = cbCantSpeak.isChecked();
@@ -107,7 +111,7 @@ public class TriageActivity extends AppCompatActivity {
         
         // Create session
         currentSession = new TriageSession();
-        currentSession.setUserId(userId);
+        currentSession.setUserId(targetUserId);
         currentSession.setStartTime(new Date());
         currentSession.setCantSpeakFullSentences(cantSpeak);
         currentSession.setChestPullingInRetractions(chestRetractions);
@@ -117,7 +121,7 @@ public class TriageActivity extends AppCompatActivity {
         
         // Get zone if PEF provided
         if (currentPEF != null) {
-            pefRepository.getPersonalBest(userId, new PEFRepository.LoadCallback<PersonalBest>() {
+            pefRepository.getPersonalBest(targetUserId, new PEFRepository.LoadCallback<PersonalBest>() {
                 @Override
                 public void onSuccess(PersonalBest pb) {
                     if (pb != null) {

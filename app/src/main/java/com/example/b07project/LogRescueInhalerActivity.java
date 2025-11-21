@@ -70,12 +70,15 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     private KonfettiView konfettiView;
+    private String childId;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_rescue_inhaler);
         
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
         controllerRepository = new ControllerMedicineRepository();
@@ -219,12 +222,15 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
-        // Always log for self (null childId)
-        final String childIdToUse = null;
+        // Determine target user ID (child if provided, else current user)
+        final String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        // Inventory is managed by the parent (currentUser) for the child (childId)
+        // If childId is null (self-logging), we pass null as childId to inventory
+        final String inventoryChildId = childId;
 
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 scheduledTime,
@@ -237,7 +243,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String documentId) {
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Controller", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Controller", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             // Continue with existing flow
@@ -272,7 +278,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             });
         } else {
             RescueInhalerLog log = new RescueInhalerLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 triggers,
@@ -283,7 +289,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String documentId) {
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             showLoading(false);

@@ -31,11 +31,14 @@ public class PEFEntryActivity extends AppCompatActivity {
     
     private PEFRepository pefRepository;
     private PersonalBest userPersonalBest;
+    private String childId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pef_entry);
+
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
 
         pefRepository = new PEFRepository();
         initializeViews();
@@ -61,8 +64,9 @@ public class PEFEntryActivity extends AppCompatActivity {
 
     private void loadPersonalBest() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String targetUserId = (childId != null) ? childId : userId;
         
-        pefRepository.getPersonalBest(userId, new PEFRepository.LoadCallback<PersonalBest>() {
+        pefRepository.getPersonalBest(targetUserId, new PEFRepository.LoadCallback<PersonalBest>() {
             @Override
             public void onSuccess(PersonalBest pb) {
                 userPersonalBest = pb;
@@ -176,12 +180,13 @@ public class PEFEntryActivity extends AppCompatActivity {
         }
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String targetUserId = (childId != null) ? childId : userId;
         String notes = etNotes.getText().toString().trim();
         
         boolean isPreMed = rbPreMedication.isChecked();
         boolean isPostMed = rbPostMedication.isChecked();
 
-        PEFReading reading = new PEFReading(userId, pefValue, isPreMed, isPostMed, notes);
+        PEFReading reading = new PEFReading(targetUserId, pefValue, isPreMed, isPostMed, notes);
 
         btnSave.setEnabled(false);
         btnSave.setText("Saving...");

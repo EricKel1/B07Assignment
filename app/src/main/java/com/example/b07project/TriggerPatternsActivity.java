@@ -123,16 +123,22 @@ public class TriggerPatternsActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            tvNoData.setText("Please sign in to view trigger patterns");
-            tvNoData.setVisibility(View.VISIBLE);
-            return;
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                tvNoData.setText("Please sign in to view trigger patterns");
+                tvNoData.setVisibility(View.VISIBLE);
+                return;
+            }
+            userId = currentUser.getUid();
         }
 
         showLoading(true);
 
-        repository.getTriggerStatistics(currentUser.getUid(), startDate, endDate,
+        repository.getTriggerStatistics(userId, startDate, endDate,
             new TriggerAnalyticsRepository.TriggerStatsCallback() {
                 @Override
                 public void onSuccess(Map<String, TriggerAnalyticsRepository.TriggerStats> triggerStats) {

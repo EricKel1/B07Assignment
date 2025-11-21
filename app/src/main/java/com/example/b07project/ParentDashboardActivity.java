@@ -139,6 +139,34 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 intent.putExtra("EXTRA_CHILD_ID", childId);
                 startActivity(intent);
             }
+
+            @Override
+            public void onLogRescueInhaler(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, LogRescueInhalerActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onLogDailyCheckIn(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, DailySymptomCheckInActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onLogPEF(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, PEFEntryActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onLogTriage(String childName, String childId) {
+                Intent intent = new Intent(ParentDashboardActivity.this, TriageActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            }
         });
         rvChildren.setLayoutManager(new LinearLayoutManager(this));
         rvChildren.setAdapter(adapter);
@@ -301,7 +329,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 Date lastRescueTime = null;
                 
                 for (RescueInhalerLog log : logs) {
-                    count += log.getDoseCount();
+                    count++; // Count events, not doses
                     if (log.getTimestamp() != null) {
                         if (lastRescueTime == null || log.getTimestamp().after(lastRescueTime)) {
                             lastRescueTime = log.getTimestamp();
