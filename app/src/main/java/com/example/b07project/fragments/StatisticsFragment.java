@@ -36,6 +36,15 @@ public class StatisticsFragment extends Fragment {
     private RescueInhalerRepository rescueRepository;
     private ControllerMedicineRepository controllerRepository;
     private SimpleDateFormat dayFormat;
+    private String userId;
+
+    public static StatisticsFragment newInstance(String userId) {
+        StatisticsFragment fragment = new StatisticsFragment();
+        Bundle args = new Bundle();
+        args.putString("userId", userId);
+        fragment.setArguments(args);
+        return fragment;
+    }
 
     @Nullable
     @Override
@@ -49,6 +58,12 @@ public class StatisticsFragment extends Fragment {
         controllerRepository = new ControllerMedicineRepository();
         dayFormat = new SimpleDateFormat("EEE", Locale.getDefault());
 
+        if (getArguments() != null && getArguments().getString("userId") != null) {
+            userId = getArguments().getString("userId");
+        } else {
+            userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        }
+
         return view;
     }
 
@@ -59,7 +74,7 @@ public class StatisticsFragment extends Fragment {
     }
 
     private void loadStatistics() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        if (userId == null) return;
 
         android.util.Log.d("RescueServiceChart", "=== LOADING STATISTICS ===");
         android.util.Log.d("RescueServiceChart", "userId: " + userId);
