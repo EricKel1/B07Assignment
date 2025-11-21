@@ -36,6 +36,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         void onLogDailyCheckIn(String childName, String childId);
         void onLogPEF(String childName, String childId);
         void onLogTriage(String childName, String childId);
+        void onRemoveChild(String childName, String childId);
     }
 
     public ChildAdapter(List<Map<String, String>> children, OnChildActionListener listener) {
@@ -96,6 +97,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
             popup.getMenu().add("Log Daily Check-in");
             popup.getMenu().add("Log PEF");
             popup.getMenu().add("Start Triage");
+            popup.getMenu().add("Remove Child");
             
             popup.setOnMenuItemClickListener(item -> {
                 if (item.getTitle().equals("Edit Profile")) {
@@ -120,6 +122,8 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
                     listener.onLogPEF(name, id);
                 } else if (item.getTitle().equals("Start Triage")) {
                     listener.onLogTriage(name, id);
+                } else if (item.getTitle().equals("Remove Child")) {
+                    listener.onRemoveChild(name, id);
                 }
                 return true;
             });

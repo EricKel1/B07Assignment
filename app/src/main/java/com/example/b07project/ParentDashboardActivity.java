@@ -79,7 +79,10 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onViewReports(String childName, String childId) {
-                onViewReportsClicked(childName, childId);
+                String targetId = getTargetId(childId);
+                Intent intent = new Intent(ParentDashboardActivity.this, StatisticsReportsActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
+                startActivity(intent);
             }
 
             @Override
@@ -104,7 +107,8 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onSetPersonalBest(String childName, String childId) {
-                showSetPersonalBestDialog(childName, childId);
+                String targetId = getTargetId(childId);
+                showSetPersonalBestDialog(childName, targetId);
             }
 
             @Override
@@ -114,58 +118,84 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onViewTriggerPatterns(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, TriggerPatternsActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onViewIncidentHistory(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, IncidentHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onViewDailyCheckinHistory(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, SymptomHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onViewMedicineLoggingHistory(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, RescueInhalerHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onLogRescueInhaler(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, LogRescueInhalerActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onLogDailyCheckIn(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, DailySymptomCheckInActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onLogPEF(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, PEFEntryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
             }
 
             @Override
             public void onLogTriage(String childName, String childId) {
+                String targetId = getTargetId(childId);
                 Intent intent = new Intent(ParentDashboardActivity.this, TriageActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", childId);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
+            }
+
+            @Override
+            public void onRemoveChild(String childName, String childId) {
+                new MaterialAlertDialogBuilder(ParentDashboardActivity.this)
+                        .setTitle("Remove Child")
+                        .setMessage("Are you sure you want to remove " + childName + " from your dashboard? This cannot be undone.")
+                        .setPositiveButton("Remove", (dialog, which) -> {
+                            FirebaseFirestore.getInstance().collection("children").document(childId)
+                                    .delete()
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(ParentDashboardActivity.this, "Child removed", Toast.LENGTH_SHORT).show();
+                                        loadChildren();
+                                    })
+                                    .addOnFailureListener(e -> Toast.makeText(ParentDashboardActivity.this, "Error removing child", Toast.LENGTH_SHORT).show());
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
             }
         });
         rvChildren.setLayoutManager(new LinearLayoutManager(this));
@@ -201,8 +231,24 @@ public class ParentDashboardActivity extends AppCompatActivity {
     }
 
     private void showAddChildDialog() {
+        String[] options = {"Create New Profile", "Link Existing Account"};
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Add Child")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        showCreateNewChildDialog();
+                    } else {
+                        Intent intent = new Intent(ParentDashboardActivity.this, ParentAddNewExistingChildActivity.class);
+                        startActivity(intent);
+                    }
+                })
+                .show();
+    }
+
+    private void showCreateNewChildDialog() {
         MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
-        builder.setTitle("Add Child");
+        builder.setTitle("Create New Profile");
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -260,16 +306,26 @@ public class ParentDashboardActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
+        android.util.Log.d("childparentdatalink", "loadChildren called for parent: " + user.getUid());
+
         progressBar.setVisibility(View.VISIBLE);
         FirebaseFirestore.getInstance().collection("children")
                 .whereEqualTo("parentId", user.getUid())
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    android.util.Log.d("childparentdatalink", "Found " + queryDocumentSnapshots.size() + " children");
                     childrenList.clear();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Map<String, String> child = new HashMap<>();
                         child.put("id", document.getId());
                         child.put("name", document.getString("name"));
+                        if (document.contains("uid")) {
+                            String uid = document.getString("uid");
+                            child.put("uid", uid);
+                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has linked UID: " + uid);
+                        } else {
+                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has NO linked UID (using docId: " + document.getId() + ")");
+                        }
                         child.put("zone", "Loading...");
                         child.put("lastRescue", "Loading...");
                         child.put("weeklyRescues", "Loading...");
@@ -287,6 +343,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
+                    android.util.Log.e("childparentdatalink", "Error loading children", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Failed to load children: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
@@ -294,8 +351,14 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
     private void fetchChildStats(Map<String, String> child, int position, int days) {
         String childId = child.get("id");
+        if (child.containsKey("uid")) {
+            childId = child.get("uid");
+        }
+        
+        android.util.Log.d("childparentdatalink", "Fetching stats for " + child.get("name") + " using ID: " + childId);
         
         // 1. Fetch Zone (PEF)
+        String finalChildId = childId;
         pefRepository.getLastPEFReading(childId, new PEFRepository.LoadCallback<PEFReading>() {
             @Override
             public void onSuccess(PEFReading reading) {
@@ -343,16 +406,6 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
                     child.put("lastRescue", sdf.format(lastRescueTime));
                 } else {
-                    // Only overwrite if we haven't found one yet or if this is a fresh fetch
-                    // Actually, if we are re-fetching with a different range, we might miss the last rescue if it was > range days ago.
-                    // But "Last Rescue" usually means absolute last.
-                    // However, the requirement says "Last rescue time" and "Weekly rescue count".
-                    // If I change the range to 30 days, the count changes. The last rescue time should probably be the absolute last, regardless of range.
-                    // But here I am fetching logs within range.
-                    // If the last rescue was 40 days ago, and I select 30 days, it will show "None".
-                    // That might be acceptable for "Trend snippet".
-                    // Or I should fetch "Last Rescue" separately as a single query "limit 1 order by date desc".
-                    // For now, I'll stick to this implementation as it's efficient enough.
                     child.put("lastRescue", "None in range");
                 }
                 
@@ -368,6 +421,21 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 checkIfAllLoaded();
             }
         });
+    }
+
+    private String getTargetId(String childId) {
+        for (Map<String, String> child : childrenList) {
+            if (child.get("id").equals(childId)) {
+                if (child.containsKey("uid")) {
+                    String uid = child.get("uid");
+                    android.util.Log.d("childparentdatalink", "getTargetId: Resolved " + childId + " to UID " + uid);
+                    return uid;
+                }
+                break;
+            }
+        }
+        android.util.Log.d("childparentdatalink", "getTargetId: Could not resolve " + childId + " to UID, using original ID");
+        return childId;
     }
 
     private int loadedCount = 0;
