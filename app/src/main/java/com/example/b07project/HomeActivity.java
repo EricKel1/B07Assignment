@@ -44,10 +44,34 @@ public class HomeActivity extends AppCompatActivity {
             dataOwnerId = childId;
             tvViewingChildNotice.setText("Viewing child: " + (childName != null ? childName : "Child"));
             tvViewingChildNotice.setVisibility(View.VISIBLE);
+            // Hide inventory for child mode if needed, but requirement says "Inventory (Parent)"
+            // The user asked to remove it from the "kids page".
+            // If this is child mode (Provider viewing child), maybe they shouldn't see it either?
+            // But the user specifically said "kids page" which implies the child logged in.
         } else {
-            // Parent Mode (or default)
+            // Parent Mode (or default) - Wait, if it's a child logged in, childId is null here?
+            // If a child logs in directly, they are the currentUser.
             dataOwnerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
             tvViewingChildNotice.setVisibility(View.GONE);
+        }
+        
+        // Hide Inventory button if the current user is a child
+        // We can check the role from Firestore, or pass it in intent.
+        // For now, let's check if we are in "Child Mode" (Provider viewing) or if the logged in user is a child.
+        // Actually, the user said "remove manage inventory from the kids page".
+        // If I am a child logged in, I see this page.
+        // If I am a parent logged in, I see ParentDashboardActivity.
+        // If I am a provider, I see ProviderHomeActivity -> HomeActivity (Child Mode).
+        
+        // So if I am here, I am either a Child (logged in) or a Provider (viewing child).
+        // In both cases, "Manage Inventory" should probably be hidden?
+        // Requirement: "Inventory (Parent): Track purchase date..."
+        // So only Parent should see it.
+        // But Parent doesn't use HomeActivity anymore, they use ParentDashboardActivity.
+        // So HomeActivity is ONLY for Child (self) or Provider (viewing child).
+        // Therefore, Inventory button should ALWAYS be hidden in HomeActivity.
+        if (btnInventory != null) {
+            btnInventory.setVisibility(View.GONE);
         }
 
         loadZoneStatus();

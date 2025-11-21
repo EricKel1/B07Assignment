@@ -18,6 +18,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import android.content.SharedPreferences;
+
 public class DeviceChooserActivity extends AppCompatActivity {
 
     private ProgressBar progressBar;
@@ -47,6 +49,20 @@ public class DeviceChooserActivity extends AppCompatActivity {
         loadParentInfo(currentUser);
     }
 
+    private void savePreference(String type, String childId, String childName) {
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("last_role", type);
+        if (childId != null) {
+            editor.putString("last_child_id", childId);
+            editor.putString("last_child_name", childName);
+        } else {
+            editor.remove("last_child_id");
+            editor.remove("last_child_name");
+        }
+        editor.apply();
+    }
+
     private void loadParentInfo(FirebaseUser currentUser) {
         String uid = currentUser.getUid();
         DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("users").document(uid);
@@ -74,7 +90,9 @@ public class DeviceChooserActivity extends AppCompatActivity {
         });
 
         btnParent.setOnClickListener(v -> {
+            savePreference("parent", null, null);
             startActivity(new Intent(DeviceChooserActivity.this, ParentDashboardActivity.class));
+            finish();
         });
     }
 
@@ -112,10 +130,12 @@ public class DeviceChooserActivity extends AppCompatActivity {
         params.setMargins(0, 8, 0, 8);
         childButton.setLayoutParams(params);
         childButton.setOnClickListener(v -> {
+            savePreference("child", childId, childName);
             Intent intent = new Intent(DeviceChooserActivity.this, HomeActivity.class);
             intent.putExtra("EXTRA_CHILD_ID", childId);
             intent.putExtra("EXTRA_CHILD_NAME", childName);
             startActivity(intent);
+            finish();
         });
         llChildrenButtons.addView(childButton);
     }
