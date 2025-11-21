@@ -92,19 +92,32 @@ public class ReportGenerator {
         Date endDate = calendar.getTime();
         calendar.add(Calendar.DAY_OF_YEAR, -(days - 1));
         Date startDate = calendar.getTime();
+        generateReport(userId, startDate, endDate, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, callback);
+    }
+
+    public void generateReport(String userId, Date startDate, Date endDate, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones, ReportCallback callback) {
+        Log.d(TAG, "generateReport: Starting for user " + userId + " from " + startDate + " to " + endDate);
+        long diff = endDate.getTime() - startDate.getTime();
+        int days = (int) (diff / (24 * 60 * 60 * 1000)) + 1;
+        if (days < 1) days = 1;
+        Log.d(TAG, "generateReport: Calculated days: " + days);
 
         // Fetch data from all repositories
+        int finalDays = days;
         rescueRepository.getLogsForUserInDateRange(userId, startDate, endDate, new RescueInhalerRepository.LoadCallback() {
             @Override
             public void onSuccess(List<RescueInhalerLog> rescueLogs) {
+                Log.d(TAG, "generateReport: Rescue logs fetched: " + rescueLogs.size());
                 controllerRepository.getLogsForUserInDateRange(userId, startDate, endDate, new ControllerMedicineRepository.LoadCallback() {
                     @Override
                     public void onSuccess(List<ControllerMedicineLog> controllerLogs) {
-                        fetchOptionalData(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, callback);
+                        Log.d(TAG, "generateReport: Controller logs fetched: " + controllerLogs.size());
+                        fetchOptionalData(userId, startDate, endDate, finalDays, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, callback);
                     }
 
                     @Override
                     public void onFailure(String error) {
+                        Log.e(TAG, "generateReport: Controller fetch failed: " + error);
                         callback.onFailure(error);
                     }
                 });
@@ -112,6 +125,7 @@ public class ReportGenerator {
 
             @Override
             public void onFailure(String error) {
+                Log.e(TAG, "generateReport: Rescue fetch failed: " + error);
                 callback.onFailure(error);
             }
         });
@@ -120,15 +134,17 @@ public class ReportGenerator {
     private void fetchOptionalData(String userId, Date startDate, Date endDate, int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones,
                                    List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                    ReportCallback callback) {
+        Log.d(TAG, "fetchOptionalData: Fetching triage sessions...");
         triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
             @Override
             public void onSuccess(List<TriageSession> allTriageSessions) {
+                Log.d(TAG, "fetchOptionalData: Triage sessions fetched: " + allTriageSessions.size());
                 fetchPEF(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, allTriageSessions, callback);
             }
 
             @Override
             public void onFailure(String error) {
-                Log.e(TAG, "Triage fetch failed: " + error);
+                Log.e(TAG, "fetchOptionalData: Triage fetch failed: " + error);
                 fetchPEF(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, new ArrayList<>(), callback);
             }
         });
@@ -137,15 +153,17 @@ public class ReportGenerator {
     private void fetchPEF(String userId, Date startDate, Date endDate, int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones,
                           List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                           List<TriageSession> triageSessions, ReportCallback callback) {
+        Log.d(TAG, "fetchPEF: Fetching PEF readings...");
         pefRepository.getPEFReadingsForUser(userId, new PEFRepository.LoadCallback<List<PEFReading>>() {
             @Override
             public void onSuccess(List<PEFReading> allPefReadings) {
+                Log.d(TAG, "fetchPEF: PEF readings fetched: " + allPefReadings.size());
                 fetchSymptoms(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, triageSessions, allPefReadings, callback);
             }
 
             @Override
             public void onFailure(String error) {
-                Log.e(TAG, "PEF fetch failed: " + error);
+                Log.e(TAG, "fetchPEF: PEF fetch failed: " + error);
                 fetchSymptoms(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, triageSessions, new ArrayList<>(), callback);
             }
         });
@@ -155,15 +173,17 @@ public class ReportGenerator {
                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                List<TriageSession> triageSessions, List<PEFReading> pefReadings,
                                ReportCallback callback) {
+        Log.d(TAG, "fetchSymptoms: Fetching symptoms...");
         symptomRepository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
             @Override
             public void onSuccess(List<SymptomCheckIn> allSymptomCheckIns) {
+                Log.d(TAG, "fetchSymptoms: Symptoms fetched: " + allSymptomCheckIns.size());
                 finalizeReport(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, triageSessions, pefReadings, allSymptomCheckIns, callback);
             }
 
             @Override
             public void onFailure(String error) {
-                Log.e(TAG, "Symptom fetch failed: " + error);
+                Log.e(TAG, "fetchSymptoms: Symptom fetch failed: " + error);
                 finalizeReport(userId, startDate, endDate, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, rescueLogs, controllerLogs, triageSessions, pefReadings, new ArrayList<>(), callback);
             }
         });
@@ -173,6 +193,7 @@ public class ReportGenerator {
                                 List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                 List<TriageSession> allTriageSessions, List<PEFReading> allPefReadings,
                                 List<SymptomCheckIn> allSymptomCheckIns, ReportCallback callback) {
+        Log.d(TAG, "finalizeReport: Finalizing report...");
         // Filter data by date range
         List<TriageSession> triageSessions = filterByDate(allTriageSessions, startDate, endDate);
         List<PEFReading> pefReadings = filterByDate(allPefReadings, startDate, endDate);
@@ -180,6 +201,7 @@ public class ReportGenerator {
 
         Report report = createReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, startDate, endDate, 
             rescueLogs, controllerLogs, triageSessions, pefReadings, symptomCheckIns);
+        Log.d(TAG, "finalizeReport: Report created, calling onSuccess");
         callback.onSuccess(report);
     }
 

@@ -88,6 +88,9 @@ public class ReportsFragment extends Fragment {
         }
 
         Spinner spinner = dialogView.findViewById(R.id.spinnerTimePeriod);
+        LinearLayout layoutCustomDates = dialogView.findViewById(R.id.layoutCustomDates);
+        android.widget.Button btnStartDate = dialogView.findViewById(R.id.btnStartDate);
+        android.widget.Button btnEndDate = dialogView.findViewById(R.id.btnEndDate);
         CheckBox cbRescue = dialogView.findViewById(R.id.cbRescue);
         CheckBox cbController = dialogView.findViewById(R.id.cbController);
         CheckBox cbSymptoms = dialogView.findViewById(R.id.cbSymptoms);
@@ -96,44 +99,109 @@ public class ReportsFragment extends Fragment {
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         android.widget.Button btnGenerate = dialogView.findViewById(R.id.btnGenerate);
 
-        String[] options = {"7 days", "30 days", "90 days (3 months)", "180 days (6 months)"};
+        String[] options = {"7 days", "30 days", "90 days (3 months)", "180 days (6 months)", "Custom Range"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, options);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
 
+        final java.util.Calendar startCal = java.util.Calendar.getInstance();
+        startCal.add(java.util.Calendar.DAY_OF_YEAR, -7);
+        final java.util.Calendar endCal = java.util.Calendar.getInstance();
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MMM d, yyyy", java.util.Locale.getDefault());
+        btnStartDate.setText(sdf.format(startCal.getTime()));
+        btnEndDate.setText(sdf.format(endCal.getTime()));
+
+        spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (position == 4) { // Custom Range
+                    layoutCustomDates.setVisibility(View.VISIBLE);
+                } else {
+                    layoutCustomDates.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        btnStartDate.setOnClickListener(v -> {
+            new android.app.DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+                startCal.set(year, month, dayOfMonth);
+                btnStartDate.setText(sdf.format(startCal.getTime()));
+            }, startCal.get(java.util.Calendar.YEAR), startCal.get(java.util.Calendar.MONTH), startCal.get(java.util.Calendar.DAY_OF_MONTH)).show();
+        });
+
+        btnEndDate.setOnClickListener(v -> {
+            new android.app.DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+                endCal.set(year, month, dayOfMonth);
+                btnEndDate.setText(sdf.format(endCal.getTime()));
+            }, endCal.get(java.util.Calendar.YEAR), endCal.get(java.util.Calendar.MONTH), endCal.get(java.util.Calendar.DAY_OF_MONTH)).show();
+        });
+
         btnCancel.setOnClickListener(v -> dialog.dismiss());
 
         btnGenerate.setOnClickListener(v -> {
-            int days = 7;
             int position = spinner.getSelectedItemPosition();
-            switch (position) {
-                case 0: days = 7; break;
-                case 1: days = 30; break;
-                case 2: days = 90; break;
-                case 3: days = 180; break;
+            if (position == 4) {
+                if (startCal.getTimeInMillis() > endCal.getTimeInMillis()) {
+                    Toast.makeText(getContext(), "Start date must be before end date", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                createReport(startCal.getTime(), endCal.getTime(), cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
+            } else {
+                int days = 7;
+                switch (position) {
+                    case 0: days = 7; break;
+                    case 1: days = 30; break;
+                    case 2: days = 90; break;
+                    case 3: days = 180; break;
+                }
+                createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
             }
-            createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
             dialog.dismiss();
         });
 
         dialog.show();
     }
 
-    private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
-        Toast.makeText(getContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
-        
-        ReportGenerator generator = new ReportGenerator(getContext());
-        generator.generateReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
+    private void createReport(java.util.Date startDate, java.util.Date endDate, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
+        long diff = endDate.getTime() - startDate.getTime();
+        int days = (int) (diff / (24 * 60 * 60 * 1000)) + 1;
+        Toast.makeText(requireContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
+
+        ReportGenerator generator = new ReportGenerator(requireContext());
+        generator.generateReport(userId, startDate, endDate, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
             @Override
             public void onSuccess(Report report) {
                 saveReportToFirestore(report);
-                Toast.makeText(getContext(), "Report generated successfully!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Report generated successfully!", Toast.LENGTH_SHORT).show();
                 loadReports();
             }
 
             @Override
             public void onFailure(String error) {
-                Toast.makeText(getContext(), "Failed to generate report: " + error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), "Failed to generate report: " + error, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
+        Toast.makeText(requireContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
+        
+        ReportGenerator generator = new ReportGenerator(requireContext());
+        generator.generateReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
+            @Override
+            public void onSuccess(Report report) {
+                saveReportToFirestore(report);
+                Toast.makeText(requireContext(), "Report generated successfully!", Toast.LENGTH_SHORT).show();
+                loadReports();
+            }
+
+            @Override
+            public void onFailure(String error) {
+                Toast.makeText(requireContext(), "Failed to generate report: " + error, Toast.LENGTH_SHORT).show();
             }
         });
     }
