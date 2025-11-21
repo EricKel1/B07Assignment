@@ -1,6 +1,8 @@
 package com.example.b07project.utils;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -9,9 +11,11 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -36,8 +40,10 @@ import com.example.b07project.repository.SymptomCheckInRepository;
 import com.example.b07project.repository.TriageRepository;
 import com.google.firebase.auth.FirebaseAuth;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -400,7 +406,8 @@ public class ReportGenerator {
         Log.d(TAG, "generatePDF: HTML generated, length: " + htmlContent.length());
 
         String fileName = "AsthmaReport_" + report.getDays() + "days_" + System.currentTimeMillis() + ".pdf";
-        File file = new File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), fileName);
+        // Use cache dir for temporary storage before sharing/moving
+        File file = new File(context.getCacheDir(), fileName);
         Log.d(TAG, "generatePDF: Output file path: " + file.getAbsolutePath());
         renderHtmlToPdf(htmlContent, file, action);
     }
@@ -634,7 +641,7 @@ public class ReportGenerator {
                 "    const endPage = Math.floor((top + height - 1) / pageHeight);" +
                 "    if (startPage !== endPage) {" +
                 "      const nextPageStart = (startPage + 1) * pageHeight;" +
-                "      const spacerHeight = nextPageStart - top;" +
+                "      const spacerHeight = nextPageStart - top + 40;" +
                 "      if (el.tagName === 'TR') {" +
                 "        const spacerRow = document.createElement('tr');" +
                 "        spacerRow.style.height = spacerHeight + 'px';" +
@@ -742,10 +749,11 @@ public class ReportGenerator {
                                 document.writeTo(fos);
                                 fos.close();
                                 Log.d(TAG, "onPageFinished: Document written successfully");
+                                
                                 if (action == ReportAction.SHARE) {
                                     sharePDF(outputFile);
                                 } else {
-                                    Toast.makeText(context, "Report saved to Documents", Toast.LENGTH_LONG).show();
+                                    saveToPublicDocuments(outputFile, outputFile.getName());
                                 }
                             } catch (IOException e) {
                                 Log.e(TAG, "onPageFinished: Error writing PDF", e);
@@ -764,6 +772,57 @@ public class ReportGenerator {
             Log.d(TAG, "renderHtmlToPdf: Loading HTML data");
             webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
         });
+    }
+
+    private void saveToPublicDocuments(File tempFile, String fileName) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS);
+
+            ContentResolver resolver = context.getContentResolver();
+            Uri uri = null;
+
+            try {
+                uri = resolver.insert(MediaStore.Files.getContentUri("external"), values);
+                if (uri != null) {
+                    try (OutputStream out = resolver.openOutputStream(uri);
+                         FileInputStream in = new FileInputStream(tempFile)) {
+                        byte[] buffer = new byte[1024];
+                        int len;
+                        while ((len = in.read(buffer)) > 0) {
+                            out.write(buffer, 0, len);
+                        }
+                        Toast.makeText(context, "Report saved to Documents", Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    throw new IOException("Failed to create MediaStore entry");
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error saving to public documents", e);
+                Toast.makeText(context, "Error saving to Documents folder", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            // Legacy storage
+            File publicDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+            if (!publicDir.exists()) {
+                publicDir.mkdirs();
+            }
+            File destFile = new File(publicDir, fileName);
+            try (FileInputStream in = new FileInputStream(tempFile);
+                 FileOutputStream out = new FileOutputStream(destFile)) {
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, len);
+                }
+                Toast.makeText(context, "Report saved to Documents", Toast.LENGTH_LONG).show();
+            } catch (IOException e) {
+                Log.e(TAG, "Error saving to legacy public documents", e);
+                Toast.makeText(context, "Error saving to Documents folder", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     private void sharePDF(File file) {
