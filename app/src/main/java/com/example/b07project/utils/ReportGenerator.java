@@ -87,7 +87,7 @@ public class ReportGenerator {
         this.dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
     }
 
-    public void generateReport(String userId, int days, ReportCallback callback) {
+    public void generateReport(String userId, int days, boolean includeTriage, ReportCallback callback) {
         Calendar calendar = Calendar.getInstance();
         Date endDate = calendar.getTime();
         calendar.add(Calendar.DAY_OF_YEAR, -(days - 1));
@@ -100,7 +100,7 @@ public class ReportGenerator {
                 controllerRepository.getLogsForUserInDateRange(userId, startDate, endDate, new ControllerMedicineRepository.LoadCallback() {
                     @Override
                     public void onSuccess(List<ControllerMedicineLog> controllerLogs) {
-                        fetchOptionalData(userId, startDate, endDate, days, rescueLogs, controllerLogs, callback);
+                        fetchOptionalData(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, callback);
                     }
 
                     @Override
@@ -117,59 +117,59 @@ public class ReportGenerator {
         });
     }
 
-    private void fetchOptionalData(String userId, Date startDate, Date endDate, int days,
+    private void fetchOptionalData(String userId, Date startDate, Date endDate, int days, boolean includeTriage,
                                    List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                    ReportCallback callback) {
         triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
             @Override
             public void onSuccess(List<TriageSession> allTriageSessions) {
-                fetchPEF(userId, startDate, endDate, days, rescueLogs, controllerLogs, allTriageSessions, callback);
+                fetchPEF(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, allTriageSessions, callback);
             }
 
             @Override
             public void onFailure(String error) {
                 Log.e(TAG, "Triage fetch failed: " + error);
-                fetchPEF(userId, startDate, endDate, days, rescueLogs, controllerLogs, new ArrayList<>(), callback);
+                fetchPEF(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, new ArrayList<>(), callback);
             }
         });
     }
 
-    private void fetchPEF(String userId, Date startDate, Date endDate, int days,
+    private void fetchPEF(String userId, Date startDate, Date endDate, int days, boolean includeTriage,
                           List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                           List<TriageSession> triageSessions, ReportCallback callback) {
         pefRepository.getPEFReadingsForUser(userId, new PEFRepository.LoadCallback<List<PEFReading>>() {
             @Override
             public void onSuccess(List<PEFReading> allPefReadings) {
-                fetchSymptoms(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, allPefReadings, callback);
+                fetchSymptoms(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, triageSessions, allPefReadings, callback);
             }
 
             @Override
             public void onFailure(String error) {
                 Log.e(TAG, "PEF fetch failed: " + error);
-                fetchSymptoms(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, new ArrayList<>(), callback);
+                fetchSymptoms(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, triageSessions, new ArrayList<>(), callback);
             }
         });
     }
 
-    private void fetchSymptoms(String userId, Date startDate, Date endDate, int days,
+    private void fetchSymptoms(String userId, Date startDate, Date endDate, int days, boolean includeTriage,
                                List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                List<TriageSession> triageSessions, List<PEFReading> pefReadings,
                                ReportCallback callback) {
         symptomRepository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
             @Override
             public void onSuccess(List<SymptomCheckIn> allSymptomCheckIns) {
-                finalizeReport(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, pefReadings, allSymptomCheckIns, callback);
+                finalizeReport(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, triageSessions, pefReadings, allSymptomCheckIns, callback);
             }
 
             @Override
             public void onFailure(String error) {
                 Log.e(TAG, "Symptom fetch failed: " + error);
-                finalizeReport(userId, startDate, endDate, days, rescueLogs, controllerLogs, triageSessions, pefReadings, new ArrayList<>(), callback);
+                finalizeReport(userId, startDate, endDate, days, includeTriage, rescueLogs, controllerLogs, triageSessions, pefReadings, new ArrayList<>(), callback);
             }
         });
     }
 
-    private void finalizeReport(String userId, Date startDate, Date endDate, int days,
+    private void finalizeReport(String userId, Date startDate, Date endDate, int days, boolean includeTriage,
                                 List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                 List<TriageSession> allTriageSessions, List<PEFReading> allPefReadings,
                                 List<SymptomCheckIn> allSymptomCheckIns, ReportCallback callback) {
@@ -178,7 +178,7 @@ public class ReportGenerator {
         List<PEFReading> pefReadings = filterByDate(allPefReadings, startDate, endDate);
         List<SymptomCheckIn> symptomCheckIns = filterByDate(allSymptomCheckIns, startDate, endDate);
 
-        Report report = createReport(userId, days, startDate, endDate, 
+        Report report = createReport(userId, days, includeTriage, startDate, endDate, 
             rescueLogs, controllerLogs, triageSessions, pefReadings, symptomCheckIns);
         callback.onSuccess(report);
     }
@@ -208,7 +208,7 @@ public class ReportGenerator {
         return filtered;
     }
 
-    private Report createReport(String userId, int days, Date startDate, Date endDate,
+    private Report createReport(String userId, int days, boolean includeTriage, Date startDate, Date endDate,
                                 List<RescueInhalerLog> rescueLogs, List<ControllerMedicineLog> controllerLogs,
                                 List<TriageSession> triageSessions, List<PEFReading> pefReadings,
                                 List<SymptomCheckIn> symptomCheckIns) {
@@ -272,7 +272,8 @@ public class ReportGenerator {
                 green,
                 yellow,
                 red,
-                triageIncidents
+                triageIncidents,
+                includeTriage
         );
     }
 
@@ -465,17 +466,21 @@ public class ReportGenerator {
         StringBuilder triageRows = new StringBuilder();
         SimpleDateFormat triageDateFmt = new SimpleDateFormat("MMM d, HH:mm", Locale.getDefault());
         boolean hasTriageIncidents = false;
-        for (TriageSession session : triageSessions) {
-            if ("emergency".equalsIgnoreCase(session.getDecision()) || session.isEscalated()) {
-                hasTriageIncidents = true;
-                String reason = session.getEscalationReason() != null ? session.getEscalationReason() : session.getDecision();
-                triageRows.append("<tr>")
-                    .append("<td>").append(triageDateFmt.format(session.getStartTime())).append("</td>")
-                    .append("<td>").append(reason).append("</td>")
-                    .append("<td>").append(session.getUserResponse() != null ? session.getUserResponse() : "N/A").append("</td>")
-                    .append("</tr>");
+        
+        if (report.isIncludeTriage()) {
+            for (TriageSession session : triageSessions) {
+                if ("emergency".equalsIgnoreCase(session.getDecision()) || session.isEscalated()) {
+                    hasTriageIncidents = true;
+                    String reason = session.getEscalationReason() != null ? session.getEscalationReason() : session.getDecision();
+                    triageRows.append("<tr>")
+                        .append("<td>").append(triageDateFmt.format(session.getStartTime())).append("</td>")
+                        .append("<td>").append(reason).append("</td>")
+                        .append("<td>").append(session.getUserResponse() != null ? session.getUserResponse() : "N/A").append("</td>")
+                        .append("</tr>");
+                }
             }
         }
+        
         String triageTableHtml = "";
         if (hasTriageIncidents) {
             triageTableHtml = "<div class='chart-box triage-incidents'><h2>Notable Triage Incidents</h2>" +

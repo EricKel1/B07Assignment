@@ -5,6 +5,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -73,27 +77,49 @@ public class ReportsFragment extends Fragment {
     }
 
     private void showCreateReportDialog() {
-        String[] options = {"7 days", "30 days", "90 days"};
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        TextView tvLabel = new TextView(requireContext());
+        tvLabel.setText("Select Time Period:");
+        layout.addView(tvLabel);
+
+        Spinner spinner = new Spinner(requireContext());
+        String[] options = {"7 days", "30 days", "90 days (3 months)", "180 days (6 months)"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, options);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        layout.addView(spinner);
+
+        CheckBox cbTriage = new CheckBox(requireContext());
+        cbTriage.setText("Include Notable Triage Incidents");
+        cbTriage.setChecked(true);
+        layout.addView(cbTriage);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Create Report")
-                .setItems(options, (dialog, which) -> {
-                    int days = 0;
-                    switch (which) {
+                .setView(layout)
+                .setPositiveButton("Generate", (dialog, which) -> {
+                    int days = 7;
+                    int position = spinner.getSelectedItemPosition();
+                    switch (position) {
                         case 0: days = 7; break;
                         case 1: days = 30; break;
                         case 2: days = 90; break;
+                        case 3: days = 180; break;
                     }
-                    createReport(days);
+                    createReport(days, cbTriage.isChecked());
                 })
+                .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void createReport(int days) {
+    private void createReport(int days, boolean includeTriage) {
         Toast.makeText(getContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
         
         ReportGenerator generator = new ReportGenerator(getContext());
-        generator.generateReport(userId, days, new ReportGenerator.ReportCallback() {
+        generator.generateReport(userId, days, includeTriage, new ReportGenerator.ReportCallback() {
             @Override
             public void onSuccess(Report report) {
                 saveReportToFirestore(report);

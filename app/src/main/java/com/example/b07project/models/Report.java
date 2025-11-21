@@ -17,6 +17,11 @@ public class Report {
     private int yellowZoneCount;
     private int redZoneCount;
     private int triageIncidentsCount;
+    private boolean includeTriage;
+    private boolean includeRescue;
+    private boolean includeController;
+    private boolean includeSymptoms;
+    private boolean includeZones;
 
     public Report() {
         // Required empty constructor for Firestore
@@ -26,7 +31,9 @@ public class Report {
                   int totalRescueUses, int totalControllerDoses, 
                   double avgRescuePerDay, double avgControllerPerDay,
                   double controllerAdherence, int symptomBurdenDays,
-                  int greenZoneCount, int yellowZoneCount, int redZoneCount, int triageIncidentsCount) {
+                  int greenZoneCount, int yellowZoneCount, int redZoneCount, int triageIncidentsCount,
+                  boolean includeTriage, boolean includeRescue, boolean includeController, 
+                  boolean includeSymptoms, boolean includeZones) {
         this.userId = userId;
         this.days = days;
         this.generatedDate = generatedDate;
@@ -42,6 +49,11 @@ public class Report {
         this.yellowZoneCount = yellowZoneCount;
         this.redZoneCount = redZoneCount;
         this.triageIncidentsCount = triageIncidentsCount;
+        this.includeTriage = includeTriage;
+        this.includeRescue = includeRescue;
+        this.includeController = includeController;
+        this.includeSymptoms = includeSymptoms;
+        this.includeZones = includeZones;
     }
 
     // Getters and setters
@@ -92,4 +104,7 @@ public class Report {
 
     public int getTriageIncidentsCount() { return triageIncidentsCount; }
     public void setTriageIncidentsCount(int triageIncidentsCount) { this.triageIncidentsCount = triageIncidentsCount; }
+
+    public boolean isIncludeTriage() { return includeTriage; }
+    public void setIncludeTriage(boolean includeTriage) { this.includeTriage = includeTriage; }
 }
