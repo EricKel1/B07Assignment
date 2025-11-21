@@ -10,6 +10,8 @@ import androidx.core.content.ContextCompat;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import androidx.cardview.widget.CardView;
 
 import android.widget.ImageButton;
 import android.Manifest;
@@ -23,7 +25,8 @@ public class HomeActivity extends AppCompatActivity {
     private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
     private Button btnInventory;
     private ImageButton btnNotifications;
-    private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice;
+    private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice, tvMedicationSchedule;
+    private CardView cardMedicationSchedule;
     private PEFRepository pefRepository;
     private String dataOwnerId;
 
@@ -75,7 +78,31 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         loadZoneStatus();
+        loadMedicationSchedule();
         checkNotificationPermission();
+    }
+
+    private void loadMedicationSchedule() {
+        if (dataOwnerId == null) return;
+
+        FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && documentSnapshot.contains("plannedDosesPerDay")) {
+                        Long doses = documentSnapshot.getLong("plannedDosesPerDay");
+                        if (doses != null && doses > 0) {
+                            tvMedicationSchedule.setText("Take " + doses + " controller dose(s) daily.");
+                            cardMedicationSchedule.setVisibility(View.VISIBLE);
+                        } else {
+                            cardMedicationSchedule.setVisibility(View.GONE);
+                        }
+                    } else {
+                        cardMedicationSchedule.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (cardMedicationSchedule != null) cardMedicationSchedule.setVisibility(View.GONE);
+                });
     }
 
     private void checkNotificationPermission() {
@@ -105,6 +132,9 @@ public class HomeActivity extends AppCompatActivity {
         tvCurrentZone = findViewById(R.id.tvCurrentZone);
         tvZonePercentage = findViewById(R.id.tvZonePercentage);
         tvViewingChildNotice = findViewById(R.id.tvViewingChildNotice);
+        
+        tvMedicationSchedule = findViewById(R.id.tvMedicationSchedule);
+        cardMedicationSchedule = findViewById(R.id.cardMedicationSchedule);
     }
 
     private void setupListeners() {

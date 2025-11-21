@@ -3,9 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    android:layout_marginBottom="16dp"
+    android:layout_marginHorizontal="4dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -13,71 +15,130 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/tvChildName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Child Name"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
-            android:layout_marginBottom="12dp"/>
-
+        <!-- Header: Name and Menu -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Current Zone: "
-                android:textStyle="bold"/>
-            <TextView
-                android:id="@+id/tvCurrentZone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Loading..."
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Last Rescue: "
-                android:textStyle="bold"/>
-            <TextView
-                android:id="@+id/tvLastRescue"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="--"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Rescues: "
-                android:textStyle="bold"/>
-            <TextView
-                android:id="@+id/tvWeeklyRescues"
+                android:id="@+id/tvChildName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="--"/>
+                android:text="Child Name"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="#1A237E"/>
+
+            <ImageButton
+                android:id="@+id/btnMenu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@android:drawable/ic_menu_more"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Options"
+                app:tint="#757575"/>
+        </LinearLayout>
+
+        <!-- Stats Grid -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false"
+            android:layout_marginBottom="16dp">
+
+            <!-- Zone Stat -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Current Zone"
+                    android:textSize="12sp"
+                    android:textColor="#757575"/>
+                
+                <TextView
+                    android:id="@+id/tvCurrentZone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Loading..."
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#E0E0E0"
+                android:layout_marginHorizontal="8dp"/>
+
+            <!-- Weekly Rescues Stat -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rescues"
+                    android:textSize="12sp"
+                    android:textColor="#757575"/>
+
+                <TextView
+                    android:id="@+id/tvWeeklyRescues"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Last Rescue & Range Toggle -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp"
+            android:background="#F5F5F5"
+            android:padding="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Last Rescue:"
+                    android:textSize="12sp"
+                    android:textColor="#757575"/>
+                
+                <TextView
+                    android:id="@+id/tvLastRescue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textSize="14sp"
+                    android:textColor="#424242"/>
+            </LinearLayout>
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleGroupRange"
@@ -109,6 +170,7 @@
             </com.google.android.material.button.MaterialButtonToggleGroup>
         </LinearLayout>
 
+        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -121,6 +183,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Invite"
+                android:textSize="12sp"
                 android:layout_marginEnd="4dp"/>
 
             <Button
@@ -130,6 +193,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Share"
+                android:textSize="12sp"
                 android:layout_marginEnd="4dp"/>
 
             <Button
@@ -138,6 +202,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Reports"
+                android:textSize="12sp"
                 android:backgroundTint="#1565C0"
                 android:textColor="@android:color/white"/>
         </LinearLayout>

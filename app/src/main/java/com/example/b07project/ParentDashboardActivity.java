@@ -34,10 +34,13 @@ import java.util.Map;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.app.AlertDialog;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import android.widget.EditText;
 import android.text.InputType;
 
 import android.widget.ImageButton;
+
+import com.google.firebase.firestore.SetOptions;
 
 public class ParentDashboardActivity extends AppCompatActivity {
 
@@ -93,6 +96,21 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 }
             }
+
+            @Override
+            public void onEditProfile(String childName, String childId) {
+                showEditProfileDialog(childName, childId);
+            }
+
+            @Override
+            public void onSetPersonalBest(String childName, String childId) {
+                showSetPersonalBestDialog(childName, childId);
+            }
+
+            @Override
+            public void onSetMedicationSchedule(String childName, String childId) {
+                showSetMedicationScheduleDialog(childName, childId);
+            }
         });
         rvChildren.setLayoutManager(new LinearLayoutManager(this));
         rvChildren.setAdapter(adapter);
@@ -127,13 +145,22 @@ public class ParentDashboardActivity extends AppCompatActivity {
     }
 
     private void showAddChildDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
         builder.setTitle("Add Child");
 
         final EditText input = new EditText(this);
         input.setInputType(InputType.TYPE_CLASS_TEXT);
         input.setHint("Child Name");
-        builder.setView(input);
+        
+        // Add padding
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 50;
+        params.rightMargin = 50;
+        input.setLayoutParams(params);
+        container.addView(input);
+        
+        builder.setView(container);
 
         builder.setPositiveButton("Add", (dialog, which) -> {
             String childName = input.getText().toString().trim();
@@ -312,5 +339,136 @@ public class ParentDashboardActivity extends AppCompatActivity {
         Intent intent = new Intent(this, StatisticsReportsActivity.class);
         intent.putExtra("EXTRA_CHILD_ID", childId);
         startActivity(intent);
+    }
+
+    private void showEditProfileDialog(String currentName, String childId) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Edit Child Profile");
+
+        // Create layout programmatically
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(60, 40, 60, 20);
+
+        final EditText etName = new EditText(this);
+        etName.setHint("Child Name");
+        etName.setText(currentName);
+        layout.addView(etName);
+
+        final EditText etDOB = new EditText(this);
+        etDOB.setHint("Date of Birth (YYYY-MM-DD)");
+        etDOB.setLayoutParams(new android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+        ((android.widget.LinearLayout.LayoutParams) etDOB.getLayoutParams()).topMargin = 20;
+        layout.addView(etDOB);
+
+        final EditText etNotes = new EditText(this);
+        etNotes.setHint("Medical Notes (Optional)");
+        etNotes.setLayoutParams(new android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+        ((android.widget.LinearLayout.LayoutParams) etNotes.getLayoutParams()).topMargin = 20;
+        layout.addView(etNotes);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String newName = etName.getText().toString().trim();
+            String dob = etDOB.getText().toString().trim();
+            String notes = etNotes.getText().toString().trim();
+
+            if (newName.isEmpty()) {
+                Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("name", newName);
+            if (!dob.isEmpty()) updates.put("dateOfBirth", dob);
+            if (!notes.isEmpty()) updates.put("notes", notes);
+
+            FirebaseFirestore.getInstance().collection("children").document(childId)
+                    .set(updates, SetOptions.merge())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
+                        loadChildren(); // Refresh list
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(this, "Failed to update", Toast.LENGTH_SHORT).show());
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void showSetPersonalBestDialog(String childName, String childId) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Set Personal Best (PEF)");
+        builder.setMessage("Enter the highest Peak Flow value " + childName + " can achieve when healthy.");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("e.g. 350");
+        
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 60;
+        params.rightMargin = 60;
+        input.setLayoutParams(params);
+        container.addView(input);
+        
+        builder.setView(container);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String valueStr = input.getText().toString().trim();
+            if (!valueStr.isEmpty()) {
+                int value = Integer.parseInt(valueStr);
+                PersonalBest pb = new PersonalBest(childId, value, FirebaseAuth.getInstance().getCurrentUser().getUid());
+                pefRepository.setPersonalBest(pb, new PEFRepository.SaveCallback() {
+                    @Override
+                    public void onSuccess(String documentId) {
+                        Toast.makeText(ParentDashboardActivity.this, "Personal Best updated", Toast.LENGTH_SHORT).show();
+                        loadChildren(); // Refresh to update zone calculation if needed
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        Toast.makeText(ParentDashboardActivity.this, "Failed to update PB", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void showSetMedicationScheduleDialog(String childName, String childId) {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        builder.setTitle("Controller Schedule");
+        builder.setMessage("How many controller doses should " + childName + " take per day?");
+
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        input.setHint("e.g. 2");
+        
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 60;
+        params.rightMargin = 60;
+        input.setLayoutParams(params);
+        container.addView(input);
+        
+        builder.setView(container);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String valueStr = input.getText().toString().trim();
+            if (!valueStr.isEmpty()) {
+                int doses = Integer.parseInt(valueStr);
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("plannedDosesPerDay", doses);
+
+                FirebaseFirestore.getInstance().collection("children").document(childId)
+                        .set(updates, SetOptions.merge())
+                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Schedule updated", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e -> Toast.makeText(this, "Failed to update", Toast.LENGTH_SHORT).show());
+            }
+        });
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
     }
 }

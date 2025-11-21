@@ -60,6 +60,59 @@
             tools:visibility="visible"/>
 
         <androidx.cardview.widget.CardView
+            android:id="@+id/cardMedicationSchedule"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="#E0F7FA"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tvViewingChildNotice"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="16dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:src="@android:drawable/ic_menu_agenda"
+                    app:tint="#006064"
+                    android:contentDescription="Schedule Icon"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Daily Controller Plan"
+                        android:textStyle="bold"
+                        android:textColor="#006064"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:id="@+id/tvMedicationSchedule"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Take 2 doses today"
+                        android:textColor="#00838F"
+                        android:textSize="14sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
             android:id="@+id/cardRescueInhaler"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -67,7 +120,7 @@
             app:cardCornerRadius="12dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="#E3F2FD"
-            app:layout_constraintTop_toBottomOf="@id/tvViewingChildNotice"
+            app:layout_constraintTop_toBottomOf="@id/cardMedicationSchedule"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 

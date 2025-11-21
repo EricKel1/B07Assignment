@@ -11,6 +11,8 @@ import com.example.b07project.R;
 import java.util.List;
 import java.util.Map;
 
+import android.widget.ImageButton;
+import android.widget.PopupMenu;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
 public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHolder> {
@@ -23,6 +25,9 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         void onViewReports(String childName, String childId);
         void onSharingSettings(String childName, String childId);
         void onRangeChanged(String childId, int days);
+        void onEditProfile(String childName, String childId);
+        void onSetPersonalBest(String childName, String childId);
+        void onSetMedicationSchedule(String childName, String childId);
     }
 
     public ChildAdapter(List<Map<String, String>> children, OnChildActionListener listener) {
@@ -69,6 +74,25 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
                 listener.onRangeChanged(id, days);
             }
         });
+
+        holder.btnMenu.setOnClickListener(v -> {
+            PopupMenu popup = new PopupMenu(v.getContext(), holder.btnMenu);
+            popup.getMenu().add("Edit Profile");
+            popup.getMenu().add("Set Personal Best");
+            popup.getMenu().add("Medication Schedule");
+            
+            popup.setOnMenuItemClickListener(item -> {
+                if (item.getTitle().equals("Edit Profile")) {
+                    listener.onEditProfile(name, id);
+                } else if (item.getTitle().equals("Set Personal Best")) {
+                    listener.onSetPersonalBest(name, id);
+                } else if (item.getTitle().equals("Medication Schedule")) {
+                    listener.onSetMedicationSchedule(name, id);
+                }
+                return true;
+            });
+            popup.show();
+        });
     }
 
     @Override
@@ -85,6 +109,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
         Button btnViewReports;
         Button btnSharing;
         MaterialButtonToggleGroup toggleGroupRange;
+        ImageButton btnMenu;
 
         public ChildViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -96,6 +121,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
             btnViewReports = itemView.findViewById(R.id.btnViewReports);
             btnSharing = itemView.findViewById(R.id.btnSharing);
             toggleGroupRange = itemView.findViewById(R.id.toggleGroupRange);
+            btnMenu = itemView.findViewById(R.id.btnMenu);
         }
     }
 }
