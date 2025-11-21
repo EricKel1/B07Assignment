@@ -77,62 +77,46 @@ public class ReportsFragment extends Fragment {
     }
 
     private void showCreateReportDialog() {
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 40, 50, 10);
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_create_report, null);
+        builder.setView(dialogView);
 
-        TextView tvLabel = new TextView(requireContext());
-        tvLabel.setText("Select Time Period:");
-        layout.addView(tvLabel);
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_rounded_background);
+        }
 
-        Spinner spinner = new Spinner(requireContext());
+        Spinner spinner = dialogView.findViewById(R.id.spinnerTimePeriod);
+        CheckBox cbRescue = dialogView.findViewById(R.id.cbRescue);
+        CheckBox cbController = dialogView.findViewById(R.id.cbController);
+        CheckBox cbSymptoms = dialogView.findViewById(R.id.cbSymptoms);
+        CheckBox cbZones = dialogView.findViewById(R.id.cbZones);
+        CheckBox cbTriage = dialogView.findViewById(R.id.cbTriage);
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+        android.widget.Button btnGenerate = dialogView.findViewById(R.id.btnGenerate);
+
         String[] options = {"7 days", "30 days", "90 days (3 months)", "180 days (6 months)"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, options);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
-        layout.addView(spinner);
 
-        CheckBox cbRescue = new CheckBox(requireContext());
-        cbRescue.setText("Include Rescue Inhaler Usage");
-        cbRescue.setChecked(true);
-        layout.addView(cbRescue);
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
-        CheckBox cbController = new CheckBox(requireContext());
-        cbController.setText("Include Controller Medication");
-        cbController.setChecked(true);
-        layout.addView(cbController);
+        btnGenerate.setOnClickListener(v -> {
+            int days = 7;
+            int position = spinner.getSelectedItemPosition();
+            switch (position) {
+                case 0: days = 7; break;
+                case 1: days = 30; break;
+                case 2: days = 90; break;
+                case 3: days = 180; break;
+            }
+            createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
+            dialog.dismiss();
+        });
 
-        CheckBox cbSymptoms = new CheckBox(requireContext());
-        cbSymptoms.setText("Include Symptom Burden");
-        cbSymptoms.setChecked(true);
-        layout.addView(cbSymptoms);
-
-        CheckBox cbZones = new CheckBox(requireContext());
-        cbZones.setText("Include Zone Distribution");
-        cbZones.setChecked(true);
-        layout.addView(cbZones);
-
-        CheckBox cbTriage = new CheckBox(requireContext());
-        cbTriage.setText("Include Notable Triage Incidents");
-        cbTriage.setChecked(true);
-        layout.addView(cbTriage);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Create Report")
-                .setView(layout)
-                .setPositiveButton("Generate", (dialog, which) -> {
-                    int days = 7;
-                    int position = spinner.getSelectedItemPosition();
-                    switch (position) {
-                        case 0: days = 7; break;
-                        case 1: days = 30; break;
-                        case 2: days = 90; break;
-                        case 3: days = 180; break;
-                    }
-                    createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
+        dialog.show();
     }
 
     private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
