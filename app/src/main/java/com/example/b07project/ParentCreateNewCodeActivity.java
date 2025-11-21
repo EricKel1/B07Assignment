@@ -42,12 +42,12 @@ public class ParentCreateNewCodeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_parent_create_new_code);
 
         Intent intent = getIntent();
-        int providerCode = Integer.parseInt(intent.getStringExtra("providerCode"));
+        String providerCode = intent.getStringExtra("providerCode");
         initializeViews();
         setupListeners(providerCode);
 
         //get providerCode from previous screen
-        sevenDayCodePlaceholder.setText(String.valueOf(providerCode));
+        sevenDayCodePlaceholder.setText(providerCode);
 
 
     }
@@ -58,7 +58,7 @@ public class ParentCreateNewCodeActivity extends AppCompatActivity {
         codeCopy = findViewById(R.id.codeCopy);
     }
 
-    private void setupListeners(int code){
+    private void setupListeners(String code){
         btnToProviderPermissions.setOnClickListener(v -> {
             //Will link to the page that lets you modify provider permissions.
 
@@ -66,7 +66,7 @@ public class ParentCreateNewCodeActivity extends AppCompatActivity {
         btnBackToLogs.setOnClickListener((v -> bh.backTo(this)));
         codeCopy.setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Provider Code", String.valueOf(code));
+            ClipData clip = ClipData.newPlainText("Provider Code", code);
             clipboard.setPrimaryClip(clip);
             Toast.makeText(this, "Code copied to clipboard", Toast.LENGTH_LONG).show();
          });
