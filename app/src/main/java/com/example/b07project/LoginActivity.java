@@ -49,6 +49,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         tvError.setVisibility(View.GONE);
         startActivity(new Intent(this, HomeActivity.class));
         finish();
+
     }
 
     @Override public void navigateToProviderHome() {
@@ -62,6 +63,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         tvError.setVisibility(View.GONE);
         startActivity(new Intent(this, DeviceChooserActivity.class));
         finish();
+
     }
 
     @Override public String getEmailInput() { return etEmail.getText().toString().trim(); }

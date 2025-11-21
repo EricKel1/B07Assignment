@@ -13,7 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.B07Project">
-        
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
@@ -23,7 +23,7 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-        
+
         <activity android:name=".HomeActivity" />
         <activity android:name=".SignUpActivity" android:exported="true" />
         <activity android:name=".LogRescueInhalerActivity" />
@@ -35,6 +35,16 @@
         <activity android:name=".TriageActivity" />
         <activity android:name=".IncidentHistoryActivity" />
         <activity android:name=".InhalerTechniqueActivity" />
+        <activity android:name=".ParentHomeActivity" />
+        <activity android:name=".ParentAddNewChildActivity"/>
+        <activity android:name=".ParentAddNewExistingChildActivity" />
+        <activity android:name=".ParentChildLogsActivity" />
+        <activity android:name=".ParentCreateNewCodeActivity" />
+        <activity android:name=".ProviderUseInviteCodeActivity" />
+        <activity android:name=".ChildLoginConduitActivity" />
+        <activity android:name=".ChildLoginThroughParentActivity" />
+        <activity android:name=".ChildLoginThroughSelfActivity" />
+
         <activity android:name=".MotivationActivity" />
         <activity android:name=".MotivationSettingsActivity" />
         <activity android:name=".StatisticsReportsActivity" />
@@ -45,6 +55,16 @@
         <activity android:name=".ProviderHomeActivity" />
         <activity android:name=".InventoryActivity" />
         <activity android:name=".NotificationCenterActivity" />
+        <activity android:name=".ParentHomeActivity" />
+        <activity android:name=".ParentAddNewChildActivity"/>
+        <activity android:name=".ParentAddNewExistingChildActivity" />
+        <activity android:name=".ParentChildLogsActivity" />
+        <activity android:name=".ParentCreateNewCodeActivity" />
+        <activity android:name=".ProviderUseInviteCodeActivity" />
+        <activity android:name=".ChildLoginConduitActivity" />
+        <activity android:name=".ChildLoginThroughParentActivity" />
+        <activity android:name=".ChildLoginThroughSelfActivity" />
+
         <activity
             android:name=".main.WelcomeActivity"
             android:exported="true">
