@@ -135,6 +135,6 @@
     <string name="im_the_parent">I\'m %1$s (Parent)</string>
 
     <!-- Strings for Parent Dashboard Activity -->
-    <string name="parent_dashboard_title">This is the parent’s dashboard.</string>
+    <string name="parent_dashboard_title">Parent Dashboard</string>
     <string name="log_out">Log Out</string>
 </resources>
