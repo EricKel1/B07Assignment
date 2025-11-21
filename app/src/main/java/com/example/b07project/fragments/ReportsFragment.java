@@ -264,12 +264,27 @@ public class ReportsFragment extends Fragment {
     }
 
     private void confirmDeleteReport(Report report, int position) {
-        new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Report?")
-                .setMessage("Are you sure you want to delete this report? This cannot be undone.")
-                .setPositiveButton("Delete", (dialog, which) -> deleteReport(report, position))
-                .setNegativeButton("Cancel", null)
-                .show();
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = requireActivity().getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_delete_report, null);
+        builder.setView(dialogView);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_rounded_background);
+        }
+
+        android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancelDelete);
+        android.widget.Button btnConfirm = dialogView.findViewById(R.id.btnConfirmDelete);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnConfirm.setOnClickListener(v -> {
+            deleteReport(report, position);
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void deleteReport(Report report, int position) {
