@@ -29,7 +29,7 @@ exports.sendPushNotification = onDocumentCreated("notifications/{notificationId}
 
       try {
         // 1. Get the user's FCM token from their profile
-        const userDoc = await admin.firestore().collection("users").document(userId).get();
+        const userDoc = await admin.firestore().collection("users").doc(userId).get();
         
         if (!userDoc.exists) {
           console.log(`User ${userId} not found`);
