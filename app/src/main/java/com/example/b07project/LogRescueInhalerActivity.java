@@ -26,6 +26,7 @@ import com.example.b07project.repository.RescueInhalerRepository;
 import com.example.b07project.services.MotivationService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -291,9 +292,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 public void onSuccess(String documentId) {
                     // Check for "Worse After Dose" Alert
                     if (cbWorseAfterDose.isChecked()) {
-                        String userName = currentUser.getDisplayName();
-                        if (userName == null || userName.isEmpty()) userName = "Child";
-                        NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, "Worse After Dose Alert", userName + " reported feeling worse after using rescue inhaler.");
+                        sendAlertWithChildName(targetUserId, "Worse After Dose Alert", "reported feeling worse after using rescue inhaler.");
                     }
 
                     // Check for Rapid Rescue Repeats (e.g., > 4 puffs in last 4 hours)
@@ -430,6 +429,27 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         android.util.Log.d("ConfettiService", "Dialog shown");
     }
 
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
+    }
+
     private void checkRapidRescueRepeats(String targetUserId, String currentLogId, int currentDoseCount) {
         Calendar cal = Calendar.getInstance();
         Date now = cal.getTime();
@@ -454,9 +474,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 }
                 
                 if (totalPuffs >= 3) { // Threshold: 3 or more puffs in 3 hours
-                     FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-                     String userName = (currentUser != null && currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()) ? currentUser.getDisplayName() : "Child";
-                     NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, "Rapid Rescue Usage Alert", userName + " has used " + totalPuffs + " puffs of rescue inhaler in the last 3 hours.");
+                     sendAlertWithChildName(targetUserId, "Rapid Rescue Usage Alert", "has used " + totalPuffs + " puffs of rescue inhaler in the last 3 hours.");
                 }
             }
 

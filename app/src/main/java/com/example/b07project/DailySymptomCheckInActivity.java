@@ -16,6 +16,7 @@ import com.example.b07project.repository.SymptomCheckInRepository;
 import com.google.android.material.slider.Slider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -208,9 +209,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
             public void onSuccess(String documentId) {
                 // Check for Triage Escalation
                 if (symptomLevel >= 4) {
-                    String userName = currentUser.getDisplayName();
-                    if (userName == null || userName.isEmpty()) userName = "Child";
-                    NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, "Triage Escalation Alert", userName + " reported severe symptoms (Level " + symptomLevel + "). Please check on them immediately.");
+                    sendAlertWithChildName(targetUserId, "Triage Escalation Alert", "reported severe symptoms (Level " + symptomLevel + "). Please check on them immediately.");
                 }
 
                 showLoading(false);
@@ -226,6 +225,27 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
                 showMessage("Failed to save check-in: " + error, true);
             }
         });
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 
     private List<String> getSelectedSymptoms() {

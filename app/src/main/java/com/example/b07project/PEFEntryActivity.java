@@ -18,6 +18,8 @@ import com.example.b07project.repository.PEFRepository;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.models.PEFReading;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class PEFEntryActivity extends AppCompatActivity {
 
@@ -197,9 +199,7 @@ public class PEFEntryActivity extends AppCompatActivity {
                 if (userPersonalBest != null && userPersonalBest.getValue() > 0) {
                     String zone = PersonalBest.calculateZone(pefValue, userPersonalBest.getValue());
                     if ("red".equalsIgnoreCase(zone)) {
-                        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
-                        if (userName == null || userName.isEmpty()) userName = "Child";
-                        NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, "Red Zone Alert", userName + " recorded a Red Zone PEF reading (" + pefValue + ").");
+                        sendAlertWithChildName(targetUserId, "Red Zone Alert", "recorded a Red Zone PEF reading (" + pefValue + ").");
                     }
                 }
                 
@@ -214,5 +214,26 @@ public class PEFEntryActivity extends AppCompatActivity {
                 btnSave.setText("Save Peak Flow Reading");
             }
         });
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 }
