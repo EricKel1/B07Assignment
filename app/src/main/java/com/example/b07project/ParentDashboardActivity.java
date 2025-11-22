@@ -1,6 +1,7 @@
 package com.example.b07project;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -44,6 +45,10 @@ import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.DocumentChange;
 import com.example.b07project.utils.NotificationHelper;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import java.util.concurrent.TimeUnit;
 
 public class ParentDashboardActivity extends AppCompatActivity {
 
@@ -176,8 +181,23 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
         btnAddChild.setOnClickListener(v -> showAddChildDialog());
         
+        scheduleNotificationWorker();
+        
         // Temporary Debug: Print logs for a specific child ID if known
         // debugPrintLogsForChild("ioeu7bHKq4a5otHN2DursmyuQnT2"); 
+    }
+
+    private void scheduleNotificationWorker() {
+        PeriodicWorkRequest workRequest =
+                new PeriodicWorkRequest.Builder(
+                        com.example.b07project.services.NotificationWorker.class,
+                        15, TimeUnit.MINUTES)
+                        .build();
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "NotificationWorker",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest);
     }
 
     private void debugPrintLogsForChild(String childId) {
@@ -237,14 +257,29 @@ public class ParentDashboardActivity extends AppCompatActivity {
                                 // For now, we'll just show it.
                                 String title = dc.getDocument().getString("title");
                                 String message = dc.getDocument().getString("message");
+                                Date timestamp = dc.getDocument().getDate("timestamp");
+
                                 android.util.Log.d("NotificationDebug", "New notification: " + title);
                                 NotificationHelper.showLocalNotification(this, title, message);
+                                
+                                // Update shared prefs so background worker doesn't show it again
+                                if (timestamp != null) {
+                                    updateLastCheckTime(timestamp);
+                                }
                             }
                         }
                     } else {
                         android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Snapshots is null.");
                     }
                 });
+    }
+
+    private void updateLastCheckTime(Date timestamp) {
+        SharedPreferences prefs = getSharedPreferences("NotificationWorkerPrefs", MODE_PRIVATE);
+        long currentLast = prefs.getLong("last_check_timestamp", 0);
+        if (timestamp.getTime() > currentLast) {
+            prefs.edit().putLong("last_check_timestamp", timestamp.getTime()).apply();
+        }
     }
 
     @Override
