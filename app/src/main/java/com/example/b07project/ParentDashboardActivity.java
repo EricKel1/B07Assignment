@@ -1,6 +1,7 @@
 package com.example.b07project;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -22,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -41,9 +43,21 @@ import android.text.InputType;
 import android.widget.ImageButton;
 
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.DocumentChange;
+import com.example.b07project.utils.NotificationHelper;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import java.util.concurrent.TimeUnit;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
 
 public class ParentDashboardActivity extends AppCompatActivity {
 
+    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 101;
     private RecyclerView rvChildren;
     private ProgressBar progressBar;
     private ChildAdapter adapter;
@@ -53,11 +67,31 @@ public class ParentDashboardActivity extends AppCompatActivity {
     private Button btnAddChild;
     private ImageButton btnNotifications;
     private Button btnSwitchProfile;
+    private ListenerRegistration notificationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_parent_dashboard);
+
+        // Request Notification Permission for Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_POST_NOTIFICATIONS);
+            }
+        }
+
+        // Register FCM Token
+        FirebaseMessaging.getInstance().getToken()
+            .addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    android.util.Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                    return;
+                }
+                String token = task.getResult();
+                android.util.Log.d("FCM", "FCM Token: " + token);
+                saveFCMToken(token);
+            });
 
         rvChildren = findViewById(R.id.rvChildren);
         progressBar = findViewById(R.id.progressBar);
@@ -172,6 +206,8 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
         btnAddChild.setOnClickListener(v -> showAddChildDialog());
         
+        // Removed scheduleNotificationWorker() as we are switching to FCM
+        
         // Temporary Debug: Print logs for a specific child ID if known
         // debugPrintLogsForChild("ioeu7bHKq4a5otHN2DursmyuQnT2"); 
     }
@@ -194,6 +230,85 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> android.util.Log.e("childparentdatalink", "DEBUG: Failed to fetch logs", e));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setupNotificationListener();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (notificationListener != null) {
+            notificationListener.remove();
+        }
+    }
+
+    private void setupNotificationListener() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        android.util.Log.d("NotificationDebug", "ParentDashboard listener setup for user: " + user.getUid());
+
+        SharedPreferences prefs = getSharedPreferences("NotificationWorkerPrefs", MODE_PRIVATE);
+        // If key doesn't exist, initialize it to now so we don't show old history on first run
+        if (!prefs.contains("last_check_timestamp")) {
+             prefs.edit().putLong("last_check_timestamp", System.currentTimeMillis()).apply();
+        }
+
+        notificationListener = FirebaseFirestore.getInstance().collection("notifications")
+                .whereEqualTo("userId", user.getUid())
+                .whereEqualTo("read", false)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        android.util.Log.e("NotificationDebug", "ParentDashboard listener FAILED: " + e.getMessage());
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Count: " + snapshots.size());
+                        
+                        long lastCheck = prefs.getLong("last_check_timestamp", System.currentTimeMillis());
+                        long maxTimestamp = lastCheck;
+                        boolean updated = false;
+
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            if (dc.getType() == DocumentChange.Type.ADDED) {
+                                String title = dc.getDocument().getString("title");
+                                String message = dc.getDocument().getString("message");
+                                Date timestamp = dc.getDocument().getDate("timestamp");
+
+                                if (timestamp != null && timestamp.getTime() > lastCheck) {
+                                    android.util.Log.d("NotificationDebug", "New notification: " + title);
+                                    // NotificationHelper.showLocalNotification(this, title, message); // Disabled to avoid duplicates with FCM
+                                    
+                                    if (timestamp.getTime() > maxTimestamp) {
+                                        maxTimestamp = timestamp.getTime();
+                                        updated = true;
+                                    }
+                                } else {
+                                    android.util.Log.d("NotificationDebug", "Skipping old/duplicate notification: " + title);
+                                }
+                            }
+                        }
+                        
+                        if (updated) {
+                            prefs.edit().putLong("last_check_timestamp", maxTimestamp).apply();
+                        }
+                    } else {
+                        android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Snapshots is null.");
+                    }
+                });
+    }
+
+    private void updateLastCheckTime(Date timestamp) {
+        SharedPreferences prefs = getSharedPreferences("NotificationWorkerPrefs", MODE_PRIVATE);
+        long currentLast = prefs.getLong("last_check_timestamp", 0);
+        if (timestamp.getTime() > currentLast) {
+            prefs.edit().putLong("last_check_timestamp", timestamp.getTime()).apply();
+        }
     }
 
     @Override
@@ -278,14 +393,14 @@ public class ParentDashboardActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        android.util.Log.d("childparentdatalink", "loadChildren called for parent: " + user.getUid());
+        android.util.Log.d("childparentlink", "loadChildren called for parent: " + user.getUid());
 
         progressBar.setVisibility(View.VISIBLE);
         FirebaseFirestore.getInstance().collection("children")
                 .whereEqualTo("parentId", user.getUid())
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    android.util.Log.d("childparentdatalink", "Found " + queryDocumentSnapshots.size() + " children");
+                    android.util.Log.d("childparentlink", "Found " + queryDocumentSnapshots.size() + " children");
                     childrenList.clear();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Map<String, String> child = new HashMap<>();
@@ -294,9 +409,9 @@ public class ParentDashboardActivity extends AppCompatActivity {
                         if (document.contains("uid")) {
                             String uid = document.getString("uid");
                             child.put("uid", uid);
-                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has linked UID: " + uid);
+                            android.util.Log.d("childparentlink", "Child: " + document.getString("name") + " has linked UID: " + uid);
                         } else {
-                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has NO linked UID (using docId: " + document.getId() + ")");
+                            android.util.Log.d("childparentlink", "Child: " + document.getString("name") + " has NO linked UID (using docId: " + document.getId() + ")");
                         }
                         child.put("zone", "Loading...");
                         child.put("lastRescue", "Loading...");
@@ -315,7 +430,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("childparentdatalink", "Error loading children", e);
+                    android.util.Log.e("childparentlink", "Error loading children", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Failed to load children: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
@@ -327,7 +442,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
             childId = child.get("uid");
         }
         
-        android.util.Log.d("childparentdatalink", "Fetching stats for " + child.get("name") + " using ID: " + childId);
+        android.util.Log.d("childparentlink", "Fetching stats for " + child.get("name") + " using ID: " + childId);
         
         // 1. Fetch Zone (PEF)
         String finalChildId = childId;
@@ -337,7 +452,24 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 if (reading != null && reading.getZone() != null) {
                     child.put("zone", PersonalBest.getZoneLabel(reading.getZone()));
                 } else {
-                    child.put("zone", "Unknown");
+                    // Try fetching personal best to see if it's set
+                    pefRepository.getPersonalBest(finalChildId, new PEFRepository.LoadCallback<PersonalBest>() {
+                        @Override
+                        public void onSuccess(PersonalBest pb) {
+                            if (pb == null) {
+                                child.put("zone", "Set PB");
+                            } else {
+                                child.put("zone", "No Data");
+                            }
+                            adapter.notifyItemChanged(position);
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            child.put("zone", "Unknown");
+                            adapter.notifyItemChanged(position);
+                        }
+                    });
+                    return; // Return early as we handle notify in inner callback
                 }
                 adapter.notifyItemChanged(position);
                 checkIfAllLoaded();
@@ -364,7 +496,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 Date lastRescueTime = null;
                 
                 for (RescueInhalerLog log : logs) {
-                    count++; // Count events, not doses
+                    count += log.getDoseCount(); // Count doses, not just events
                     if (log.getTimestamp() != null) {
                         if (lastRescueTime == null || log.getTimestamp().after(lastRescueTime)) {
                             lastRescueTime = log.getTimestamp();
@@ -378,7 +510,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
                     child.put("lastRescue", sdf.format(lastRescueTime));
                 } else {
-                    child.put("lastRescue", "None in range");
+                    child.put("lastRescue", "None");
                 }
                 
                 adapter.notifyItemChanged(position);
@@ -566,5 +698,17 @@ public class ParentDashboardActivity extends AppCompatActivity {
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    private void saveFCMToken(String token) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("fcmToken", token);
+            FirebaseFirestore.getInstance().collection("users").document(user.getUid())
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> android.util.Log.d("FCM", "Token saved to Firestore"))
+                .addOnFailureListener(e -> android.util.Log.e("FCM", "Error saving token", e));
+        }
     }
 }

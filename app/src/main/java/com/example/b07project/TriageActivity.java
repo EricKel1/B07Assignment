@@ -23,6 +23,8 @@ import com.example.b07project.repository.PEFRepository;
 import com.example.b07project.repository.TriageRepository;
 import com.example.b07project.utils.NotificationHelper;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -160,12 +162,9 @@ public class TriageActivity extends AppCompatActivity {
                 currentSession.setId(documentId);
                 
                 // Send Parent Alert
-                String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
-                if (userName == null || userName.isEmpty()) userName = "User";
-                
                 String alertTitle = "Triage Started";
-                String alertMessage = userName + " started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
-                NotificationHelper.sendAlert(TriageActivity.this, currentSession.getUserId(), alertTitle, alertMessage);
+                String alertMessageSuffix = "started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
+                sendAlertWithChildName(currentSession.getUserId(), alertTitle, alertMessageSuffix);
             }
 
             @Override
@@ -347,15 +346,33 @@ public class TriageActivity extends AppCompatActivity {
         triageRepository.saveTriageSession(currentSession, null);
         
         // Send Parent Alert
-        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
-        if (userName == null || userName.isEmpty()) userName = "User";
-        
-        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", userName + " requested emergency assistance during triage.");
+        sendAlertWithChildName(currentSession.getUserId(), "Triage Escalation", "requested emergency assistance during triage.");
         
         // Show emergency guidance
         showEmergencyDecision();
         
         Toast.makeText(this, "Escalating to emergency guidance", Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(TriageActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(TriageActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 
     @Override

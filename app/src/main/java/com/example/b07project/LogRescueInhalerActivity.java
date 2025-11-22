@@ -26,6 +26,7 @@ import com.example.b07project.repository.RescueInhalerRepository;
 import com.example.b07project.services.MotivationService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,11 +41,7 @@ import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
 import nl.dionsegijn.konfetti.core.models.Shape;
 import nl.dionsegijn.konfetti.core.models.Size;
 
-import android.widget.ArrayAdapter;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import java.util.HashMap;
-import java.util.Map;
+import com.example.b07project.utils.NotificationHelper;
 
 public class LogRescueInhalerActivity extends AppCompatActivity {
     
@@ -56,6 +53,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private CheckBox cbTakenOnTime;
     private CheckBox cbTriggerExercise, cbTriggerColdAir, cbTriggerPets, cbTriggerPollen;
     private CheckBox cbTriggerStress, cbTriggerSmoke, cbTriggerWeather, cbTriggerDust;
+    private CheckBox cbWorseAfterDose;
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
@@ -119,6 +117,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         cbTriggerSmoke = findViewById(R.id.cbTriggerSmoke);
         cbTriggerWeather = findViewById(R.id.cbTriggerWeather);
         cbTriggerDust = findViewById(R.id.cbTriggerDust);
+        cbWorseAfterDose = findViewById(R.id.cbWorseAfterDose);
         etNotes = findViewById(R.id.etNotes);
         btnDecrease = findViewById(R.id.btnDecrease);
         btnIncrease = findViewById(R.id.btnIncrease);
@@ -225,7 +224,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         
         // Determine target user ID (child if provided, else current user)
         final String targetUserId = (childId != null) ? childId : currentUser.getUid();
-        android.util.Log.d("childparentdatalink", "Saving log for targetUserId: " + targetUserId);
+        android.util.Log.d("childparentlink", "Saving log for targetUserId: " + targetUserId);
         
         // Inventory is managed by the parent (currentUser) for the child (childId)
         // If childId is null (self-logging), we pass null as childId to inventory
@@ -291,6 +290,14 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             rescueRepository.saveLog(log, new RescueInhalerRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
+                    // Check for "Worse After Dose" Alert
+                    if (cbWorseAfterDose.isChecked()) {
+                        sendAlertWithChildName(targetUserId, "Worse After Dose Alert", "reported feeling worse after using rescue inhaler.");
+                    }
+
+                    // Check for Rapid Rescue Repeats (e.g., > 4 puffs in last 4 hours)
+                    checkRapidRescueRepeats(targetUserId, documentId, doseCount);
+
                     // Decrement inventory
                     inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
@@ -420,5 +427,61 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.primary_blue));
         
         android.util.Log.d("ConfettiService", "Dialog shown");
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
+    }
+
+    private void checkRapidRescueRepeats(String targetUserId, String currentLogId, int currentDoseCount) {
+        Calendar cal = Calendar.getInstance();
+        Date now = cal.getTime();
+        cal.add(Calendar.HOUR_OF_DAY, -3);
+        Date startTime = cal.getTime();
+
+        rescueRepository.getLogsForUserInDateRange(targetUserId, startTime, now, new RescueInhalerRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<RescueInhalerLog> logs) {
+                int totalPuffs = 0;
+                boolean currentLogFound = false;
+                
+                for (RescueInhalerLog log : logs) {
+                    if (log.getId() != null && log.getId().equals(currentLogId)) {
+                        currentLogFound = true;
+                    }
+                    totalPuffs += log.getDoseCount();
+                }
+                
+                if (!currentLogFound) {
+                    totalPuffs += currentDoseCount;
+                }
+                
+                if (totalPuffs >= 3) { // Threshold: 3 or more puffs in 3 hours
+                     sendAlertWithChildName(targetUserId, "Rapid Rescue Usage Alert", "has used " + totalPuffs + " puffs of rescue inhaler in the last 3 hours.");
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                android.util.Log.e("RapidRescue", "Failed to fetch logs: " + error);
+            }
+        });
     }
 }

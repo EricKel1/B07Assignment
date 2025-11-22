@@ -16,6 +16,7 @@ import com.example.b07project.repository.SymptomCheckInRepository;
 import com.google.android.material.slider.Slider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import com.example.b07project.utils.NotificationHelper;
 
 public class DailySymptomCheckInActivity extends AppCompatActivity {
 
@@ -184,6 +187,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         showLoading(true);
 
         String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentlink", "DailySymptomCheckInActivity: Saving check-in for targetUserId: " + targetUserId);
 
         int symptomLevel = (int) sliderSymptomLevel.getValue();
         List<String> symptoms = getSelectedSymptoms();
@@ -203,6 +207,11 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         repository.saveCheckIn(checkIn, new SymptomCheckInRepository.SaveCallback() {
             @Override
             public void onSuccess(String documentId) {
+                // Check for Triage Escalation
+                if (symptomLevel >= 4) {
+                    sendAlertWithChildName(targetUserId, "Triage Escalation Alert", "reported severe symptoms (Level " + symptomLevel + "). Please check on them immediately.");
+                }
+
                 showLoading(false);
                 Toast.makeText(DailySymptomCheckInActivity.this,
                     "Symptom check-in saved successfully!",
@@ -216,6 +225,27 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
                 showMessage("Failed to save check-in: " + error, true);
             }
         });
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 
     private List<String> getSelectedSymptoms() {

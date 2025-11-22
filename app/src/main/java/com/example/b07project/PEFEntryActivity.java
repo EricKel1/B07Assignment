@@ -13,12 +13,13 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
-import com.example.b07project.models.PEFReading;
-import com.example.b07project.models.PersonalBest;
+import com.example.b07project.utils.NotificationHelper;
 import com.example.b07project.repository.PEFRepository;
+import com.example.b07project.models.PersonalBest;
+import com.example.b07project.models.PEFReading;
 import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.Date;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class PEFEntryActivity extends AppCompatActivity {
 
@@ -194,6 +195,14 @@ public class PEFEntryActivity extends AppCompatActivity {
         pefRepository.savePEFReading(reading, new PEFRepository.SaveCallback() {
             @Override
             public void onSuccess(String documentId) {
+                // Check for Red Zone Alert
+                if (userPersonalBest != null && userPersonalBest.getValue() > 0) {
+                    String zone = PersonalBest.calculateZone(pefValue, userPersonalBest.getValue());
+                    if ("red".equalsIgnoreCase(zone)) {
+                        sendAlertWithChildName(targetUserId, "Red Zone Alert", "recorded a Red Zone PEF reading (" + pefValue + ").");
+                    }
+                }
+                
                 Toast.makeText(PEFEntryActivity.this, "Peak flow reading saved", Toast.LENGTH_SHORT).show();
                 finish();
             }
@@ -205,5 +214,26 @@ public class PEFEntryActivity extends AppCompatActivity {
                 btnSave.setText("Save Peak Flow Reading");
             }
         });
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 }
