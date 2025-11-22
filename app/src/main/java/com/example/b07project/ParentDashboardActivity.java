@@ -240,6 +240,12 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
         android.util.Log.d("NotificationDebug", "ParentDashboard listener setup for user: " + user.getUid());
 
+        SharedPreferences prefs = getSharedPreferences("NotificationWorkerPrefs", MODE_PRIVATE);
+        // If key doesn't exist, initialize it to now so we don't show old history on first run
+        if (!prefs.contains("last_check_timestamp")) {
+             prefs.edit().putLong("last_check_timestamp", System.currentTimeMillis()).apply();
+        }
+
         notificationListener = FirebaseFirestore.getInstance().collection("notifications")
                 .whereEqualTo("userId", user.getUid())
                 .whereEqualTo("read", false)
@@ -251,22 +257,33 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
                     if (snapshots != null) {
                         android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Count: " + snapshots.size());
+                        
+                        long lastCheck = prefs.getLong("last_check_timestamp", System.currentTimeMillis());
+                        long maxTimestamp = lastCheck;
+                        boolean updated = false;
+
                         for (DocumentChange dc : snapshots.getDocumentChanges()) {
                             if (dc.getType() == DocumentChange.Type.ADDED) {
-                                // Check if the notification is recent (e.g., within last minute) to avoid spamming on startup
-                                // For now, we'll just show it.
                                 String title = dc.getDocument().getString("title");
                                 String message = dc.getDocument().getString("message");
                                 Date timestamp = dc.getDocument().getDate("timestamp");
 
-                                android.util.Log.d("NotificationDebug", "New notification: " + title);
-                                NotificationHelper.showLocalNotification(this, title, message);
-                                
-                                // Update shared prefs so background worker doesn't show it again
-                                if (timestamp != null) {
-                                    updateLastCheckTime(timestamp);
+                                if (timestamp != null && timestamp.getTime() > lastCheck) {
+                                    android.util.Log.d("NotificationDebug", "New notification: " + title);
+                                    NotificationHelper.showLocalNotification(this, title, message);
+                                    
+                                    if (timestamp.getTime() > maxTimestamp) {
+                                        maxTimestamp = timestamp.getTime();
+                                        updated = true;
+                                    }
+                                } else {
+                                    android.util.Log.d("NotificationDebug", "Skipping old/duplicate notification: " + title);
                                 }
                             }
+                        }
+                        
+                        if (updated) {
+                            prefs.edit().putLong("last_check_timestamp", maxTimestamp).apply();
                         }
                     } else {
                         android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Snapshots is null.");

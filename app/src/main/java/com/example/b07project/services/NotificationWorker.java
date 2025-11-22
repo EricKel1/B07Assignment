@@ -14,6 +14,9 @@ import com.google.firebase.firestore.Query;
 import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class NotificationWorker extends Worker {
 
@@ -43,32 +46,48 @@ public class NotificationWorker extends Worker {
 
         android.util.Log.d("NotificationWorker", "Checking for notifications after: " + lastCheckDate);
 
+        // Query ONLY by userId to avoid composite index requirements
         FirebaseFirestore.getInstance().collection("notifications")
                 .whereEqualTo("userId", user.getUid())
-                .whereGreaterThan("timestamp", lastCheckDate)
-                .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(snapshots -> {
                     if (!snapshots.isEmpty()) {
-                        android.util.Log.d("NotificationWorker", "Found " + snapshots.size() + " new notifications");
+                        List<DocumentSnapshot> newNotifications = new ArrayList<>();
                         for (DocumentSnapshot doc : snapshots) {
-                            String title = doc.getString("title");
-                            String message = doc.getString("message");
-                            NotificationHelper.showLocalNotification(getApplicationContext(), title, message);
+                            Date timestamp = doc.getDate("timestamp");
+                            if (timestamp != null && timestamp.after(lastCheckDate)) {
+                                newNotifications.add(doc);
+                            }
                         }
-                        
-                        // Update last check time to the latest notification's time
-                        DocumentSnapshot lastDoc = snapshots.getDocuments().get(snapshots.size() - 1);
-                        Date latestTime = lastDoc.getDate("timestamp");
-                        if (latestTime != null) {
-                            prefs.edit().putLong(KEY_LAST_CHECK, latestTime.getTime()).apply();
+
+                        android.util.Log.d("NotificationWorker", "Found " + newNotifications.size() + " new notifications (local filter)");
+
+                        if (!newNotifications.isEmpty()) {
+                            // Sort by timestamp ascending
+                            Collections.sort(newNotifications, (d1, d2) -> {
+                                Date t1 = d1.getDate("timestamp");
+                                Date t2 = d2.getDate("timestamp");
+                                if (t1 == null || t2 == null) return 0;
+                                return t1.compareTo(t2);
+                            });
+
+                            for (DocumentSnapshot doc : newNotifications) {
+                                String title = doc.getString("title");
+                                String message = doc.getString("message");
+                                NotificationHelper.showLocalNotification(getApplicationContext(), title, message);
+                            }
+                            
+                            // Update last check time
+                            DocumentSnapshot lastDoc = newNotifications.get(newNotifications.size() - 1);
+                            Date latestTime = lastDoc.getDate("timestamp");
+                            if (latestTime != null) {
+                                prefs.edit().putLong(KEY_LAST_CHECK, latestTime.getTime()).apply();
+                            }
+                        } else {
+                             prefs.edit().putLong(KEY_LAST_CHECK, System.currentTimeMillis()).apply();
                         }
                     } else {
-                         android.util.Log.d("NotificationWorker", "No new notifications found");
-                         // Update check time to now to avoid gap? 
-                         // Actually, if we found nothing, we should update to now so we don't query the same empty window again?
-                         // But if we update to now, we might miss something that came in 1ms ago?
-                         // It's safer to just update to now.
+                         android.util.Log.d("NotificationWorker", "No notifications found for user");
                          prefs.edit().putLong(KEY_LAST_CHECK, System.currentTimeMillis()).apply();
                     }
                     success[0] = true;
