@@ -27,8 +27,9 @@
             android:id="@+id/btnNotifications"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@android:drawable/ic_popup_reminder"
+            android:src="@drawable/ic_notification"
             android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="#424242"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:contentDescription="Notifications" />

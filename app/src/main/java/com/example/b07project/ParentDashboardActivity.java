@@ -50,7 +50,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
     private List<Map<String, String>> childrenList;
     private PEFRepository pefRepository;
     private RescueInhalerRepository rescueRepository;
-    private FloatingActionButton fabAddChild;
+    private Button btnAddChild;
     private ImageButton btnNotifications;
     private Button btnSwitchProfile;
 
@@ -63,7 +63,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         Button btnLogout = findViewById(R.id.btnLogout);
         Button btnInventory = findViewById(R.id.btnInventory);
-        fabAddChild = findViewById(R.id.fabAddChild);
+        btnAddChild = findViewById(R.id.btnAddChild);
         btnNotifications = findViewById(R.id.btnNotifications);
         btnSwitchProfile = findViewById(R.id.btnSwitchProfile);
 
@@ -170,7 +170,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
             finish();
         });
 
-        fabAddChild.setOnClickListener(v -> showAddChildDialog());
+        btnAddChild.setOnClickListener(v -> showAddChildDialog());
         
         // Temporary Debug: Print logs for a specific child ID if known
         // debugPrintLogsForChild("ioeu7bHKq4a5otHN2DursmyuQnT2"); 
