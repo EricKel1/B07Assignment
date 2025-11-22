@@ -47,15 +47,12 @@ public class HomeActivity extends AppCompatActivity {
             dataOwnerId = childId;
             tvViewingChildNotice.setText("Viewing child: " + (childName != null ? childName : "Child"));
             tvViewingChildNotice.setVisibility(View.VISIBLE);
-            // Hide inventory for child mode if needed, but requirement says "Inventory (Parent)"
-            // The user asked to remove it from the "kids page".
-            // If this is child mode (Provider viewing child), maybe they shouldn't see it either?
-            // But the user specifically said "kids page" which implies the child logged in.
+            if (btnSignOut != null) btnSignOut.setVisibility(View.GONE);
         } else {
-            // Parent Mode (or default) - Wait, if it's a child logged in, childId is null here?
-            // If a child logs in directly, they are the currentUser.
+            // Parent Mode (or default)
             dataOwnerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
             tvViewingChildNotice.setVisibility(View.GONE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
         }
         
         // Hide Inventory button if the current user is a child
