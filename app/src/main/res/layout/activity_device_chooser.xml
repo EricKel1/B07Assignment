@@ -80,7 +80,7 @@
 
                 <Button
                     android:id="@+id/btnParent"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Widget.MaterialComponents.Button"
                     android:layout_width="match_parent"
                     android:layout_height="72dp"
                     android:visibility="gone"
@@ -89,9 +89,9 @@
                     app:icon="@android:drawable/ic_menu_myplaces"
                     app:iconSize="32dp"
                     app:iconGravity="textStart"
-                    app:strokeColor="#1565C0"
-                    app:strokeWidth="2dp"
-                    android:textColor="#1565C0"
+                    app:backgroundTint="#1565C0"
+                    android:textColor="@android:color/white"
+                    app:iconTint="@android:color/white"
                     app:cornerRadius="16dp"
                     android:layout_marginBottom="32dp"/>
 

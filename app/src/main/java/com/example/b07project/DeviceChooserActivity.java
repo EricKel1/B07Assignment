@@ -134,17 +134,25 @@ public class DeviceChooserActivity extends AppCompatActivity {
     }
 
     private void showModeSelectionDialog(String childId, String childName) {
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Select Session Mode")
-            .setMessage("Do you want to allow switching back to the parent profile without signing out?")
-            .setPositiveButton("Allow Switching", (dialog, which) -> {
-                proceedToChildMode(childId, childName, false);
-            })
-            .setNegativeButton("Lock Profile", (dialog, which) -> {
-                proceedToChildMode(childId, childName, true);
-            })
-            .setCancelable(true)
-            .show();
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_mode_selection, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnAllowSwitching).setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToChildMode(childId, childName, false);
+        });
+
+        dialogView.findViewById(R.id.btnLockProfile).setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToChildMode(childId, childName, true);
+        });
+
+        dialog.show();
     }
 
     private void proceedToChildMode(String childId, String childName, boolean isLocked) {
