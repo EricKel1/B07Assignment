@@ -155,5 +155,6 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadChildData(); // Refresh zone on return
+        loadSharingSettings();
     }
 }
