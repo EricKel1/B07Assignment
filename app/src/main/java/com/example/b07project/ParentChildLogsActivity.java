@@ -1,96 +1,119 @@
 package com.example.b07project;
 
-
-import android.content.Intent;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ProgressBar;
+import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.firebase.auth.FirebaseAuth;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import com.google.firebase.Timestamp;
 
+public class ParentChildLogsActivity extends AppCompatActivity {
 
-public class ParentChildLogsActivity extends AppCompatActivity{
-    private Button btnCreateCode;
-    private Button btnChildInfoGoBack;
-    private FirebaseAuth auth;
-
-
-    private BackToParent bh = new BackToParent();
+    private RecyclerView rvInviteCodes;
+    private TextView tvEmptyState;
+    private TextView tvChildName;
+    private ExtendedFloatingActionButton btnCreateCode;
+    private InviteCodeAdapter adapter;
+    private List<DocumentSnapshot> codeList;
+    private String childName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-        // in the page where you select a child you need
-//        Intent intent = new Intent(CurrentActivity.this, NextActivity.class);
-//        intent.putExtra("childName", childnamehere);
-//        startActivity(intent);
-        // in order to get the child's name for the hash.
         super.onCreate(savedInstanceState);
-        auth = FirebaseAuth.getInstance();
-
-        //get child name from previous screen
-        String childName = getIntent().getStringExtra("childName");
-
         setContentView(R.layout.activity_parent_child_logs);
+
+        childName = getIntent().getStringExtra("childName");
+
         initializeViews();
-        setupListeners(childName);
-        //TEst with name john
-        //setupListeners("john");
-
+        setupRecyclerView();
+        setupListeners();
+        fetchInviteCodes();
     }
 
-    //initializeViews initializes all the views on the screen.
-    private void initializeViews(){
+    private void initializeViews() {
+        rvInviteCodes = findViewById(R.id.rvInviteCodes);
+        tvEmptyState = findViewById(R.id.tvEmptyState);
+        tvChildName = findViewById(R.id.tvChildName);
         btnCreateCode = findViewById(R.id.btnCreateCode);
-        btnChildInfoGoBack = findViewById(R.id.btnChildInfoGoBack);
-        TextView tvTitle = findViewById(R.id.tvTitle2);
-        TextView tvSubtitle = findViewById(R.id.textView5);
-        
-        String childName = getIntent().getStringExtra("childName");
+
         if (childName != null) {
-            tvTitle.setText("Generate Code for " + childName);
-            tvSubtitle.setText("Child: " + childName);
+            tvChildName.setText("Child: " + childName);
         }
     }
 
-    //setupListeners sets up eventlisteners for the relevant views in initializeViews.
-    //InitializeViews should always be called before setupListeners.
-    private void setupListeners(String name){
-        btnCreateCode.setOnClickListener(v -> attemptCreateCode(name));
-        btnChildInfoGoBack.setOnClickListener((v -> bh.backTo(this)));
+    private void setupRecyclerView() {
+        codeList = new ArrayList<>();
+        adapter = new InviteCodeAdapter(codeList);
+        rvInviteCodes.setLayoutManager(new LinearLayoutManager(this));
+        rvInviteCodes.setAdapter(adapter);
     }
 
+    private void setupListeners() {
+        btnCreateCode.setOnClickListener(v -> attemptCreateCode());
+        
+        com.google.android.material.appbar.MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        toolbar.setNavigationOnClickListener(v -> finish());
+    }
 
-    private void attemptCreateCode(String name){
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private void fetchInviteCodes() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String email = user.getEmail();
-        //try creating code
-            //recursively calls itself until a unique code is made
-        String code = generateInviteCode();
-        makeCodeUnique(code, name, email);
+        if (user == null) return;
+
+        FirebaseFirestore.getInstance().collection("invite_codes")
+                .whereEqualTo("uid", user.getUid())
+                .whereEqualTo("child", childName)
+                .orderBy("expiresAt", Query.Direction.DESCENDING)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    codeList.clear();
+                    codeList.addAll(queryDocumentSnapshots.getDocuments());
+                    adapter.notifyDataSetChanged();
+                    updateEmptyState();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error loading codes: " + e.getMessage(), Toast.LENGTH_SHORT).show());
     }
 
-    private String generateInviteCode(){
+    private void updateEmptyState() {
+        if (codeList.isEmpty()) {
+            tvEmptyState.setVisibility(View.VISIBLE);
+            rvInviteCodes.setVisibility(View.GONE);
+        } else {
+            tvEmptyState.setVisibility(View.GONE);
+            rvInviteCodes.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void attemptCreateCode() {
+        String code = generateInviteCode();
+        makeCodeUnique(code);
+    }
+
+    private String generateInviteCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         StringBuilder sb = new StringBuilder();
         java.util.Random random = new java.util.Random();
@@ -100,65 +123,102 @@ public class ParentChildLogsActivity extends AppCompatActivity{
         return sb.toString();
     }
 
-    private void makeCodeUnique(String code, String name, String email){
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        
-        checkIfCodeExists(code, new InviteCodeInterface() {
-            @Override
-            public void onResult(boolean exists) {
-                if (exists) {
-                    // code exists
-                    String newCode = generateInviteCode();
-                    makeCodeUnique(newCode, name, email);
-                } else {
-                    // code does not exist
-                    addToDb(code, name);
-                }
-            }
-        });
-    }
-
-    private void checkIfCodeExists(String code, InviteCodeInterface inter){
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-        db.collection("invite_codes").document(code).get()
-                .addOnSuccessListener(a->{
-                    inter.onResult(a.exists());
-                }).addOnFailureListener(e->{
-                    inter.onResult(false);
+    private void makeCodeUnique(String code) {
+        FirebaseFirestore.getInstance().collection("invite_codes").document(code).get()
+                .addOnSuccessListener(doc -> {
+                    if (doc.exists()) {
+                        makeCodeUnique(generateInviteCode());
+                    } else {
+                        saveCodeToDb(code);
+                    }
                 });
-
     }
-    //name is child's name
-    private void addToDb(String code, String name){
-        //The code will use child's name hashed + current time + parent email hashed
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    private void saveCodeToDb(String code) {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, "User not logged in.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String email = user.getEmail();        //should check if user auth is correct
+        if (user == null) return;
 
         long expireTime = System.currentTimeMillis() + 7L * 24 * 60 * 60 * 1000;
         Map<String, Object> codeData = new HashMap<>();
         codeData.put("code", code);
         codeData.put("expiresAt", new Timestamp(new Date(expireTime)));
-        codeData.put("email", email);
+        codeData.put("email", user.getEmail());
         codeData.put("uid", user.getUid());
-        codeData.put("child", name);
+        codeData.put("child", childName);
 
-        db.collection("invite_codes").document(code).set(codeData)
-                .addOnSuccessListener(a->{
-                    //Code to go to the next page, with the code copied through
-                    Intent intent = new Intent(ParentChildLogsActivity.this, ParentCreateNewCodeActivity.class);
-                    intent.putExtra("providerCode", code);
-                    startActivity(intent);
-                }).addOnFailureListener(e->{
-                    Toast.makeText(this, "Error creating code: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
+        FirebaseFirestore.getInstance().collection("invite_codes").document(code).set(codeData)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Code generated!", Toast.LENGTH_SHORT).show();
+                    fetchInviteCodes(); // Refresh list
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error creating code", Toast.LENGTH_SHORT).show());
     }
+
+    private void revokeCode(String code) {
+        FirebaseFirestore.getInstance().collection("invite_codes").document(code)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(this, "Code revoked", Toast.LENGTH_SHORT).show();
+                    fetchInviteCodes();
+                })
+                .addOnFailureListener(e -> Toast.makeText(this, "Error revoking code", Toast.LENGTH_SHORT).show());
     }
+
+    private class InviteCodeAdapter extends RecyclerView.Adapter<InviteCodeAdapter.ViewHolder> {
+        private List<DocumentSnapshot> codes;
+
+        public InviteCodeAdapter(List<DocumentSnapshot> codes) {
+            this.codes = codes;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_invite_code, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            DocumentSnapshot doc = codes.get(position);
+            String code = doc.getString("code");
+            Timestamp expiresAt = doc.getTimestamp("expiresAt");
+
+            holder.tvCode.setText(code);
+            if (expiresAt != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+                holder.tvExpires.setText("Expires: " + sdf.format(expiresAt.toDate()));
+            }
+
+            holder.btnCopy.setOnClickListener(v -> {
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Invite Code", code);
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(ParentChildLogsActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+            });
+
+            holder.btnRevoke.setOnClickListener(v -> revokeCode(code));
+        }
+
+        @Override
+        public int getItemCount() {
+            return codes.size();
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView tvCode, tvExpires;
+            ImageButton btnCopy, btnRevoke;
+
+            public ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                tvCode = itemView.findViewById(R.id.tvCode);
+                tvExpires = itemView.findViewById(R.id.tvExpires);
+                btnCopy = itemView.findViewById(R.id.btnCopy);
+                btnRevoke = itemView.findViewById(R.id.btnRevoke);
+            }
+        }
+    }
+}
 
 
 
