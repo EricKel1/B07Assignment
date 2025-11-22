@@ -100,16 +100,24 @@ public class ConfirmFragment extends Fragment {
     }
 
     private void showSuccessDialog() {
-        new AlertDialog.Builder(getContext())
-                .setTitle("Verify your email")
-                .setMessage("We\'ve sent a verification link to " + viewModel.email.getValue() + ". Please check your inbox and verify your email before logging in.")
-                .setPositiveButton("OK", (dialog, which) -> {
-                    FirebaseAuth.getInstance().signOut();
-                    Intent intent = new Intent(getActivity(), WelcomeActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                })
-                .setCancelable(false)
-                .show();
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_verification_sent, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setCancelable(false);
+
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        tvMessage.setText("We've sent a verification link to " + viewModel.email.getValue() + ". Please check your inbox and verify your email before logging in.");
+
+        dialogView.findViewById(R.id.btnDialogLogin).setOnClickListener(v -> {
+            dialog.dismiss();
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        });
+
+        dialog.show();
     }
 }

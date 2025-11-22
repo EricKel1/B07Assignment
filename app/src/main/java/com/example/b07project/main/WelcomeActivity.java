@@ -76,6 +76,10 @@ public class WelcomeActivity extends AppCompatActivity {
             startActivity(new Intent(WelcomeActivity.this, ProviderSignupActivity.class));
         });
 
+        findViewById(R.id.btnJoinAsChild).setOnClickListener(v -> {
+            startActivity(new Intent(WelcomeActivity.this, com.example.b07project.SignUpActivity.class));
+        });
+
         findViewById(R.id.tvLogin).setOnClickListener(v -> {
             startActivity(new Intent(WelcomeActivity.this, LoginActivity.class));
         });

@@ -81,6 +81,7 @@ public class SignUpActivity extends AppCompatActivity {
                         userData.put("userId", user.getUid());
                         userData.put("email", email);
                         userData.put("name", name);
+                        userData.put("role", "child");
                         userData.put("accountCreatedAt", creationTime);
                         
                         db.collection("users").document(user.getUid())
@@ -100,10 +101,7 @@ public class SignUpActivity extends AppCompatActivity {
                             .addOnCompleteListener(profileTask -> {
                                 showLoading(false);
                                 if (profileTask.isSuccessful()) {
-                                    Toast.makeText(SignUpActivity.this, 
-                                        "Account created successfully!", 
-                                        Toast.LENGTH_SHORT).show();
-                                    navigateToHome();
+                                    showSuccessDialog(email);
                                 } else {
                                     Toast.makeText(SignUpActivity.this, 
                                         "Account created, but profile update failed", 
@@ -192,6 +190,31 @@ public class SignUpActivity extends AppCompatActivity {
         tvError.setVisibility(View.VISIBLE);
     }
     
+    private void showSuccessDialog(String email) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_verification_sent, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.setCancelable(false);
+
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        tvMessage.setText("We've sent a verification link to " + email + ". Please check your inbox and verify your email before logging in.");
+
+        dialogView.findViewById(R.id.btnDialogLogin).setOnClickListener(v -> {
+            dialog.dismiss();
+            auth.signOut();
+            Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        dialog.show();
+    }
+
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
