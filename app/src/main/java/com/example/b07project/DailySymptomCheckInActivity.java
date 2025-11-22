@@ -184,6 +184,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         showLoading(true);
 
         String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentlink", "DailySymptomCheckInActivity: Saving check-in for targetUserId: " + targetUserId);
 
         int symptomLevel = (int) sliderSymptomLevel.getValue();
         List<String> symptoms = getSelectedSymptoms();

@@ -81,6 +81,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
         String userId;
         if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
             userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+            android.util.Log.d("childparentlink", "SymptomHistoryActivity: Using EXTRA_CHILD_ID: " + userId);
         } else {
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser == null) {
@@ -89,6 +90,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
                 return;
             }
             userId = currentUser.getUid();
+            android.util.Log.d("childparentlink", "SymptomHistoryActivity: Using current user ID: " + userId);
         }
 
         showLoading(true);

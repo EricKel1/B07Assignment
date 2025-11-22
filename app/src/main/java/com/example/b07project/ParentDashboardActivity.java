@@ -278,14 +278,14 @@ public class ParentDashboardActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        android.util.Log.d("childparentdatalink", "loadChildren called for parent: " + user.getUid());
+        android.util.Log.d("childparentlink", "loadChildren called for parent: " + user.getUid());
 
         progressBar.setVisibility(View.VISIBLE);
         FirebaseFirestore.getInstance().collection("children")
                 .whereEqualTo("parentId", user.getUid())
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    android.util.Log.d("childparentdatalink", "Found " + queryDocumentSnapshots.size() + " children");
+                    android.util.Log.d("childparentlink", "Found " + queryDocumentSnapshots.size() + " children");
                     childrenList.clear();
                     for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                         Map<String, String> child = new HashMap<>();
@@ -294,9 +294,9 @@ public class ParentDashboardActivity extends AppCompatActivity {
                         if (document.contains("uid")) {
                             String uid = document.getString("uid");
                             child.put("uid", uid);
-                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has linked UID: " + uid);
+                            android.util.Log.d("childparentlink", "Child: " + document.getString("name") + " has linked UID: " + uid);
                         } else {
-                            android.util.Log.d("childparentdatalink", "Child: " + document.getString("name") + " has NO linked UID (using docId: " + document.getId() + ")");
+                            android.util.Log.d("childparentlink", "Child: " + document.getString("name") + " has NO linked UID (using docId: " + document.getId() + ")");
                         }
                         child.put("zone", "Loading...");
                         child.put("lastRescue", "Loading...");
@@ -315,7 +315,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> {
-                    android.util.Log.e("childparentdatalink", "Error loading children", e);
+                    android.util.Log.e("childparentlink", "Error loading children", e);
                     progressBar.setVisibility(View.GONE);
                     Toast.makeText(this, "Failed to load children: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
@@ -327,7 +327,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
             childId = child.get("uid");
         }
         
-        android.util.Log.d("childparentdatalink", "Fetching stats for " + child.get("name") + " using ID: " + childId);
+        android.util.Log.d("childparentlink", "Fetching stats for " + child.get("name") + " using ID: " + childId);
         
         // 1. Fetch Zone (PEF)
         String finalChildId = childId;
@@ -337,7 +337,24 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 if (reading != null && reading.getZone() != null) {
                     child.put("zone", PersonalBest.getZoneLabel(reading.getZone()));
                 } else {
-                    child.put("zone", "Unknown");
+                    // Try fetching personal best to see if it's set
+                    pefRepository.getPersonalBest(finalChildId, new PEFRepository.LoadCallback<PersonalBest>() {
+                        @Override
+                        public void onSuccess(PersonalBest pb) {
+                            if (pb == null) {
+                                child.put("zone", "Set PB");
+                            } else {
+                                child.put("zone", "No Data");
+                            }
+                            adapter.notifyItemChanged(position);
+                        }
+                        @Override
+                        public void onFailure(String error) {
+                            child.put("zone", "Unknown");
+                            adapter.notifyItemChanged(position);
+                        }
+                    });
+                    return; // Return early as we handle notify in inner callback
                 }
                 adapter.notifyItemChanged(position);
                 checkIfAllLoaded();
@@ -364,7 +381,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                 Date lastRescueTime = null;
                 
                 for (RescueInhalerLog log : logs) {
-                    count++; // Count events, not doses
+                    count += log.getDoseCount(); // Count doses, not just events
                     if (log.getTimestamp() != null) {
                         if (lastRescueTime == null || log.getTimestamp().after(lastRescueTime)) {
                             lastRescueTime = log.getTimestamp();
@@ -378,7 +395,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     SimpleDateFormat sdf = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
                     child.put("lastRescue", sdf.format(lastRescueTime));
                 } else {
-                    child.put("lastRescue", "None in range");
+                    child.put("lastRescue", "None");
                 }
                 
                 adapter.notifyItemChanged(position);

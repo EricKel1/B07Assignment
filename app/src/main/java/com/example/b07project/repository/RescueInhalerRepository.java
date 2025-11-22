@@ -85,7 +85,7 @@ public class RescueInhalerRepository {
     }
 
     public void getLogsForUserInDateRange(String userId, Date startDate, Date endDate, LoadCallback callback) {
-        android.util.Log.d("childparentdatalink", "Repo: getLogsForUserInDateRange for user: " + userId);
+        android.util.Log.d("childparentlink", "Repo: getLogsForUserInDateRange for user: " + userId);
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)
             .whereGreaterThanOrEqualTo("timestamp", startDate)
@@ -93,7 +93,7 @@ public class RescueInhalerRepository {
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
-                android.util.Log.d("childparentdatalink", "Repo: Found " + queryDocumentSnapshots.size() + " logs for user: " + userId);
+                android.util.Log.d("childparentlink", "Repo: Found " + queryDocumentSnapshots.size() + " logs for user: " + userId);
                 List<RescueInhalerLog> logs = new ArrayList<>();
                 for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                     RescueInhalerLog log = new RescueInhalerLog();
@@ -111,7 +111,7 @@ public class RescueInhalerRepository {
                 }
             })
             .addOnFailureListener(e -> {
-                android.util.Log.e("childparentdatalink", "Repo: Error fetching logs", e);
+                android.util.Log.e("childparentlink", "Repo: Error fetching logs", e);
                 if (callback != null) {
                     callback.onFailure(e.getMessage());
                 }

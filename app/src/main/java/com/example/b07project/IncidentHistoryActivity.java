@@ -54,6 +54,7 @@ public class IncidentHistoryActivity extends AppCompatActivity {
         String userId;
         if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
             userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+            android.util.Log.d("childparentlink", "IncidentHistoryActivity: Using EXTRA_CHILD_ID: " + userId);
         } else {
             FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
             if (currentUser == null) {
@@ -62,6 +63,7 @@ public class IncidentHistoryActivity extends AppCompatActivity {
                 return;
             }
             userId = currentUser.getUid();
+            android.util.Log.d("childparentlink", "IncidentHistoryActivity: Using current user ID: " + userId);
         }
 
         triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {

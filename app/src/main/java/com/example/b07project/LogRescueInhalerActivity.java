@@ -223,7 +223,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         
         // Determine target user ID (child if provided, else current user)
         final String targetUserId = (childId != null) ? childId : currentUser.getUid();
-        android.util.Log.d("childparentdatalink", "Saving log for targetUserId: " + targetUserId);
+        android.util.Log.d("childparentlink", "Saving log for targetUserId: " + targetUserId);
         
         // Inventory is managed by the parent (currentUser) for the child (childId)
         // If childId is null (self-logging), we pass null as childId to inventory
