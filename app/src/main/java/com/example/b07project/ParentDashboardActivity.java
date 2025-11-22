@@ -218,29 +218,31 @@ public class ParentDashboardActivity extends AppCompatActivity {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
-        android.util.Log.d("NotificationListener", "Setting up listener for user: " + user.getUid());
+        android.util.Log.d("NotificationDebug", "ParentDashboard listener setup for user: " + user.getUid());
 
         notificationListener = FirebaseFirestore.getInstance().collection("notifications")
                 .whereEqualTo("userId", user.getUid())
                 .whereEqualTo("read", false)
                 .addSnapshotListener((snapshots, e) -> {
                     if (e != null) {
-                        android.util.Log.e("NotificationListener", "Listen failed: " + e.getMessage());
+                        android.util.Log.e("NotificationDebug", "ParentDashboard listener FAILED: " + e.getMessage());
                         return;
                     }
 
                     if (snapshots != null) {
-                        android.util.Log.d("NotificationListener", "Received snapshot with " + snapshots.size() + " documents.");
+                        android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Count: " + snapshots.size());
                         for (DocumentChange dc : snapshots.getDocumentChanges()) {
                             if (dc.getType() == DocumentChange.Type.ADDED) {
                                 // Check if the notification is recent (e.g., within last minute) to avoid spamming on startup
                                 // For now, we'll just show it.
                                 String title = dc.getDocument().getString("title");
                                 String message = dc.getDocument().getString("message");
-                                android.util.Log.d("NotificationListener", "New notification: " + title);
+                                android.util.Log.d("NotificationDebug", "New notification: " + title);
                                 NotificationHelper.showLocalNotification(this, title, message);
                             }
                         }
+                    } else {
+                        android.util.Log.d("NotificationDebug", "ParentDashboard listener update. Snapshots is null.");
                     }
                 });
     }

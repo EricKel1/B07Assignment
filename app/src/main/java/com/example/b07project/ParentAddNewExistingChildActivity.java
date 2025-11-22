@@ -23,6 +23,8 @@ import java.util.function.Consumer;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 
+import com.google.firebase.firestore.SetOptions;
+
 public class ParentAddNewExistingChildActivity extends AppCompatActivity {
     //
     private EditText childEmail, childDateOfBirth2;
@@ -89,12 +91,19 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
                 // Use the verified Auth UID
                 String childUid = authUid;
 
-                // Update user's hasParent flag
-                userDoc.getReference().update("hasParent", true);
+                // Update user's hasParent flag and set parentId
+                Map<String, Object> userUpdates = new HashMap<>();
+                userUpdates.put("hasParent", true);
+                userUpdates.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                userDoc.getReference().update(userUpdates);
 
-                // Also try to update the hasParent flag on the real UID doc if it differs
+                // Also try to update the hasParent flag and parentId on the real UID doc if it differs
                 if (!userDoc.getId().equals(childUid)) {
-                    db.collection("users").document(childUid).update("hasParent", true)
+                    Map<String, Object> realUserUpdates = new HashMap<>();
+                    realUserUpdates.put("hasParent", true);
+                    realUserUpdates.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    
+                    db.collection("users").document(childUid).update(realUserUpdates)
                             .addOnFailureListener(e -> android.util.Log.w("Link", "Could not update real user doc hasParent: " + e.getMessage()));
                 }
 
@@ -179,11 +188,32 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
             }
 
             FirebaseAuth secondaryAuth = FirebaseAuth.getInstance(secondaryApp);
+            // We also need a Firestore instance for this secondary app to write as the child
+            FirebaseFirestore secondaryDb = FirebaseFirestore.getInstance(secondaryApp);
+
             secondaryAuth.signInWithEmailAndPassword(email, password)
                     .addOnSuccessListener(authResult -> {
                         String uid = authResult.getUser().getUid();
-                        secondaryAuth.signOut();
-                        callback.accept(uid);
+                        
+                        // CRITICAL FIX: Write parentId to the child's user document using the CHILD'S auth session.
+                        // This bypasses the permission issue where Parent cannot write to Child's profile.
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                        updates.put("hasParent", true);
+                        
+                        secondaryDb.collection("users").document(uid)
+                                .set(updates, SetOptions.merge())
+                                .addOnSuccessListener(aVoid -> {
+                                    android.util.Log.d("Link", "Successfully wrote parentId to child profile as child.");
+                                    secondaryAuth.signOut();
+                                    callback.accept(uid);
+                                })
+                                .addOnFailureListener(e -> {
+                                    android.util.Log.e("Link", "Failed to write parentId as child: " + e.getMessage());
+                                    // Even if this fails, we proceed, but notifications might be broken
+                                    secondaryAuth.signOut();
+                                    callback.accept(uid);
+                                });
                     })
                     .addOnFailureListener(e -> {
                         android.util.Log.e("AuthCheck", "Secondary auth failed: " + e.getMessage());

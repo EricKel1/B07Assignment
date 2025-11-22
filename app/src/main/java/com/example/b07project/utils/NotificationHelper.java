@@ -17,64 +17,58 @@ public class NotificationHelper {
     private static final String CHANNEL_DESC = "Alerts for low medicine and expiry";
 
     public static void sendAlert(Context context, String userId, String title, String message) {
-        android.util.Log.d("NotificationHelper", "sendAlert called for userId: " + userId);
+        android.util.Log.d("NotificationDebug", "sendAlert START. userId=" + userId + ", title=" + title);
 
-        // 1. Send System Notification (Local - for the device triggering it, e.g. Child)
-        // We might want to suppress this if we only want Parent to see it, but usually feedback is good.
-        // However, the user asked for "Parent getting push notifications".
+        // 1. Send System Notification (Local)
+        showLocalNotification(context, title, message);
         
-        // 2. Save to Firestore for the Target User (usually the Child's ID is passed here)
-        // We need to check if this user has a parent, and if so, send to the parent instead/also.
-        
+        // 2. Save to Firestore
+        // We check the 'users' collection FIRST because it's the most reliable source 
+        // for the user's own profile (and their parentId).
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         
-        // Check 'children' collection first as it definitely contains the link
-        db.collection("children").document(userId).get().addOnSuccessListener(doc -> {
+        db.collection("users").document(userId).get().addOnSuccessListener(doc -> {
+            android.util.Log.d("NotificationDebug", "Users collection lookup success. Exists: " + doc.exists());
             String targetId = userId;
             if (doc.exists()) {
                 String parentId = doc.getString("parentId");
+                android.util.Log.d("NotificationDebug", "Found parentId in users: " + parentId);
                 if (parentId != null && !parentId.isEmpty()) {
-                    targetId = parentId; // Send to Parent
-                    android.util.Log.d("NotificationHelper", "Found parentId: " + parentId + " in children collection. Redirecting notification.");
+                    targetId = parentId;
                 } else {
-                    android.util.Log.d("NotificationHelper", "No parentId found in children collection for " + userId);
+                    // If not found in users, try children collection as backup
+                    // (This handles cases where the user profile might not be fully synced but the link exists)
+                    checkChildrenCollection(userId, title, message);
+                    return;
                 }
-            } else {
-                android.util.Log.d("NotificationHelper", "No document found in children collection for " + userId);
-                // Fallback: Check 'users' collection
-                checkUsersCollection(userId, title, message);
-                return; 
             }
-            
             saveToFirestore(targetId, title, message);
         }).addOnFailureListener(e -> {
-            android.util.Log.e("NotificationHelper", "Error checking children collection: " + e.getMessage());
-            // Fallback
-            checkUsersCollection(userId, title, message);
+            android.util.Log.w("NotificationDebug", "Users collection lookup failed: " + e.getMessage());
+            // Fallback to children collection
+            checkChildrenCollection(userId, title, message);
         });
-
-        // Local notification
-        showLocalNotification(context, title, message);
     }
 
-    private static void checkUsersCollection(String userId, String title, String message) {
-        FirebaseFirestore.getInstance().collection("users").document(userId).get().addOnSuccessListener(doc -> {
+    private static void checkChildrenCollection(String userId, String title, String message) {
+        FirebaseFirestore.getInstance().collection("children").document(userId).get().addOnSuccessListener(doc -> {
             String targetId = userId;
             if (doc.exists()) {
                 String parentId = doc.getString("parentId");
                 if (parentId != null && !parentId.isEmpty()) {
                     targetId = parentId;
-                    android.util.Log.d("NotificationHelper", "Found parentId: " + parentId + " in users collection.");
                 }
             }
             saveToFirestore(targetId, title, message);
         }).addOnFailureListener(e -> {
+            android.util.Log.w("NotificationDebug", "Children collection lookup failed: " + e.getMessage());
+            // If both fail, just save to the user ID
             saveToFirestore(userId, title, message);
         });
     }
 
     private static void saveToFirestore(String targetId, String title, String message) {
-        android.util.Log.d("NotificationHelper", "Saving notification to Firestore for targetId: " + targetId);
+        android.util.Log.d("NotificationDebug", "FINAL SAVE: Saving notification for targetId=" + targetId);
         NotificationRepository repo = new NotificationRepository();
         repo.saveNotification(new AppNotification(targetId, title, message));
     }
