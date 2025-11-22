@@ -34,11 +34,12 @@ public class LoginPresenter implements LoginContract.Presenter {
             @Override public void onSuccess() {
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user != null) {
-                    // Bypass verification check for test accounts
+                    // Bypass verification check for test accounts and child accounts (username login)
                     boolean isTestUser = user.getEmail() != null && user.getEmail().endsWith("@test.com");
+                    boolean isChildUser = user.getEmail() != null && user.getEmail().endsWith("@b07project.local");
 
-                    if (user.isEmailVerified() || isTestUser) {
-                        // Email is verified or is a test user, proceed with role check
+                    if (user.isEmailVerified() || isTestUser || isChildUser) {
+                        // Email is verified or is a test/child user, proceed with role check
                         fetchUserRole(user.getUid());
                     } else {
                         // Email not verified, show dialog and sign out
