@@ -143,9 +143,12 @@ public class HomeActivity extends AppCompatActivity {
         boolean sharePEF = Boolean.TRUE.equals(settings.get("pef"));
         setViewVisibility(R.id.badgeSafetyMonitoring, sharePEF);
 
-        // Stats / Patterns
-        boolean shareStats = Boolean.TRUE.equals(settings.get("summaryCharts"));
-        setViewVisibility(R.id.badgeTriggerPatterns, shareStats);
+        // Patterns
+        boolean sharePatterns = Boolean.TRUE.equals(settings.get("patterns"));
+        setViewVisibility(R.id.badgeTriggerPatterns, sharePatterns);
+
+        // Stats
+        boolean shareStats = Boolean.TRUE.equals(settings.get("stats"));
         setViewVisibility(R.id.badgeMotivation, shareStats);
     }
 

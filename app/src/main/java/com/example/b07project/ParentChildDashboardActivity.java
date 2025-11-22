@@ -135,10 +135,13 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         setViewVisibility(R.id.badgeEnterPEF, sharePEF);
         setViewVisibility(R.id.badgeHistoryIncidents, sharePEF);
 
-        // Stats / Patterns
-        boolean shareStats = Boolean.TRUE.equals(settings.get("summaryCharts"));
+        // Patterns
+        boolean sharePatterns = Boolean.TRUE.equals(settings.get("patterns"));
+        setViewVisibility(R.id.badgePatterns, sharePatterns);
+
+        // Stats
+        boolean shareStats = Boolean.TRUE.equals(settings.get("stats"));
         setViewVisibility(R.id.badgeStats, shareStats);
-        setViewVisibility(R.id.badgePatterns, shareStats);
     }
 
     private void setViewVisibility(int viewId, boolean visible) {

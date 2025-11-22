@@ -15,13 +15,11 @@ public class SharingSettingsActivity extends AppCompatActivity {
     private String childId;
     private FirebaseFirestore db;
     
-    private SwitchMaterial switchRescueLogs;
-    private SwitchMaterial switchControllerAdherence;
-    private SwitchMaterial switchSymptoms;
-    private SwitchMaterial switchTriggers;
-    private SwitchMaterial switchPEF;
-    private SwitchMaterial switchTriage;
-    private SwitchMaterial switchSummaryCharts;
+    private SwitchMaterial switchMedication;
+    private SwitchMaterial switchDailyCheckIn;
+    private SwitchMaterial switchSafetyMonitoring;
+    private SwitchMaterial switchTriggerPatterns;
+    private SwitchMaterial switchStatisticsReports;
     private Button btnSave;
 
     @Override
@@ -38,13 +36,11 @@ public class SharingSettingsActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        switchRescueLogs = findViewById(R.id.switchRescueLogs);
-        switchControllerAdherence = findViewById(R.id.switchControllerAdherence);
-        switchSymptoms = findViewById(R.id.switchSymptoms);
-        switchTriggers = findViewById(R.id.switchTriggers);
-        switchPEF = findViewById(R.id.switchPEF);
-        switchTriage = findViewById(R.id.switchTriage);
-        switchSummaryCharts = findViewById(R.id.switchSummaryCharts);
+        switchMedication = findViewById(R.id.switchMedication);
+        switchDailyCheckIn = findViewById(R.id.switchDailyCheckIn);
+        switchSafetyMonitoring = findViewById(R.id.switchSafetyMonitoring);
+        switchTriggerPatterns = findViewById(R.id.switchTriggerPatterns);
+        switchStatisticsReports = findViewById(R.id.switchStatisticsReports);
         btnSave = findViewById(R.id.btnSave);
 
         loadSettings();
@@ -59,16 +55,11 @@ public class SharingSettingsActivity extends AppCompatActivity {
                     if (documentSnapshot.exists()) {
                         Map<String, Object> sharing = (Map<String, Object>) documentSnapshot.get("sharingSettings");
                         if (sharing != null) {
-                            switchRescueLogs.setChecked(Boolean.TRUE.equals(sharing.get("rescueLogs")));
-                            switchControllerAdherence.setChecked(Boolean.TRUE.equals(sharing.get("controllerAdherence")));
-                            switchSymptoms.setChecked(Boolean.TRUE.equals(sharing.get("symptoms")));
-                            switchTriggers.setChecked(Boolean.TRUE.equals(sharing.get("triggers")));
-                            switchPEF.setChecked(Boolean.TRUE.equals(sharing.get("pef")));
-                            switchTriage.setChecked(Boolean.TRUE.equals(sharing.get("triage")));
-                            switchSummaryCharts.setChecked(Boolean.TRUE.equals(sharing.get("summaryCharts")));
-                        } else {
-                            // Default to false or true? Requirement says "By default nothing is shared".
-                            // So false is correct.
+                            switchMedication.setChecked(Boolean.TRUE.equals(sharing.get("medication")));
+                            switchDailyCheckIn.setChecked(Boolean.TRUE.equals(sharing.get("symptoms")));
+                            switchSafetyMonitoring.setChecked(Boolean.TRUE.equals(sharing.get("pef")));
+                            switchTriggerPatterns.setChecked(Boolean.TRUE.equals(sharing.get("patterns")));
+                            switchStatisticsReports.setChecked(Boolean.TRUE.equals(sharing.get("stats")));
                         }
                     }
                 })
@@ -77,13 +68,11 @@ public class SharingSettingsActivity extends AppCompatActivity {
 
     private void saveSettings() {
         Map<String, Object> sharing = new HashMap<>();
-        sharing.put("rescueLogs", switchRescueLogs.isChecked());
-        sharing.put("controllerAdherence", switchControllerAdherence.isChecked());
-        sharing.put("symptoms", switchSymptoms.isChecked());
-        sharing.put("triggers", switchTriggers.isChecked());
-        sharing.put("pef", switchPEF.isChecked());
-        sharing.put("triage", switchTriage.isChecked());
-        sharing.put("summaryCharts", switchSummaryCharts.isChecked());
+        sharing.put("medication", switchMedication.isChecked());
+        sharing.put("symptoms", switchDailyCheckIn.isChecked());
+        sharing.put("pef", switchSafetyMonitoring.isChecked());
+        sharing.put("patterns", switchTriggerPatterns.isChecked());
+        sharing.put("stats", switchStatisticsReports.isChecked());
 
         Map<String, Object> update = new HashMap<>();
         update.put("sharingSettings", sharing);
