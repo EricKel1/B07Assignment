@@ -73,6 +73,15 @@ public class ParentDashboardActivity extends AppCompatActivity {
         childrenList = new ArrayList<>();
         adapter = new ChildAdapter(childrenList, new ChildAdapter.OnChildActionListener() {
             @Override
+            public void onViewChildDashboard(String childName, String childId) {
+                String targetId = getTargetId(childId);
+                Intent intent = new Intent(ParentDashboardActivity.this, ParentChildDashboardActivity.class);
+                intent.putExtra("EXTRA_CHILD_ID", targetId);
+                intent.putExtra("EXTRA_CHILD_NAME", childName);
+                startActivity(intent);
+            }
+
+            @Override
             public void onGenerateCode(String childName, String childId) {
                 onGenerateCodeClicked(childName, childId);
             }
@@ -114,71 +123,6 @@ public class ParentDashboardActivity extends AppCompatActivity {
             @Override
             public void onSetMedicationSchedule(String childName, String childId) {
                 showSetMedicationScheduleDialog(childName, childId);
-            }
-
-            @Override
-            public void onViewTriggerPatterns(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, TriggerPatternsActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onViewIncidentHistory(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, IncidentHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onViewDailyCheckinHistory(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, SymptomHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onViewMedicineLoggingHistory(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, RescueInhalerHistoryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onLogRescueInhaler(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                android.util.Log.d("childparentdatalink", "onLogRescueInhaler: childId=" + childId + ", targetId=" + targetId);
-                Intent intent = new Intent(ParentDashboardActivity.this, LogRescueInhalerActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onLogDailyCheckIn(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, DailySymptomCheckInActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onLogPEF(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, PEFEntryActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
-            }
-
-            @Override
-            public void onLogTriage(String childName, String childId) {
-                String targetId = getTargetId(childId);
-                Intent intent = new Intent(ParentDashboardActivity.this, TriageActivity.class);
-                intent.putExtra("EXTRA_CHILD_ID", targetId);
-                startActivity(intent);
             }
 
             @Override
