@@ -9,6 +9,8 @@ import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
+import com.google.firebase.firestore.FirebaseFirestore;
+import java.util.Map;
 
 public class ParentChildDashboardActivity extends AppCompatActivity {
 
@@ -16,12 +18,14 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
     private String childName;
     private TextView tvChildNameHeader, tvCurrentZoneHeader;
     private PEFRepository pefRepository;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_parent_child_dashboard);
 
+        db = FirebaseFirestore.getInstance();
         childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
         childName = getIntent().getStringExtra("EXTRA_CHILD_NAME");
         
@@ -30,6 +34,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         initializeViews();
         setupListeners();
         loadChildData();
+        loadSharingSettings();
     }
 
     private void initializeViews() {
@@ -94,6 +99,53 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
 
         int color = PersonalBest.getZoneColor(zone);
         tvCurrentZoneHeader.setTextColor(color);
+    }
+
+    private void loadSharingSettings() {
+        if (childId == null) return;
+
+        db.collection("children").document(childId)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    Map<String, Boolean> sharingSettings = (Map<String, Boolean>) documentSnapshot.get("sharingSettings");
+                    if (sharingSettings != null) {
+                        updateBadges(sharingSettings);
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                // Handle error or just leave badges hidden
+            });
+    }
+
+    private void updateBadges(Map<String, Boolean> settings) {
+        // Medication
+        boolean shareMedication = Boolean.TRUE.equals(settings.get("medication"));
+        setViewVisibility(R.id.badgeLogMedicine, shareMedication);
+        setViewVisibility(R.id.badgeHistoryMedicine, shareMedication);
+
+        // Symptoms
+        boolean shareSymptoms = Boolean.TRUE.equals(settings.get("symptoms"));
+        setViewVisibility(R.id.badgeDailyCheckIn, shareSymptoms);
+        setViewVisibility(R.id.badgeHistoryCheckIn, shareSymptoms);
+
+        // PEF / Safety
+        boolean sharePEF = Boolean.TRUE.equals(settings.get("pef"));
+        setViewVisibility(R.id.badgeEnterPEF, sharePEF);
+        setViewVisibility(R.id.badgeHistoryIncidents, sharePEF);
+
+        // Stats / Patterns
+        boolean shareStats = Boolean.TRUE.equals(settings.get("summaryCharts"));
+        setViewVisibility(R.id.badgeStats, shareStats);
+        setViewVisibility(R.id.badgePatterns, shareStats);
+    }
+
+    private void setViewVisibility(int viewId, boolean visible) {
+        View view = findViewById(viewId);
+        if (view != null) {
+            view.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     @Override
