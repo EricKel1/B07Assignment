@@ -15,12 +15,18 @@ public class LoginPresenter implements LoginContract.Presenter {
     @Override
     public void onLoginClicked() {
         if (view == null) return;
-        String email = view.getEmailInput();
+        String input = view.getEmailInput();
         String pass  = view.getPasswordInput();
 
-        if (email == null || email.isEmpty() || pass == null || pass.length() < 6) {
-            view.showError("Enter a valid email and a 6+ character password.");
+        if (input == null || input.isEmpty() || pass == null || pass.length() < 6) {
+            view.showError("Enter a valid email/username and a 6+ character password.");
             return;
+        }
+
+        String email = input;
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(input).matches()) {
+            // Assume it's a username
+            email = input + "@b07project.local";
         }
 
         view.showLoading(true);

@@ -22,7 +22,7 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
     //add a new child to a parent's account,
     //specifically with the underlying logic of the adding.
 
-    private EditText childName, childDateOfBirth;
+    private EditText childName, childDateOfBirth, childUsername, childPassword;
 
     private Button btnAddChild, btnCancelAddChild;
     private TextView ncError2;
@@ -47,6 +47,8 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
     private void initializeViews(){
         childName = findViewById(R.id.childName);
         childDateOfBirth = findViewById(R.id.childDateOfBirth);
+        childUsername = findViewById(R.id.childUsername);
+        childPassword = findViewById(R.id.childPassword);
         btnAddChild = findViewById(R.id.btnAddChild);
         btnCancelAddChild = findViewById(R.id.btnCancelAddChild);
         ncError2 = findViewById(R.id.ncError2);
@@ -64,30 +66,101 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String name = childName.getText().toString().trim();
         String age = childDateOfBirth.getText().toString().trim();
+        String username = childUsername.getText().toString().trim();
+        String password = childPassword.getText().toString().trim();
 
 
-        if(!validateInput(name, age)) {
+        if(!validateInput(name, age, username, password)) {
             return;
         }
 
-        Map<String, Object> child = new HashMap<>();
-        child.put("name", name);
-        child.put("dateOfBirth", age);
-        child.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
-        child.put("createdAt", System.currentTimeMillis());
+        showLoading(true);
 
+        // Create secondary app to create user without signing out parent
+        String secondaryAppName = "SecondaryApp";
+        com.google.firebase.FirebaseApp secondaryApp = null;
+        try {
+            secondaryApp = com.google.firebase.FirebaseApp.getInstance(secondaryAppName);
+        } catch (IllegalStateException e) {
+            com.google.firebase.FirebaseOptions options = com.google.firebase.FirebaseApp.getInstance().getOptions();
+            secondaryApp = com.google.firebase.FirebaseApp.initializeApp(this, options, secondaryAppName);
+        }
 
-        db.collection("children").add(child)
-                .addOnSuccessListener(documentReference -> {
-                    bh.backTo(this);
+        FirebaseAuth secondaryAuth = FirebaseAuth.getInstance(secondaryApp);
+        String email = username + "@b07project.local"; // Construct email from username
+
+        com.google.firebase.FirebaseApp finalSecondaryApp = secondaryApp;
+        secondaryAuth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    String childUid = authResult.getUser().getUid();
+                    String parentId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                    // 1. Create User Document (in 'users' collection)
+                    Map<String, Object> userMap = new HashMap<>();
+                    userMap.put("name", name);
+                    userMap.put("email", email);
+                    userMap.put("username", username);
+                    userMap.put("role", "child");
+                    userMap.put("parentId", parentId);
+                    userMap.put("hasParent", true);
+                    userMap.put("accountCreatedAt", System.currentTimeMillis());
+
+                    // Use secondary db instance (as the child) to write to users collection
+                    FirebaseFirestore secondaryDb = FirebaseFirestore.getInstance(finalSecondaryApp);
+                    
+                    secondaryDb.collection("users").document(childUid).set(userMap)
+                            .addOnSuccessListener(aVoid -> {
+                                // 2. Create Child Document (in 'children' collection) - Parent writes this
+                                Map<String, Object> childMap = new HashMap<>();
+                                childMap.put("name", name);
+                                childMap.put("dateOfBirth", age);
+                                childMap.put("parentId", parentId);
+                                childMap.put("uid", childUid); // Link to Auth UID
+                                childMap.put("username", username);
+                                childMap.put("createdAt", System.currentTimeMillis());
+                                
+                                // Add default sharing settings
+                                Map<String, Boolean> sharing = new HashMap<>();
+                                sharing.put("rescueLogs", false);
+                                sharing.put("controllerAdherence", false);
+                                sharing.put("symptoms", false);
+                                sharing.put("triggers", false);
+                                sharing.put("pef", false);
+                                sharing.put("triage", false);
+                                sharing.put("summaryCharts", false);
+                                childMap.put("sharingSettings", sharing);
+
+                                // Use main db instance (as parent) to write to children collection
+                                db.collection("children").document(childUid).set(childMap)
+                                        .addOnSuccessListener(docRef -> {
+                                            secondaryAuth.signOut();
+                                            showLoading(false);
+                                            Toast.makeText(this, "Child account created successfully", Toast.LENGTH_SHORT).show();
+                                            bh.backTo(this);
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            secondaryAuth.signOut();
+                                            showLoading(false);
+                                            showError("Failed to save child data: " + e.getMessage());
+                                        });
+                            })
+                            .addOnFailureListener(e -> {
+                                secondaryAuth.signOut();
+                                showLoading(false);
+                                showError("Failed to create user profile: " + e.getMessage());
+                            });
                 })
-                .addOnFailureListener(e -> Toast.makeText(this,
-                        "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());;
-
-
+                .addOnFailureListener(e -> {
+                    showLoading(false);
+                    if (e.getMessage() != null && e.getMessage().contains("email address is already in use")) {
+                        showError("Username is already taken");
+                    } else {
+                        showError("Error creating account: " + e.getMessage());
+                    }
+                });
     }
 
-    private boolean validateInput(String name, String age){
+    private boolean validateInput(String name, String age, String username, String password){
         if(Objects.equals(name, "") || name == null){
             showError("Please enter your child's name");
             ncError2.requestFocus();
@@ -95,6 +168,16 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
         }
         if(age == null || age.equals("")){
             showError("Please enter your child's date of birth");
+            ncError2.requestFocus();
+            return false;
+        }
+        if(username == null || username.equals("")){
+            showError("Please enter a username");
+            ncError2.requestFocus();
+            return false;
+        }
+        if(password == null || password.length() < 6){
+            showError("Password must be at least 6 characters");
             ncError2.requestFocus();
             return false;
         }
@@ -107,6 +190,8 @@ public class ParentAddNewChildActivity extends AppCompatActivity {
         btnCancelAddChild.setEnabled(!show);
         childName.setEnabled(!show);
         childDateOfBirth.setEnabled(!show);
+        childUsername.setEnabled(!show);
+        childPassword.setEnabled(!show);
     }
 
     //showError
