@@ -11,6 +11,8 @@ import com.example.b07project.repository.NotificationRepository;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.firebase.firestore.FirebaseFirestore;
+
 public class NotificationHelper {
     private static final String CHANNEL_ID = "smart_air_alerts";
     private static final String CHANNEL_NAME = "Smart Air Alerts";
@@ -71,6 +73,9 @@ public class NotificationHelper {
         android.util.Log.d("NotificationDebug", "FINAL SAVE: Saving notification for targetId=" + targetId);
         NotificationRepository repo = new NotificationRepository();
         repo.saveNotification(new AppNotification(targetId, title, message));
+        
+        // Note: The actual push notification will be sent by a Firebase Cloud Function
+        // that listens to the 'notifications' collection. This is required for FCM V1 API.
     }
 
     public static void showLocalNotification(Context context, String title, String message) {

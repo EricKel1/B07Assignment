@@ -23,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -49,9 +50,14 @@ import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import java.util.concurrent.TimeUnit;
+import android.content.pm.PackageManager;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
 
 public class ParentDashboardActivity extends AppCompatActivity {
 
+    private static final int REQUEST_CODE_POST_NOTIFICATIONS = 101;
     private RecyclerView rvChildren;
     private ProgressBar progressBar;
     private ChildAdapter adapter;
@@ -67,6 +73,25 @@ public class ParentDashboardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_parent_dashboard);
+
+        // Request Notification Permission for Android 13+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_POST_NOTIFICATIONS);
+            }
+        }
+
+        // Register FCM Token
+        FirebaseMessaging.getInstance().getToken()
+            .addOnCompleteListener(task -> {
+                if (!task.isSuccessful()) {
+                    android.util.Log.w("FCM", "Fetching FCM registration token failed", task.getException());
+                    return;
+                }
+                String token = task.getResult();
+                android.util.Log.d("FCM", "FCM Token: " + token);
+                saveFCMToken(token);
+            });
 
         rvChildren = findViewById(R.id.rvChildren);
         progressBar = findViewById(R.id.progressBar);
@@ -181,23 +206,10 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
         btnAddChild.setOnClickListener(v -> showAddChildDialog());
         
-        scheduleNotificationWorker();
+        // Removed scheduleNotificationWorker() as we are switching to FCM
         
         // Temporary Debug: Print logs for a specific child ID if known
         // debugPrintLogsForChild("ioeu7bHKq4a5otHN2DursmyuQnT2"); 
-    }
-
-    private void scheduleNotificationWorker() {
-        PeriodicWorkRequest workRequest =
-                new PeriodicWorkRequest.Builder(
-                        com.example.b07project.services.NotificationWorker.class,
-                        15, TimeUnit.MINUTES)
-                        .build();
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                "NotificationWorker",
-                ExistingPeriodicWorkPolicy.KEEP,
-                workRequest);
     }
 
     private void debugPrintLogsForChild(String childId) {
@@ -270,7 +282,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
                                 if (timestamp != null && timestamp.getTime() > lastCheck) {
                                     android.util.Log.d("NotificationDebug", "New notification: " + title);
-                                    NotificationHelper.showLocalNotification(this, title, message);
+                                    // NotificationHelper.showLocalNotification(this, title, message); // Disabled to avoid duplicates with FCM
                                     
                                     if (timestamp.getTime() > maxTimestamp) {
                                         maxTimestamp = timestamp.getTime();
@@ -686,5 +698,17 @@ public class ParentDashboardActivity extends AppCompatActivity {
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
+    }
+
+    private void saveFCMToken(String token) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("fcmToken", token);
+            FirebaseFirestore.getInstance().collection("users").document(user.getUid())
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> android.util.Log.d("FCM", "Token saved to Firestore"))
+                .addOnFailureListener(e -> android.util.Log.e("FCM", "Error saving token", e));
+        }
     }
 }
