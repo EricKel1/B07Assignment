@@ -433,7 +433,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private void checkRapidRescueRepeats(String targetUserId, String currentLogId, int currentDoseCount) {
         Calendar cal = Calendar.getInstance();
         Date now = cal.getTime();
-        cal.add(Calendar.HOUR_OF_DAY, -4);
+        cal.add(Calendar.HOUR_OF_DAY, -3);
         Date startTime = cal.getTime();
 
         rescueRepository.getLogsForUserInDateRange(targetUserId, startTime, now, new RescueInhalerRepository.LoadCallback() {
@@ -453,10 +453,10 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                     totalPuffs += currentDoseCount;
                 }
                 
-                if (totalPuffs > 4) { // Threshold: More than 4 puffs in 4 hours
+                if (totalPuffs >= 3) { // Threshold: 3 or more puffs in 3 hours
                      FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
                      String userName = (currentUser != null && currentUser.getDisplayName() != null && !currentUser.getDisplayName().isEmpty()) ? currentUser.getDisplayName() : "Child";
-                     NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, "Rapid Rescue Usage Alert", userName + " has used " + totalPuffs + " puffs of rescue inhaler in the last 4 hours.");
+                     NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, "Rapid Rescue Usage Alert", userName + " has used " + totalPuffs + " puffs of rescue inhaler in the last 3 hours.");
                 }
             }
 
