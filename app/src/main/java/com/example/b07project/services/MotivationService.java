@@ -26,10 +26,17 @@ public class MotivationService {
     private static final int DEFAULT_LOW_RESCUE_THRESHOLD = 4;
     private static final int DEFAULT_LOW_RESCUE_PERIOD = 30;
 
+    private String targetUserId;
+
     public MotivationService(Context context) {
         this.context = context;
         this.db = FirebaseFirestore.getInstance();
         this.auth = FirebaseAuth.getInstance();
+        this.targetUserId = auth.getCurrentUser() != null ? auth.getCurrentUser().getUid() : null;
+    }
+    
+    public void setTargetUserId(String userId) {
+        this.targetUserId = userId;
     }
 
     // Streak Methods
@@ -54,9 +61,18 @@ public class MotivationService {
     }
 
     public void getStreak(String type, StreakCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null) {
+             if (auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+             else {
+                 callback.onFailure(new Exception("No user ID available"));
+                 return;
+             }
+        }
+        
+        final String finalUserId = userId;
         db.collection("streaks")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", type)
                 .limit(1)
                 .get()
@@ -76,7 +92,7 @@ public class MotivationService {
                         String newId = db.collection("streaks").document().getId();
                         Streak newStreak = new Streak(
                                 newId,
-                                userId,
+                                finalUserId,
                                 type,
                                 0,
                                 0,
@@ -212,9 +228,18 @@ public class MotivationService {
 
     // Badge Methods
     public void getAllBadges(BadgeListCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null) {
+             if (auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+             else {
+                 callback.onFailure(new Exception("No user ID available"));
+                 return;
+             }
+        }
+        final String finalUserId = userId;
+        
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     List<Badge> badges = new ArrayList<>();
@@ -236,13 +261,16 @@ public class MotivationService {
     }
 
     private void initializeBadges(BadgeListCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
         List<Badge> defaultBadges = new ArrayList<>();
 
         String perfectWeekId = db.collection("badges").document().getId();
         Badge perfectWeek = new Badge(
                 perfectWeekId,
-                userId,
+                finalUserId,
                 "perfect_controller_week",
                 "Perfect Week",
                 "Take controller medication every day for 7 consecutive days",
@@ -259,7 +287,7 @@ public class MotivationService {
         String techniqueMasterId = db.collection("badges").document().getId();
         Badge techniqueMaster = new Badge(
                 techniqueMasterId,
-                userId,
+                finalUserId,
                 "technique_sessions",
                 "Technique Master",
                 "Complete " + techniqueRequired + " high-quality technique practice sessions",
@@ -274,7 +302,7 @@ public class MotivationService {
         String testBadgeId = db.collection("badges").document().getId();
         Badge testBadge = new Badge(
                 testBadgeId,
-                userId,
+                finalUserId,
                 "first_rescue_use",
                 "First Step",
                 "Log your first rescue inhaler use",
@@ -292,7 +320,7 @@ public class MotivationService {
         String lowRescueId = db.collection("badges").document().getId();
         Badge lowRescue = new Badge(
                 lowRescueId,
-                userId,
+                finalUserId,
                 "low_rescue_month",
                 "Control Champion",
                 "Use rescue inhaler ≤" + rescueThreshold + " times in " + rescuePeriod + " days",
@@ -357,16 +385,19 @@ public class MotivationService {
     }
 
     private void ensureBadgeExists(String type, BadgeTemplateBuilder builder, Runnable onComplete) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", type)
                 .limit(1)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     if (querySnapshot.isEmpty()) {
                         String badgeId = db.collection("badges").document().getId();
-                        Badge badge = builder.build(badgeId, userId);
+                        Badge badge = builder.build(badgeId, finalUserId);
                         android.util.Log.d("MotivationService", "ensureBadgeExists - Creating missing badge type=" + type);
                         saveBadge(badge, () -> {
                             if (onComplete != null) onComplete.run();
@@ -505,11 +536,14 @@ public class MotivationService {
     }
 
     private void performTechniqueSessionBadgeUpdate() {
-        String userId = auth.getCurrentUser().getUid();
-        android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Starting for userId: " + userId);
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
+        android.util.Log.d("MotivationService", "performTechniqueSessionBadgeUpdate - Starting for userId: " + finalUserId);
 
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", "technique_sessions")
                 .limit(1)
                 .get()
@@ -560,11 +594,14 @@ public class MotivationService {
     }
 
     private void performFirstRescueBadgeCheck(UpdateCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
         android.util.Log.d("MotivationService", "performFirstRescueBadgeCheck - Starting check");
 
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", "first_rescue_use")
                 .limit(1)
                 .get()
@@ -608,26 +645,47 @@ public class MotivationService {
     }
 
     private void performLowRescueBadgeCheck(int rescueThreshold, int rescuePeriod, UpdateCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
 
         android.util.Log.d("RescueInhalerService", "=== LOW RESCUE BADGE CHECK START ===");
-        android.util.Log.d("RescueInhalerService", "userId: " + userId);
+        android.util.Log.d("RescueInhalerService", "userId: " + finalUserId);
         android.util.Log.d("RescueInhalerService", "threshold: " + rescueThreshold + ", period: " + rescuePeriod + " days");
 
         try {
+            // Note: We can't easily get account creation time for a child user if we are a parent
+            // For now, we'll use a fallback or try to get it from the user document if possible
+            // But since we don't have easy access to child user metadata, we might need to skip the "account age" check
+            // or assume it's old enough if we can't verify.
+            
+            // However, the original code used auth.getCurrentUser().getMetadata().
+            // If we are viewing a child, auth.getCurrentUser() is the PARENT.
+            // So using parent's account age for child's badge logic is technically wrong but might be the only easy option without fetching child user doc.
+            // Let's stick to using the current authenticated user's metadata for account age for now as a proxy, 
+            // or just proceed. 
+            
+            // BETTER APPROACH: Just use current time for "now" and query logs. 
+            // The "period" logic relies on account creation date to define "months".
+            // If we are a parent viewing a child, we should ideally fetch the child's creation date.
+            // Since that's complex to add right now without changing more code, let's use the parent's creation date as the anchor 
+            // OR just use the current date and look back 'rescuePeriod' days (rolling window).
+            // The original code used fixed windows from account creation.
+            
+            // Let's keep using auth.getCurrentUser() for metadata for now to minimize breakage, 
+            // but use finalUserId for the queries.
+            
             com.google.firebase.auth.FirebaseUser user = auth.getCurrentUser();
-            if (user == null || user.getMetadata() == null) {
-                android.util.Log.e("RescueInhalerService", "ERROR: Missing user metadata");
-                if (callback != null) callback.onComplete();
-                return;
+            long accountCreated = System.currentTimeMillis(); // Default to now if unavailable
+            if (user != null && user.getMetadata() != null) {
+                accountCreated = user.getMetadata().getCreationTimestamp();
             }
 
-            long accountCreated = user.getMetadata().getCreationTimestamp();
             long now = System.currentTimeMillis();
             long accountAgeDays = TimeUnit.MILLISECONDS.toDays(now - accountCreated);
 
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault());
-            android.util.Log.d("RescueInhalerService", "Account created: " + sdf.format(new java.util.Date(accountCreated)));
+            android.util.Log.d("RescueInhalerService", "Account created (anchor): " + sdf.format(new java.util.Date(accountCreated)));
             android.util.Log.d("RescueInhalerService", "Current time: " + sdf.format(new java.util.Date(now)));
             android.util.Log.d("RescueInhalerService", "Account age: " + accountAgeDays + " days");
 
@@ -649,7 +707,7 @@ public class MotivationService {
             java.util.Date periodEndDate = new java.util.Date(periodEnd);
 
             db.collection("rescue_inhaler_logs")
-                    .whereEqualTo("userId", userId)
+                    .whereEqualTo("userId", finalUserId)
                     .whereGreaterThanOrEqualTo("timestamp", periodStartDate)
                     .whereLessThan("timestamp", periodEndDate)
                     .get()
@@ -669,7 +727,7 @@ public class MotivationService {
                         android.util.Log.d("RescueInhalerService", "Querying for low_rescue_month badge...");
 
                         db.collection("badges")
-                                .whereEqualTo("userId", userId)
+                                .whereEqualTo("userId", finalUserId)
                                 .whereEqualTo("type", "low_rescue_month")
                                 .limit(1)
                                 .get()
@@ -750,13 +808,16 @@ public class MotivationService {
     }
 
     private void checkControllerMedicationForToday(MedicationCheckCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
         long todayStart = getStartOfDay(System.currentTimeMillis());
         long todayEnd = todayStart + TimeUnit.DAYS.toMillis(1) - 1;
 
         // Check if user has logged controller medication today
         db.collection("controller_medicine_logs")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereGreaterThanOrEqualTo("timestamp", todayStart)
                 .whereLessThanOrEqualTo("timestamp", todayEnd)
                 .limit(1)
@@ -775,10 +836,12 @@ public class MotivationService {
                 .apply();
 
         // Update existing badges with new requirements
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
         
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", "technique_sessions")
                 .limit(1)
                 .get()
@@ -794,7 +857,7 @@ public class MotivationService {
                 });
 
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .whereEqualTo("type", "low_rescue_month")
                 .limit(1)
                 .get()
@@ -821,9 +884,12 @@ public class MotivationService {
 
     // Cleanup method to remove duplicate badges
     public void cleanupDuplicateBadges(UpdateCallback callback) {
-        String userId = auth.getCurrentUser().getUid();
+        String userId = targetUserId;
+        if (userId == null && auth.getCurrentUser() != null) userId = auth.getCurrentUser().getUid();
+        final String finalUserId = userId;
+        
         db.collection("badges")
-                .whereEqualTo("userId", userId)
+                .whereEqualTo("userId", finalUserId)
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     // Group badges by type

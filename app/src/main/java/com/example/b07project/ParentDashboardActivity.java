@@ -151,6 +151,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
             @Override
             public void onLogRescueInhaler(String childName, String childId) {
                 String targetId = getTargetId(childId);
+                android.util.Log.d("childparentdatalink", "onLogRescueInhaler: childId=" + childId + ", targetId=" + targetId);
                 Intent intent = new Intent(ParentDashboardActivity.this, LogRescueInhalerActivity.class);
                 intent.putExtra("EXTRA_CHILD_ID", targetId);
                 startActivity(intent);
@@ -226,7 +227,34 @@ public class ParentDashboardActivity extends AppCompatActivity {
         });
 
         fabAddChild.setOnClickListener(v -> showAddChildDialog());
+        
+        // Temporary Debug: Print logs for a specific child ID if known
+        // debugPrintLogsForChild("ioeu7bHKq4a5otHN2DursmyuQnT2"); 
+    }
 
+    private void debugPrintLogsForChild(String childId) {
+        FirebaseFirestore.getInstance().collection("rescue_inhaler_logs")
+                .whereEqualTo("userId", childId)
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .limit(5)
+                .get()
+                .addOnSuccessListener(snapshots -> {
+                    android.util.Log.d("childparentdatalink", "DEBUG: Dumping last 5 logs for " + childId + ":");
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : snapshots) {
+                        android.util.Log.d("childparentdatalink", "Log ID: " + doc.getId() + 
+                                " | userId: " + doc.getString("userId") + 
+                                " | time: " + doc.getDate("timestamp"));
+                    }
+                    if (snapshots.isEmpty()) {
+                        android.util.Log.d("childparentdatalink", "DEBUG: No logs found for " + childId);
+                    }
+                })
+                .addOnFailureListener(e -> android.util.Log.e("childparentdatalink", "DEBUG: Failed to fetch logs", e));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         loadChildren();
     }
 
