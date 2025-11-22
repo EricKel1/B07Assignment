@@ -318,19 +318,8 @@ public class ParentDashboardActivity extends AppCompatActivity {
     }
 
     private void showAddChildDialog() {
-        String[] options = {"Create New Profile", "Link Existing Account"};
-
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Add Child")
-                .setItems(options, (dialog, which) -> {
-                    if (which == 0) {
-                        showCreateNewChildDialog();
-                    } else {
-                        Intent intent = new Intent(ParentDashboardActivity.this, ParentAddNewExistingChildActivity.class);
-                        startActivity(intent);
-                    }
-                })
-                .show();
+        Intent intent = new Intent(ParentDashboardActivity.this, ParentAddNewChildActivity.class);
+        startActivity(intent);
     }
 
     private void showCreateNewChildDialog() {
