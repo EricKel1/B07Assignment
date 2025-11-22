@@ -99,10 +99,10 @@ public class SignUpActivity extends AppCompatActivity {
                         
                         user.updateProfile(profileUpdates)
                             .addOnCompleteListener(profileTask -> {
-                                showLoading(false);
                                 if (profileTask.isSuccessful()) {
-                                    showSuccessDialog(email);
+                                    sendVerificationEmail(user);
                                 } else {
+                                    showLoading(false);
                                     Toast.makeText(SignUpActivity.this, 
                                         "Account created, but profile update failed", 
                                         Toast.LENGTH_SHORT).show();
@@ -130,6 +130,27 @@ public class SignUpActivity extends AppCompatActivity {
             });
     }
     
+    private void sendVerificationEmail(FirebaseUser user) {
+        if (user.getEmail() != null && user.getEmail().endsWith("@test.com")) {
+            showLoading(false);
+            Toast.makeText(SignUpActivity.this, "Test account created!", Toast.LENGTH_SHORT).show();
+            navigateToHome();
+            return;
+        }
+
+        user.sendEmailVerification()
+            .addOnCompleteListener(task -> {
+                showLoading(false);
+                if (task.isSuccessful()) {
+                    android.util.Log.d("SignUpActivity", "Verification email sent to " + user.getEmail());
+                    showSuccessDialog(user.getEmail());
+                } else {
+                    android.util.Log.e("SignUpActivity", "Failed to send verification email", task.getException());
+                    Toast.makeText(SignUpActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
     private boolean validateInput(String name, String email, String password, String confirmPassword) {
         if (TextUtils.isEmpty(name)) {
             showError("Please enter your name");
