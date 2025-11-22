@@ -4,111 +4,127 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA"
+    android:background="@drawable/bg_gradient_primary"
     tools:context=".DeviceChooserActivity">
-
-    <View
-        android:id="@+id/headerBackground"
-        android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="@drawable/header_background_gradient"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvDeviceChooserTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/device_chooser_title"
-        android:textSize="28sp"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="@android:color/white"
-        app:layout_constraintBottom_toTopOf="@+id/tvDeviceChooserSubtitle"
+        android:textAlignment="center"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed"/>
+        android:layout_marginTop="48dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"/>
 
     <TextView
         android:id="@+id/tvDeviceChooserSubtitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/device_chooser_subtitle"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:textColor="#E3F2FD"
+        android:textAlignment="center"
         app:layout_constraintTop_toBottomOf="@id/tvDeviceChooserTitle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/headerBackground"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"/>
 
-    <androidx.core.widget.NestedScrollView
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/headerBackground"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:layout_constraintTop_toBottomOf="@id/tvDeviceChooserSubtitle"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:padding="24dp">
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="-24dp">
 
-        <LinearLayout
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="visible"
-                android:layout_margin="32dp"/>
-
-            <Button
-                android:id="@+id/btnParent"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:visibility="gone"
-                tools:text="I'm Sarah (Parent)"
-                android:textSize="18sp"
-                app:icon="@android:drawable/ic_menu_myplaces"
-                app:iconSize="32dp"
-                app:iconGravity="textStart"
-                app:strokeColor="#1565C0"
-                app:strokeWidth="2dp"
-                android:textColor="#1565C0"
-                app:cornerRadius="16dp"
-                android:layout_marginBottom="24dp"/>
-
-            <TextView
-                android:id="@+id/tvChildrenLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Children"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="#757575"
-                android:layout_gravity="start"
-                android:layout_marginBottom="12dp"
-                android:visibility="gone"
-                tools:visibility="visible"/>
+            android:layout_height="match_parent"
+            android:padding="24dp">
 
             <LinearLayout
-                android:id="@+id/llChildrenButtons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical"
+                android:paddingBottom="48dp">
 
-            <TextView
-                android:id="@+id/tvNoChildren"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="No children added yet."
-                android:visibility="gone"
-                android:textColor="#757575"
-                android:layout_marginTop="16dp"/>
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="visible"
+                    android:layout_margin="32dp"/>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Parent"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A237E"
+                    android:layout_marginBottom="16dp"/>
+
+                <Button
+                    android:id="@+id/btnParent"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:visibility="gone"
+                    tools:text="I'm Sarah (Parent)"
+                    android:textSize="18sp"
+                    app:icon="@android:drawable/ic_menu_myplaces"
+                    app:iconSize="32dp"
+                    app:iconGravity="textStart"
+                    app:strokeColor="#1565C0"
+                    app:strokeWidth="2dp"
+                    android:textColor="#1565C0"
+                    app:cornerRadius="16dp"
+                    android:layout_marginBottom="32dp"/>
+
+                <TextView
+                    android:id="@+id/tvChildrenLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Children"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#1A237E"
+                    android:layout_marginBottom="16dp"
+                    android:visibility="gone"
+                    tools:visibility="visible"/>
+
+                <LinearLayout
+                    android:id="@+id/llChildrenButtons"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <TextView
+                    android:id="@+id/tvNoChildren"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="No children added yet."
+                    android:textAlignment="center"
+                    android:visibility="gone"
+                    android:textColor="#757575"
+                    android:layout_marginTop="16dp"/>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -21,7 +21,7 @@ import androidx.core.app.ActivityCompat;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut;
+    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut, btnSwitchProfile;
     private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
     private Button btnInventory;
     private ImageButton btnNotifications;
@@ -47,12 +47,20 @@ public class HomeActivity extends AppCompatActivity {
             dataOwnerId = childId;
             tvViewingChildNotice.setText("Viewing child: " + (childName != null ? childName : "Child"));
             tvViewingChildNotice.setVisibility(View.VISIBLE);
-            if (btnSignOut != null) btnSignOut.setVisibility(View.GONE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
+            
+            android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            boolean isLocked = prefs.getBoolean("is_locked", false);
+            
+            if (btnSwitchProfile != null) {
+                btnSwitchProfile.setVisibility(isLocked ? View.GONE : View.VISIBLE);
+            }
         } else {
             // Parent Mode (or default)
             dataOwnerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
             tvViewingChildNotice.setVisibility(View.GONE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
+            if (btnSwitchProfile != null) btnSwitchProfile.setVisibility(View.GONE);
         }
         
         // Hide Inventory button if the current user is a child
@@ -124,6 +132,7 @@ public class HomeActivity extends AppCompatActivity {
         btnStatisticsReports = findViewById(R.id.btnStatisticsReports);
         btnInventory = findViewById(R.id.btnInventory);
         btnSignOut = findViewById(R.id.btnSignOut);
+        btnSwitchProfile = findViewById(R.id.btnSwitchProfile);
         btnNotifications = findViewById(R.id.btnNotifications);
 
         tvCurrentZone = findViewById(R.id.tvCurrentZone);
@@ -240,6 +249,24 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
+
+        if (btnSwitchProfile != null) {
+            btnSwitchProfile.setOnClickListener(v -> {
+                // Clear last child preference
+                android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                android.content.SharedPreferences.Editor editor = prefs.edit();
+                editor.remove("last_child_id");
+                editor.remove("last_child_name");
+                editor.remove("last_role");
+                editor.remove("is_locked");
+                editor.apply();
+
+                Intent intent = new Intent(this, DeviceChooserActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            });
+        }
     }
 
     private void loadZoneStatus() {
