@@ -84,23 +84,40 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
                     
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
                         android:background="#E3F2FD">
-                        
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+                            
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Log\nMedicine"
+                                android:textAlignment="center"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#1565C0"/>
+                        </LinearLayout>
+
                         <TextView
+                            android:id="@+id/badgeLogMedicine"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Log\nMedicine"
-                            android:textAlignment="center"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#1565C0"/>
-                    </LinearLayout>
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#1565C0"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <!-- Daily Check-in -->
@@ -115,23 +132,40 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:gravity="center"
-                        android:padding="16dp"
                         android:background="#E8F5E9">
 
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical"
+                            android:gravity="center"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Daily\nCheck-in"
+                                android:textAlignment="center"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#2E7D32"/>
+                        </LinearLayout>
+
                         <TextView
+                            android:id="@+id/badgeDailyCheckIn"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Daily\nCheck-in"
-                            android:textAlignment="center"
-                            android:textSize="16sp"
-                            android:textStyle="bold"
-                            android:textColor="#2E7D32"/>
-                    </LinearLayout>
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#2E7D32"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
@@ -145,30 +179,47 @@
                 android:clickable="true"
                 android:foreground="?attr/selectableItemBackground">
 
-                <LinearLayout
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="24dp"
                     android:background="#FFF3E0">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:paddingHorizontal="24dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Enter Peak Flow (PEF)"
+                            android:textSize="18sp"
+                            android:textStyle="bold"
+                            android:textColor="#EF6C00"/>
+                        
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+"
+                            android:textSize="24sp"
+                            android:textColor="#EF6C00"/>
+                    </LinearLayout>
+
                     <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Enter Peak Flow (PEF)"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#EF6C00"/>
-                    
-                    <TextView
+                        android:id="@+id/badgeEnterPEF"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="+"
-                        android:textSize="24sp"
-                        android:textColor="#EF6C00"/>
-                </LinearLayout>
+                        android:text="Shared"
+                        android:textSize="10sp"
+                        android:textColor="#EF6C00"
+                        android:background="@drawable/bg_shared_badge"
+                        android:layout_gravity="top|end"
+                        android:layout_margin="4dp"
+                        android:visibility="gone"/>
+                </FrameLayout>
             </androidx.cardview.widget.CardView>
 
             <!-- Analytics Section -->
@@ -197,28 +248,45 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
                     
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-                        
-                        <TextView
-                            android:layout_width="0dp"
+                        android:layout_height="wrap_content">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Statistics &amp; Reports"
-                            android:textSize="16sp"
-                            android:textColor="#455A64"/>
+                            android:padding="16dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
                             
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Statistics &amp; Reports"
+                                android:textSize="16sp"
+                                android:textColor="#455A64"/>
+                                
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="VIEW"
+                                android:textStyle="bold"
+                                android:textColor="#1976D2"/>
+                        </LinearLayout>
+
                         <TextView
+                            android:id="@+id/badgeStats"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="VIEW"
-                            android:textStyle="bold"
-                            android:textColor="#1976D2"/>
-                    </LinearLayout>
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#1976D2"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
@@ -231,28 +299,45 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <LinearLayout
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:layout_height="wrap_content">
 
-                        <TextView
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Trigger Patterns"
-                            android:textSize="16sp"
-                            android:textColor="#455A64"/>
+                            android:padding="16dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Trigger Patterns"
+                                android:textSize="16sp"
+                                android:textColor="#455A64"/>
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="VIEW"
+                                android:textStyle="bold"
+                                android:textColor="#1976D2"/>
+                        </LinearLayout>
 
                         <TextView
+                            android:id="@+id/badgePatterns"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="VIEW"
-                            android:textStyle="bold"
-                            android:textColor="#1976D2"/>
-                    </LinearLayout>
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#1976D2"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 
@@ -282,13 +367,30 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="Medicine History"
-                        android:textSize="15sp"
-                        android:textColor="#455A64"/>
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="Medicine History"
+                            android:textSize="15sp"
+                            android:textColor="#455A64"/>
+
+                        <TextView
+                            android:id="@+id/badgeHistoryMedicine"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#455A64"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
@@ -301,13 +403,30 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="Daily Check-in History"
-                        android:textSize="15sp"
-                        android:textColor="#455A64"/>
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="Daily Check-in History"
+                            android:textSize="15sp"
+                            android:textColor="#455A64"/>
+
+                        <TextView
+                            android:id="@+id/badgeHistoryCheckIn"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#455A64"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
@@ -320,13 +439,30 @@
                     android:clickable="true"
                     android:foreground="?attr/selectableItemBackground">
 
-                    <TextView
+                    <FrameLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="Incident History"
-                        android:textSize="15sp"
-                        android:textColor="#455A64"/>
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="Incident History"
+                            android:textSize="15sp"
+                            android:textColor="#455A64"/>
+
+                        <TextView
+                            android:id="@+id/badgeHistoryIncidents"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shared"
+                            android:textSize="10sp"
+                            android:textColor="#455A64"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
                 </androidx.cardview.widget.CardView>
             </LinearLayout>
 

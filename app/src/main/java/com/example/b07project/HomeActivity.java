@@ -85,6 +85,7 @@ public class HomeActivity extends AppCompatActivity {
         loadZoneStatus();
         loadMedicationSchedule();
         checkNotificationPermission();
+        loadSharingSettings();
     }
 
     private void loadMedicationSchedule() {
@@ -108,6 +109,54 @@ public class HomeActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> {
                     if (cardMedicationSchedule != null) cardMedicationSchedule.setVisibility(View.GONE);
                 });
+    }
+
+    private void loadSharingSettings() {
+        if (dataOwnerId == null) return;
+
+        FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    java.util.Map<String, Boolean> sharingSettings = (java.util.Map<String, Boolean>) documentSnapshot.get("sharingSettings");
+                    if (sharingSettings != null) {
+                        updateBadges(sharingSettings);
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                // Handle error or just leave badges hidden
+            });
+    }
+
+    private void updateBadges(java.util.Map<String, Boolean> settings) {
+        // Medication
+        boolean shareMedication = Boolean.TRUE.equals(settings.get("medication"));
+        setViewVisibility(R.id.badgeMedicationSchedule, shareMedication);
+        setViewVisibility(R.id.badgeRescueInhaler, shareMedication);
+
+        // Symptoms
+        boolean shareSymptoms = Boolean.TRUE.equals(settings.get("symptoms"));
+        setViewVisibility(R.id.badgeSymptomCheckIn, shareSymptoms);
+
+        // PEF / Safety
+        boolean sharePEF = Boolean.TRUE.equals(settings.get("pef"));
+        setViewVisibility(R.id.badgeSafetyMonitoring, sharePEF);
+
+        // Patterns
+        boolean sharePatterns = Boolean.TRUE.equals(settings.get("patterns"));
+        setViewVisibility(R.id.badgeTriggerPatterns, sharePatterns);
+
+        // Stats
+        boolean shareStats = Boolean.TRUE.equals(settings.get("stats"));
+        setViewVisibility(R.id.badgeMotivation, shareStats);
+    }
+
+    private void setViewVisibility(int viewId, boolean visible) {
+        View view = findViewById(viewId);
+        if (view != null) {
+            view.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void checkNotificationPermission() {
