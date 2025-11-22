@@ -24,6 +24,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import com.example.b07project.utils.NotificationHelper;
+
 public class DailySymptomCheckInActivity extends AppCompatActivity {
 
     private TextView tvDate, tvSymptomLevelValue, tvMessage;
@@ -204,6 +206,13 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         repository.saveCheckIn(checkIn, new SymptomCheckInRepository.SaveCallback() {
             @Override
             public void onSuccess(String documentId) {
+                // Check for Triage Escalation
+                if (symptomLevel >= 4) {
+                    String userName = currentUser.getDisplayName();
+                    if (userName == null || userName.isEmpty()) userName = "Child";
+                    NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, "Triage Escalation Alert", userName + " reported severe symptoms (Level " + symptomLevel + "). Please check on them immediately.");
+                }
+
                 showLoading(false);
                 Toast.makeText(DailySymptomCheckInActivity.this,
                     "Symptom check-in saved successfully!",

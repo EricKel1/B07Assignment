@@ -41,6 +41,9 @@ import android.text.InputType;
 import android.widget.ImageButton;
 
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.DocumentChange;
+import com.example.b07project.utils.NotificationHelper;
 
 public class ParentDashboardActivity extends AppCompatActivity {
 
@@ -53,6 +56,7 @@ public class ParentDashboardActivity extends AppCompatActivity {
     private Button btnAddChild;
     private ImageButton btnNotifications;
     private Button btnSwitchProfile;
+    private ListenerRegistration notificationListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -194,6 +198,51 @@ public class ParentDashboardActivity extends AppCompatActivity {
                     }
                 })
                 .addOnFailureListener(e -> android.util.Log.e("childparentdatalink", "DEBUG: Failed to fetch logs", e));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setupNotificationListener();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (notificationListener != null) {
+            notificationListener.remove();
+        }
+    }
+
+    private void setupNotificationListener() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        android.util.Log.d("NotificationListener", "Setting up listener for user: " + user.getUid());
+
+        notificationListener = FirebaseFirestore.getInstance().collection("notifications")
+                .whereEqualTo("userId", user.getUid())
+                .whereEqualTo("read", false)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) {
+                        android.util.Log.e("NotificationListener", "Listen failed: " + e.getMessage());
+                        return;
+                    }
+
+                    if (snapshots != null) {
+                        android.util.Log.d("NotificationListener", "Received snapshot with " + snapshots.size() + " documents.");
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            if (dc.getType() == DocumentChange.Type.ADDED) {
+                                // Check if the notification is recent (e.g., within last minute) to avoid spamming on startup
+                                // For now, we'll just show it.
+                                String title = dc.getDocument().getString("title");
+                                String message = dc.getDocument().getString("message");
+                                android.util.Log.d("NotificationListener", "New notification: " + title);
+                                NotificationHelper.showLocalNotification(this, title, message);
+                            }
+                        }
+                    }
+                });
     }
 
     @Override
