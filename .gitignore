@@ -39,3 +39,4 @@ app/google-services.json
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+firestore.rules

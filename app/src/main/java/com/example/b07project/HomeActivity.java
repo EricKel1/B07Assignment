@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import androidx.cardview.widget.CardView;
 
@@ -45,6 +46,7 @@ public class HomeActivity extends AppCompatActivity {
         if (childId != null) {
             // Child Mode
             dataOwnerId = childId;
+            android.util.Log.d("HomeActivity", "onCreate: Child Mode. dataOwnerId=" + dataOwnerId);
             tvViewingChildNotice.setText("Viewing child: " + (childName != null ? childName : "Child"));
             tvViewingChildNotice.setVisibility(View.VISIBLE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
@@ -57,7 +59,13 @@ public class HomeActivity extends AppCompatActivity {
             }
         } else {
             // Parent Mode (or default)
-            dataOwnerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user != null) {
+                dataOwnerId = user.getUid();
+                android.util.Log.d("HomeActivity", "onCreate: User Mode. dataOwnerId=" + dataOwnerId);
+            } else {
+                android.util.Log.e("HomeActivity", "onCreate: No user logged in!");
+            }
             tvViewingChildNotice.setVisibility(View.GONE);
             if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
             if (btnSwitchProfile != null) btnSwitchProfile.setVisibility(View.GONE);
@@ -111,44 +119,67 @@ public class HomeActivity extends AppCompatActivity {
                 });
     }
 
-    private void loadSharingSettings() {
-        if (dataOwnerId == null) return;
+    private com.google.firebase.firestore.ListenerRegistration sharingSettingsListener;
 
-        FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
+    private void loadSharingSettings() {
+        if (dataOwnerId == null) {
+            android.util.Log.e("sharedpermissionsindicator", "loadSharingSettings: dataOwnerId is null");
+            return;
+        }
+
+        android.util.Log.d("sharedpermissionsindicator", "loadSharingSettings: Fetching settings for " + dataOwnerId);
+
+        if (sharingSettingsListener != null) {
+            sharingSettingsListener.remove();
+        }
+
+        sharingSettingsListener = FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
+            .addSnapshotListener((documentSnapshot, e) -> {
+                if (e != null) {
+                    android.util.Log.e("sharedpermissionsindicator", "loadSharingSettings: Listen failed", e);
+                    return;
+                }
+
+                if (documentSnapshot != null && documentSnapshot.exists()) {
+                    android.util.Log.d("sharedpermissionsindicator", "loadSharingSettings: Document exists");
                     java.util.Map<String, Boolean> sharingSettings = (java.util.Map<String, Boolean>) documentSnapshot.get("sharingSettings");
                     if (sharingSettings != null) {
+                        android.util.Log.d("sharedpermissionsindicator", "loadSharingSettings: Settings found: " + sharingSettings.toString());
                         updateBadges(sharingSettings);
+                    } else {
+                        android.util.Log.d("sharedpermissionsindicator", "loadSharingSettings: sharingSettings field is null");
                     }
+                } else {
+                    android.util.Log.d("sharedpermissionsindicator", "loadSharingSettings: Document does not exist");
                 }
-            })
-            .addOnFailureListener(e -> {
-                // Handle error or just leave badges hidden
             });
     }
 
     private void updateBadges(java.util.Map<String, Boolean> settings) {
         // Medication
         boolean shareMedication = Boolean.TRUE.equals(settings.get("medication"));
+        android.util.Log.d("sharedpermissionsindicator", "updateBadges: medication=" + shareMedication);
         setViewVisibility(R.id.badgeMedicationSchedule, shareMedication);
         setViewVisibility(R.id.badgeRescueInhaler, shareMedication);
 
         // Symptoms
         boolean shareSymptoms = Boolean.TRUE.equals(settings.get("symptoms"));
+        android.util.Log.d("sharedpermissionsindicator", "updateBadges: symptoms=" + shareSymptoms);
         setViewVisibility(R.id.badgeSymptomCheckIn, shareSymptoms);
 
         // PEF / Safety
         boolean sharePEF = Boolean.TRUE.equals(settings.get("pef"));
+        android.util.Log.d("sharedpermissionsindicator", "updateBadges: pef=" + sharePEF);
         setViewVisibility(R.id.badgeSafetyMonitoring, sharePEF);
 
         // Patterns
         boolean sharePatterns = Boolean.TRUE.equals(settings.get("patterns"));
+        android.util.Log.d("sharedpermissionsindicator", "updateBadges: patterns=" + sharePatterns);
         setViewVisibility(R.id.badgeTriggerPatterns, sharePatterns);
 
         // Stats
         boolean shareStats = Boolean.TRUE.equals(settings.get("stats"));
+        android.util.Log.d("sharedpermissionsindicator", "updateBadges: stats=" + shareStats);
         setViewVisibility(R.id.badgeMotivation, shareStats);
     }
 
@@ -353,5 +384,14 @@ public class HomeActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadZoneStatus(); // Refresh zone when returning to home
+        loadSharingSettings();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sharingSettingsListener != null) {
+            sharingSettingsListener.remove();
+        }
     }
 }
