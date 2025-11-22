@@ -10,6 +10,8 @@ import androidx.core.content.ContextCompat;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import androidx.cardview.widget.CardView;
 
 import android.widget.ImageButton;
 import android.Manifest;
@@ -19,11 +21,12 @@ import androidx.core.app.ActivityCompat;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut;
+    private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut, btnSwitchProfile;
     private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
     private Button btnInventory;
     private ImageButton btnNotifications;
-    private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice;
+    private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice, tvMedicationSchedule;
+    private CardView cardMedicationSchedule;
     private PEFRepository pefRepository;
     private String dataOwnerId;
 
@@ -44,14 +47,67 @@ public class HomeActivity extends AppCompatActivity {
             dataOwnerId = childId;
             tvViewingChildNotice.setText("Viewing child: " + (childName != null ? childName : "Child"));
             tvViewingChildNotice.setVisibility(View.VISIBLE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
+            
+            android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            boolean isLocked = prefs.getBoolean("is_locked", false);
+            
+            if (btnSwitchProfile != null) {
+                btnSwitchProfile.setVisibility(isLocked ? View.GONE : View.VISIBLE);
+            }
         } else {
             // Parent Mode (or default)
             dataOwnerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
             tvViewingChildNotice.setVisibility(View.GONE);
+            if (btnSignOut != null) btnSignOut.setVisibility(View.VISIBLE);
+            if (btnSwitchProfile != null) btnSwitchProfile.setVisibility(View.GONE);
+        }
+        
+        // Hide Inventory button if the current user is a child
+        // We can check the role from Firestore, or pass it in intent.
+        // For now, let's check if we are in "Child Mode" (Provider viewing) or if the logged in user is a child.
+        // Actually, the user said "remove manage inventory from the kids page".
+        // If I am a child logged in, I see this page.
+        // If I am a parent logged in, I see ParentDashboardActivity.
+        // If I am a provider, I see ProviderHomeActivity -> HomeActivity (Child Mode).
+        
+        // So if I am here, I am either a Child (logged in) or a Provider (viewing child).
+        // In both cases, "Manage Inventory" should probably be hidden?
+        // Requirement: "Inventory (Parent): Track purchase date..."
+        // So only Parent should see it.
+        // But Parent doesn't use HomeActivity anymore, they use ParentDashboardActivity.
+        // So HomeActivity is ONLY for Child (self) or Provider (viewing child).
+        // Therefore, Inventory button should ALWAYS be hidden in HomeActivity.
+        if (btnInventory != null) {
+            btnInventory.setVisibility(View.GONE);
         }
 
         loadZoneStatus();
+        loadMedicationSchedule();
         checkNotificationPermission();
+    }
+
+    private void loadMedicationSchedule() {
+        if (dataOwnerId == null) return;
+
+        FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists() && documentSnapshot.contains("plannedDosesPerDay")) {
+                        Long doses = documentSnapshot.getLong("plannedDosesPerDay");
+                        if (doses != null && doses > 0) {
+                            tvMedicationSchedule.setText("Take " + doses + " controller dose(s) daily.");
+                            cardMedicationSchedule.setVisibility(View.VISIBLE);
+                        } else {
+                            cardMedicationSchedule.setVisibility(View.GONE);
+                        }
+                    } else {
+                        cardMedicationSchedule.setVisibility(View.GONE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (cardMedicationSchedule != null) cardMedicationSchedule.setVisibility(View.GONE);
+                });
     }
 
     private void checkNotificationPermission() {
@@ -76,16 +132,24 @@ public class HomeActivity extends AppCompatActivity {
         btnStatisticsReports = findViewById(R.id.btnStatisticsReports);
         btnInventory = findViewById(R.id.btnInventory);
         btnSignOut = findViewById(R.id.btnSignOut);
+        btnSwitchProfile = findViewById(R.id.btnSwitchProfile);
         btnNotifications = findViewById(R.id.btnNotifications);
 
         tvCurrentZone = findViewById(R.id.tvCurrentZone);
         tvZonePercentage = findViewById(R.id.tvZonePercentage);
         tvViewingChildNotice = findViewById(R.id.tvViewingChildNotice);
+        
+        tvMedicationSchedule = findViewById(R.id.tvMedicationSchedule);
+        cardMedicationSchedule = findViewById(R.id.cardMedicationSchedule);
     }
 
     private void setupListeners() {
         btnLogRescueInhaler.setOnClickListener(v -> {
-            startActivity(new Intent(this, LogRescueInhalerActivity.class));
+            Intent intent = new Intent(this, LogRescueInhalerActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         if (btnInventory != null) {
@@ -101,43 +165,83 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         btnViewHistory.setOnClickListener(v -> {
-            startActivity(new Intent(this, RescueInhalerHistoryActivity.class));
+            Intent intent = new Intent(this, RescueInhalerHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnDailyCheckIn.setOnClickListener(v -> {
-            startActivity(new Intent(this, DailySymptomCheckInActivity.class));
+            Intent intent = new Intent(this, DailySymptomCheckInActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewSymptomHistory.setOnClickListener(v -> {
-            startActivity(new Intent(this, SymptomHistoryActivity.class));
+            Intent intent = new Intent(this, SymptomHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewPatterns.setOnClickListener(v -> {
-            startActivity(new Intent(this, TriggerPatternsActivity.class));
+            Intent intent = new Intent(this, TriggerPatternsActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnEmergencyTriage.setOnClickListener(v -> {
-            startActivity(new Intent(this, TriageActivity.class));
+            Intent intent = new Intent(this, TriageActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnEnterPEF.setOnClickListener(v -> {
-            startActivity(new Intent(this, PEFEntryActivity.class));
+            Intent intent = new Intent(this, PEFEntryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnViewIncidents.setOnClickListener(v -> {
-            startActivity(new Intent(this, IncidentHistoryActivity.class));
+            Intent intent = new Intent(this, IncidentHistoryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnInhalerTechnique.setOnClickListener(v -> {
-            startActivity(new Intent(this, InhalerTechniqueActivity.class));
+            Intent intent = new Intent(this, InhalerTechniqueActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnMotivation.setOnClickListener(v -> {
-            startActivity(new Intent(this, MotivationActivity.class));
+            Intent intent = new Intent(this, MotivationActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnStatisticsReports.setOnClickListener(v -> {
-            startActivity(new Intent(this, StatisticsReportsActivity.class));
+            Intent intent = new Intent(this, StatisticsReportsActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
         });
 
         btnSignOut.setOnClickListener(v -> {
@@ -145,6 +249,24 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
+
+        if (btnSwitchProfile != null) {
+            btnSwitchProfile.setOnClickListener(v -> {
+                // Clear last child preference
+                android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                android.content.SharedPreferences.Editor editor = prefs.edit();
+                editor.remove("last_child_id");
+                editor.remove("last_child_name");
+                editor.remove("last_role");
+                editor.remove("is_locked");
+                editor.apply();
+
+                Intent intent = new Intent(this, DeviceChooserActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            });
+        }
     }
 
     private void loadZoneStatus() {

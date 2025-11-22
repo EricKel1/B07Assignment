@@ -67,12 +67,15 @@ public class ProviderSignupActivity extends AppCompatActivity {
             @Override
             public void onSuccess(boolean verificationBypassed) {
                 showLoading(false);
-                Toast.makeText(ProviderSignupActivity.this, "Provider account created!", Toast.LENGTH_SHORT).show();
-                // Navigate to Provider Home
-                Intent intent = new Intent(ProviderSignupActivity.this, ProviderHomeActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                finish();
+                if (verificationBypassed) {
+                    Toast.makeText(ProviderSignupActivity.this, "Test account created!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(ProviderSignupActivity.this, ProviderHomeActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    showSuccessDialog(email);
+                }
             }
 
             @Override
@@ -81,6 +84,31 @@ public class ProviderSignupActivity extends AppCompatActivity {
                 Toast.makeText(ProviderSignupActivity.this, "Error: " + errorMessage, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private void showSuccessDialog(String email) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_verification_sent, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.setCancelable(false);
+
+        android.widget.TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        tvMessage.setText("We've sent a verification link to " + email + ". Please check your inbox and verify your email before logging in.");
+
+        dialogView.findViewById(R.id.btnDialogLogin).setOnClickListener(v -> {
+            dialog.dismiss();
+            com.google.firebase.auth.FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(ProviderSignupActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        dialog.show();
     }
 
     private void showLoading(boolean isLoading) {

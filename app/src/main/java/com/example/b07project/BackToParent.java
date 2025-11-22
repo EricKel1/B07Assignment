@@ -9,7 +9,7 @@ import android.content.Intent;
 public class BackToParent extends BackTo {
     void backTo(Object o){
         Context context = (Context) o;
-        Intent intent = new Intent(context, ParentHomeActivity.class);
+        Intent intent = new Intent(context, ParentDashboardActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         context.startActivity(intent);
         if(context instanceof Activity){

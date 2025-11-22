@@ -41,7 +41,6 @@ import nl.dionsegijn.konfetti.core.models.Shape;
 import nl.dionsegijn.konfetti.core.models.Size;
 
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.HashMap;
@@ -60,7 +59,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
-    private Spinner spUserSelector;
     
     private int doseCount = 1;
     private Date timestamp;
@@ -72,15 +70,16 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     private KonfettiView konfettiView;
-    
-    private Map<String, String> childrenMap = new HashMap<>();
-    private List<String> childIds = new ArrayList<>();
+    private String childId;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_rescue_inhaler);
         
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        android.util.Log.d("childparentdatalink", "LogRescueInhalerActivity onCreate: EXTRA_CHILD_ID=" + childId);
+
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
         controllerRepository = new ControllerMedicineRepository();
@@ -99,11 +98,9 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         updateDoseCountDisplay();
         
         setupListeners();
-        fetchChildren();
     }
     
     private void initializeViews() {
-        spUserSelector = findViewById(R.id.spUserSelector);
         rgMedicineType = findViewById(R.id.rgMedicineType);
         rbRescue = findViewById(R.id.rbRescue);
         rbController = findViewById(R.id.rbController);
@@ -129,29 +126,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         progress = findViewById(R.id.progress);
     }
 
-    private void fetchChildren() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        FirebaseFirestore.getInstance().collection("children")
-                .whereEqualTo("parentId", userId)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    List<String> names = new ArrayList<>();
-                    names.add("Log for: Me (Parent)");
-                    childIds.clear();
-                    childIds.add(null);
-                    
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        names.add("Log for: " + doc.getString("name"));
-                        childIds.add(doc.getId());
-                    }
-                    
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, names);
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spUserSelector.setAdapter(adapter);
-                });
-    }
-
-    
     private void setupListeners() {
         rgMedicineType.setOnCheckedChangeListener((group, checkedId) -> {
             boolean isController = checkedId == R.id.rbController;
@@ -249,16 +223,17 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
-        // Get selected child ID
-        String selectedChildId = null;
-        if (spUserSelector.getAdapter() != null && !childIds.isEmpty()) {
-            selectedChildId = childIds.get(spUserSelector.getSelectedItemPosition());
-        }
-        final String childIdToUse = selectedChildId;
+        // Determine target user ID (child if provided, else current user)
+        final String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentdatalink", "Saving log for targetUserId: " + targetUserId);
+        
+        // Inventory is managed by the parent (currentUser) for the child (childId)
+        // If childId is null (self-logging), we pass null as childId to inventory
+        final String inventoryChildId = childId;
 
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 scheduledTime,
@@ -271,7 +246,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String documentId) {
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Controller", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Controller", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             // Continue with existing flow
@@ -306,7 +281,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             });
         } else {
             RescueInhalerLog log = new RescueInhalerLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 triggers,
@@ -317,7 +292,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 @Override
                 public void onSuccess(String documentId) {
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             showLoading(false);

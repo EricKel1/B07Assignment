@@ -38,11 +38,14 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
     private Date todayDate;
     private SymptomCheckInRepository repository;
     private SimpleDateFormat dateFormat;
+    private String childId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_daily_symptom_checkin);
+
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
 
         initializeViews();
         repository = new SymptomCheckInRepository();
@@ -121,8 +124,10 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
+        String targetUserId = (childId != null) ? childId : currentUser.getUid();
+
         showLoading(true);
-        repository.checkIfCheckInExistsForDate(currentUser.getUid(), todayDate,
+        repository.checkIfCheckInExistsForDate(targetUserId, todayDate,
             new SymptomCheckInRepository.CheckInExistsCallback() {
                 @Override
                 public void onResult(boolean exists, SymptomCheckIn existingCheckIn) {
@@ -178,13 +183,15 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
 
         showLoading(true);
 
+        String targetUserId = (childId != null) ? childId : currentUser.getUid();
+
         int symptomLevel = (int) sliderSymptomLevel.getValue();
         List<String> symptoms = getSelectedSymptoms();
         List<String> triggers = getSelectedTriggers();
         String notes = etNotes.getText().toString().trim();
 
         SymptomCheckIn checkIn = new SymptomCheckIn(
-            currentUser.getUid(),
+            targetUserId,
             todayDate,
             symptomLevel,
             symptoms,

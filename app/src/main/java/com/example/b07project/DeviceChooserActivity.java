@@ -18,6 +18,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import android.content.SharedPreferences;
+
 public class DeviceChooserActivity extends AppCompatActivity {
 
     private ProgressBar progressBar;
@@ -47,6 +49,21 @@ public class DeviceChooserActivity extends AppCompatActivity {
         loadParentInfo(currentUser);
     }
 
+    private void savePreference(String type, String childId, String childName, boolean isLocked) {
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("last_role", type);
+        editor.putBoolean("is_locked", isLocked);
+        if (childId != null) {
+            editor.putString("last_child_id", childId);
+            editor.putString("last_child_name", childName);
+        } else {
+            editor.remove("last_child_id");
+            editor.remove("last_child_name");
+        }
+        editor.apply();
+    }
+
     private void loadParentInfo(FirebaseUser currentUser) {
         String uid = currentUser.getUid();
         DocumentReference userDocRef = FirebaseFirestore.getInstance().collection("users").document(uid);
@@ -74,7 +91,9 @@ public class DeviceChooserActivity extends AppCompatActivity {
         });
 
         btnParent.setOnClickListener(v -> {
+            savePreference("parent", null, null, false);
             startActivity(new Intent(DeviceChooserActivity.this, ParentDashboardActivity.class));
+            finish();
         });
     }
 
@@ -103,21 +122,46 @@ public class DeviceChooserActivity extends AppCompatActivity {
     }
 
     private void addChildButton(String childId, String childName) {
-        Button childButton = new Button(this);
+        com.google.android.material.button.MaterialButton childButton = 
+            (com.google.android.material.button.MaterialButton) getLayoutInflater()
+            .inflate(R.layout.item_child_selection, llChildrenButtons, false);
+        
         childButton.setText("I'm " + childName + " (Child)");
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(0, 8, 0, 8);
-        childButton.setLayoutParams(params);
         childButton.setOnClickListener(v -> {
-            Intent intent = new Intent(DeviceChooserActivity.this, HomeActivity.class);
-            intent.putExtra("EXTRA_CHILD_ID", childId);
-            intent.putExtra("EXTRA_CHILD_NAME", childName);
-            startActivity(intent);
+            showModeSelectionDialog(childId, childName);
         });
         llChildrenButtons.addView(childButton);
+    }
+
+    private void showModeSelectionDialog(String childId, String childName) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_mode_selection, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        dialogView.findViewById(R.id.btnAllowSwitching).setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToChildMode(childId, childName, false);
+        });
+
+        dialogView.findViewById(R.id.btnLockProfile).setOnClickListener(v -> {
+            dialog.dismiss();
+            proceedToChildMode(childId, childName, true);
+        });
+
+        dialog.show();
+    }
+
+    private void proceedToChildMode(String childId, String childName, boolean isLocked) {
+        savePreference("child", childId, childName, isLocked);
+        Intent intent = new Intent(DeviceChooserActivity.this, HomeActivity.class);
+        intent.putExtra("EXTRA_CHILD_ID", childId);
+        intent.putExtra("EXTRA_CHILD_NAME", childName);
+        startActivity(intent);
+        finish();
     }
 
     private void logout() {

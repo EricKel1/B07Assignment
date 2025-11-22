@@ -37,6 +37,14 @@ public class ReportsFragment extends Fragment {
     private FirebaseFirestore db;
     private String userId;
 
+    public static ReportsFragment newInstance(String userId) {
+        ReportsFragment fragment = new ReportsFragment();
+        Bundle args = new Bundle();
+        args.putString("userId", userId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -47,7 +55,12 @@ public class ReportsFragment extends Fragment {
         fabCreateReport = view.findViewById(R.id.fabCreateReport);
 
         db = FirebaseFirestore.getInstance();
-        userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        if (getArguments() != null && getArguments().getString("userId") != null) {
+            userId = getArguments().getString("userId");
+        } else {
+            userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        }
 
         setupRecyclerView();
         setupListeners();

@@ -80,30 +80,34 @@ public class ParentAddNewExistingChildActivity extends AppCompatActivity {
 
         validateInput(email,password, age, isValid ->{
            if(isValid){
-               Map<String, Object> child = new HashMap<>();
-               child.put("name", email);
-               child.put("dateOfBirth", age);
-               child.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
-               child.put("createdAt", System.currentTimeMillis());
                db.collection("users").whereEqualTo("email", email).get()
                        .addOnSuccessListener(querySnapshot->{
-                           DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
-                            doc.getReference().update("hasParent", true);
+                           if (!querySnapshot.isEmpty()) {
+                               DocumentSnapshot doc = querySnapshot.getDocuments().get(0);
+                               String childUid = doc.getId();
+                               
+                               doc.getReference().update("hasParent", true);
+
+                               Map<String, Object> child = new HashMap<>();
+                               child.put("name", email);
+                               child.put("dateOfBirth", age);
+                               child.put("parentId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                               child.put("createdAt", System.currentTimeMillis());
+                               child.put("uid", childUid); // Link to the child's Auth UID
+
+                               // Use the child's Auth UID as the Document ID in the 'children' collection
+                               // This ensures security rules (isParentOfChild) can find the document at /children/{childUid}
+                               db.collection("children").document(childUid).set(child)
+                                       .addOnSuccessListener(aVoid -> {
+                                           android.util.Log.d("childparentdatalink", "Linked existing child. DocID: " + childUid + ", Linked UID: " + childUid);
+                                           bh.backTo(this);
+                                       })
+                                       .addOnFailureListener(e -> Toast.makeText(this,
+                                               "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                           }
                        });
-
-               db.collection("children").add(child)
-                       .addOnSuccessListener(documentReference -> {
-                           bh.backTo(this);
-                       })
-                       .addOnFailureListener(e -> Toast.makeText(this,
-                               "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());;
            }
-
         });
-
-
-
-
     }
 
     private void validateInput(String email, String password, String age, Consumer<Boolean> callback){

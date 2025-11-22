@@ -1,0 +1,104 @@
+package com.example.b07project;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.TextView;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import com.example.b07project.models.PersonalBest;
+import com.example.b07project.repository.PEFRepository;
+
+public class ParentChildDashboardActivity extends AppCompatActivity {
+
+    private String childId;
+    private String childName;
+    private TextView tvChildNameHeader, tvCurrentZoneHeader;
+    private PEFRepository pefRepository;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_parent_child_dashboard);
+
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        childName = getIntent().getStringExtra("EXTRA_CHILD_NAME");
+        
+        pefRepository = new PEFRepository();
+
+        initializeViews();
+        setupListeners();
+        loadChildData();
+    }
+
+    private void initializeViews() {
+        tvChildNameHeader = findViewById(R.id.tvChildNameHeader);
+        tvCurrentZoneHeader = findViewById(R.id.tvCurrentZoneHeader);
+        
+        if (childName != null) {
+            tvChildNameHeader.setText(childName);
+        }
+    }
+
+    private void setupListeners() {
+        // Quick Actions
+        setupCardListener(R.id.cardLogMedicine, LogRescueInhalerActivity.class);
+        setupCardListener(R.id.cardDailyCheckIn, DailySymptomCheckInActivity.class);
+        setupCardListener(R.id.cardEnterPEF, PEFEntryActivity.class);
+
+        // Analytics
+        setupCardListener(R.id.cardStats, StatisticsReportsActivity.class);
+        setupCardListener(R.id.cardPatterns, TriggerPatternsActivity.class);
+
+        // History
+        setupCardListener(R.id.cardHistoryMedicine, RescueInhalerHistoryActivity.class);
+        setupCardListener(R.id.cardHistoryCheckIn, SymptomHistoryActivity.class);
+        setupCardListener(R.id.cardHistoryIncidents, IncidentHistoryActivity.class);
+    }
+
+    private void setupCardListener(int cardId, Class<?> activityClass) {
+        CardView card = findViewById(cardId);
+        if (card != null) {
+            card.setOnClickListener(v -> {
+                Intent intent = new Intent(this, activityClass);
+                intent.putExtra("EXTRA_CHILD_ID", childId);
+                startActivity(intent);
+            });
+        }
+    }
+
+    private void loadChildData() {
+        if (childId == null) return;
+
+        pefRepository.getLastPEFReading(childId, new PEFRepository.LoadCallback<com.example.b07project.models.PEFReading>() {
+            @Override
+            public void onSuccess(com.example.b07project.models.PEFReading reading) {
+                if (reading != null && reading.getZone() != null && !reading.getZone().equals("unknown")) {
+                    updateZoneDisplay(reading.getZone());
+                } else {
+                    tvCurrentZoneHeader.setText("Current Zone: No data");
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                tvCurrentZoneHeader.setText("Current Zone: Unavailable");
+            }
+        });
+    }
+
+    private void updateZoneDisplay(String zone) {
+        String zoneLabel = PersonalBest.getZoneLabel(zone);
+        tvCurrentZoneHeader.setText("Current Zone: " + zoneLabel);
+
+        int color = PersonalBest.getZoneColor(zone);
+        tvCurrentZoneHeader.setTextColor(color);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadChildData(); // Refresh zone on return
+    }
+}

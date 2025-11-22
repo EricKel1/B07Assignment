@@ -152,7 +152,7 @@ public class SignupRepository {
                         FirebaseUser user = firebaseAuth.getCurrentUser();
                         if (user != null) {
                             Log.d(TAG, "Provider auth account created successfully. UID: " + user.getUid());
-                            saveProviderData(user.getUid(), email, displayName, listener);
+                            saveProviderData(user, displayName, listener);
                         }
                     } else {
                         Log.w(TAG, "Provider auth account creation failed", task.getException());
@@ -161,19 +161,23 @@ public class SignupRepository {
                 });
     }
 
-    private void saveProviderData(String uid, String email, String displayName, OnSignupCompleteListener listener) {
-        // This method remains unchanged, but we must call the updated listener
-        DocumentReference userRef = firestore.collection("users").document(uid);
+    private void saveProviderData(FirebaseUser user, String displayName, OnSignupCompleteListener listener) {
+        DocumentReference userRef = firestore.collection("users").document(user.getUid());
         Map<String, Object> userData = new HashMap<>();
         userData.put("role", "provider");
         userData.put("displayName", displayName);
-        userData.put("email", email);
+        userData.put("email", user.getEmail());
         userData.put("createdAt", new Date());
 
         userRef.set(userData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Provider Firestore data saved.");
-                    listener.onSuccess(false);
+                    if (user.getEmail() != null && user.getEmail().endsWith("@test.com")) {
+                        Log.d(TAG, "Bypassing email verification for test account: " + user.getEmail());
+                        listener.onSuccess(true);
+                    } else {
+                        sendVerificationEmail(user, listener);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Provider Firestore save failed.", e);
