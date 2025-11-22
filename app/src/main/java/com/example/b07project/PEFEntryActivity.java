@@ -13,12 +13,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
-import com.example.b07project.models.PEFReading;
-import com.example.b07project.models.PersonalBest;
+import com.example.b07project.utils.NotificationHelper;
 import com.example.b07project.repository.PEFRepository;
+import com.example.b07project.models.PersonalBest;
+import com.example.b07project.models.PEFReading;
 import com.google.firebase.auth.FirebaseAuth;
-
-import java.util.Date;
 
 public class PEFEntryActivity extends AppCompatActivity {
 
@@ -194,6 +193,16 @@ public class PEFEntryActivity extends AppCompatActivity {
         pefRepository.savePEFReading(reading, new PEFRepository.SaveCallback() {
             @Override
             public void onSuccess(String documentId) {
+                // Check for Red Zone Alert
+                if (userPersonalBest != null && userPersonalBest.getValue() > 0) {
+                    String zone = PersonalBest.calculateZone(pefValue, userPersonalBest.getValue());
+                    if ("red".equalsIgnoreCase(zone)) {
+                        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
+                        if (userName == null || userName.isEmpty()) userName = "Child";
+                        NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, "Red Zone Alert", userName + " recorded a Red Zone PEF reading (" + pefValue + ").");
+                    }
+                }
+                
                 Toast.makeText(PEFEntryActivity.this, "Peak flow reading saved", Toast.LENGTH_SHORT).show();
                 finish();
             }
