@@ -156,7 +156,8 @@ public class ParentDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onSetMedicationSchedule(String childName, String childId) {
-                showSetMedicationScheduleDialog(childName, childId);
+                // Deprecated: Schedule is now managed in ParentChildDashboardActivity
+                // showSetMedicationScheduleDialog(childName, childId);
             }
 
             @Override

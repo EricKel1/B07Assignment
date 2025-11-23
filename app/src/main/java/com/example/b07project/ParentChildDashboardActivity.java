@@ -84,11 +84,14 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         setupCardListener(R.id.cardHistoryIncidents, IncidentHistoryActivity.class);
         
         // Schedule Config
-        btnConfigureSchedule.setOnClickListener(v -> {
+        View.OnClickListener configListener = v -> {
             Intent intent = new Intent(this, ConfigureScheduleActivity.class);
             intent.putExtra("EXTRA_CHILD_ID", childId);
             startActivity(intent);
-        });
+        };
+        
+        btnConfigureSchedule.setOnClickListener(configListener);
+        findViewById(R.id.cardAdherence).setOnClickListener(configListener);
     }
 
     private void loadAdherenceData() {
@@ -109,7 +112,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(String error) {
-                tvAdherenceDetails.setText("Error loading schedule");
+                tvAdherenceDetails.setText("Error loading schedule: " + error);
             }
         });
     }
@@ -122,7 +125,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
 
         controllerRepository.getLogsSince(childId, startDate, new ControllerMedicineRepository.LoadCallback() {
             @Override
-            public void onSuccess(java.util.List<com.example.b07project.models.MedicineLog> logs) {
+            public void onSuccess(java.util.List<com.example.b07project.models.ControllerMedicineLog> logs) {
                 int expectedDoses = schedule.getFrequency() * 7;
                 int actualDoses = logs.size();
                 
