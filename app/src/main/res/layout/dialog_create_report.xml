@@ -92,6 +92,23 @@
         android:paddingStart="8dp"/>
 
     <CheckBox
+        android:id="@+id/cbDailyLogs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Daily Check-in Logs"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbTriggerChart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trigger Trends Chart"
+        android:checked="true"
+        android:layout_marginStart="32dp"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
         android:id="@+id/cbZones"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

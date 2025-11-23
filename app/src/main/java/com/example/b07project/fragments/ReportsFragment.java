@@ -107,10 +107,17 @@ public class ReportsFragment extends Fragment {
         CheckBox cbRescue = dialogView.findViewById(R.id.cbRescue);
         CheckBox cbController = dialogView.findViewById(R.id.cbController);
         CheckBox cbSymptoms = dialogView.findViewById(R.id.cbSymptoms);
+        CheckBox cbDailyLogs = dialogView.findViewById(R.id.cbDailyLogs);
+        CheckBox cbTriggerChart = dialogView.findViewById(R.id.cbTriggerChart);
         CheckBox cbZones = dialogView.findViewById(R.id.cbZones);
         CheckBox cbTriage = dialogView.findViewById(R.id.cbTriage);
         android.widget.Button btnCancel = dialogView.findViewById(R.id.btnCancel);
         android.widget.Button btnGenerate = dialogView.findViewById(R.id.btnGenerate);
+
+        cbDailyLogs.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            cbTriggerChart.setEnabled(isChecked);
+            if (!isChecked) cbTriggerChart.setChecked(false);
+        });
 
         String[] options = {"7 days", "30 days", "90 days (3 months)", "180 days (6 months)", "Custom Range"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, options);
@@ -162,7 +169,7 @@ public class ReportsFragment extends Fragment {
                     Toast.makeText(getContext(), "Start date must be before end date", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                createReport(startCal.getTime(), endCal.getTime(), cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
+                createReport(startCal.getTime(), endCal.getTime(), cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked(), cbDailyLogs.isChecked(), cbTriggerChart.isChecked());
             } else {
                 int days = 7;
                 switch (position) {
@@ -171,7 +178,7 @@ public class ReportsFragment extends Fragment {
                     case 2: days = 90; break;
                     case 3: days = 180; break;
                 }
-                createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked());
+                createReport(days, cbTriage.isChecked(), cbRescue.isChecked(), cbController.isChecked(), cbSymptoms.isChecked(), cbZones.isChecked(), cbDailyLogs.isChecked(), cbTriggerChart.isChecked());
             }
             dialog.dismiss();
         });
@@ -179,13 +186,13 @@ public class ReportsFragment extends Fragment {
         dialog.show();
     }
 
-    private void createReport(java.util.Date startDate, java.util.Date endDate, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
+    private void createReport(java.util.Date startDate, java.util.Date endDate, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones, boolean includeDailyLogs, boolean includeTriggerChart) {
         long diff = endDate.getTime() - startDate.getTime();
         int days = (int) (diff / (24 * 60 * 60 * 1000)) + 1;
         Toast.makeText(requireContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
 
         ReportGenerator generator = new ReportGenerator(requireContext());
-        generator.generateReport(userId, startDate, endDate, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
+        generator.generateReport(userId, startDate, endDate, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, includeDailyLogs, includeTriggerChart, new ReportGenerator.ReportCallback() {
             @Override
             public void onSuccess(Report report) {
                 saveReportToFirestore(report);
@@ -200,11 +207,11 @@ public class ReportsFragment extends Fragment {
         });
     }
 
-    private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones) {
+    private void createReport(int days, boolean includeTriage, boolean includeRescue, boolean includeController, boolean includeSymptoms, boolean includeZones, boolean includeDailyLogs, boolean includeTriggerChart) {
         Toast.makeText(requireContext(), "Generating " + days + "-day report...", Toast.LENGTH_SHORT).show();
         
         ReportGenerator generator = new ReportGenerator(requireContext());
-        generator.generateReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, new ReportGenerator.ReportCallback() {
+        generator.generateReport(userId, days, includeTriage, includeRescue, includeController, includeSymptoms, includeZones, includeDailyLogs, includeTriggerChart, new ReportGenerator.ReportCallback() {
             @Override
             public void onSuccess(Report report) {
                 saveReportToFirestore(report);
