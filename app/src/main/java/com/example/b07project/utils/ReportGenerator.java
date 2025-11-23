@@ -315,7 +315,7 @@ public class ReportGenerator {
 
     private void processReport(Report report, ReportAction action) {
         showLoading();
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId = report.getUserId();
         Date startDate = new Date(report.getStartDate());
         Date endDate = new Date(report.getEndDate());
 
@@ -703,6 +703,7 @@ public class ReportGenerator {
                 ".card .val { font-size: 20px; font-weight: bold; color: #111827; }" +
                 ".charts { margin-bottom: 40px; }" +
                 ".chart-box { margin-bottom: 30px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px; page-break-inside: avoid; }" +
+                ".chart-box.daily-breakdown, .chart-box.daily-logs { page-break-inside: auto; }" +
                 ".chart-box h2 { font-size: 18px; color: #111827; border-left: 4px solid #4F46E5; padding-left: 10px; margin-bottom: 15px; }" +
                 "canvas { width: 100% !important; height: 250px !important; }" +
                 ".pie-container { height: 300px !important; display: flex; justify-content: center; }" +
@@ -711,6 +712,7 @@ public class ReportGenerator {
                 "th { text-align: left; padding: 12px; background: #F9FAFB; color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E5E7EB; }" +
                 "td { padding: 12px; border-bottom: 1px solid #E5E7EB; }" +
                 "tr:nth-child(even) { background: #F9FAFB; }" +
+                "tr { page-break-inside: avoid; }" +
                 "</style></head><body>" +
                 "<div class='header'>" +
                 "<h1>Asthma Control Report</h1>" +
@@ -771,14 +773,17 @@ public class ReportGenerator {
                 "  if (document.getElementById('controllerChart')) new Chart(document.getElementById('controllerChart'), { type: 'bar', data: { labels: " + labelsJs + ", datasets: [{ label: 'Doses', data: " + controllerJs + ", backgroundColor: '#10B981', borderRadius: 4 }] }, options: commonOptions, plugins: [monthLabelPlugin] });" +
                 "  if (document.getElementById('zoneChart')) new Chart(document.getElementById('zoneChart'), { type: 'pie', data: { labels: ['Green', 'Yellow', 'Red'], datasets: [{ data: " + zoneDataJs + ", backgroundColor: ['#4CAF50', '#FFC107', '#F44336'] }] }, options: { animation: false, responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });" +
                 triggerChartJs +
-                "  setTimeout(applyPagination, 100);" +
+                "  // Removed auto-run, will be called from Java\n" +
                 "} catch(e) {" +
                 "  console.error('Chart Init Error:', e);" +
                 "}" +
                 "function applyPagination() {" +
-                "  const density = window.devicePixelRatio || 1;" +
-                "  const pageHeightPx = 1754;" +
-                "  const pageHeight = pageHeightPx / density;" +
+                "  const physicalPageHeight = 1754;" +
+                "  const physicalPageWidth = 1240;" +
+                "  const cssPageWidth = document.documentElement.clientWidth || window.innerWidth;" +
+                "  const scaleFactor = physicalPageWidth / cssPageWidth;" +
+                "  const pageHeight = (physicalPageHeight / scaleFactor) - 5;" + // -5px safety buffer
+                "  console.log('Pagination: CSS Width=' + cssPageWidth + ', Scale=' + scaleFactor + ', CSS Page Height=' + pageHeight);" +
                 "  const elements = Array.from(document.querySelectorAll('.header, .metrics-grid, .chart-box:not(.daily-breakdown):not(.daily-logs), .daily-breakdown h2, .daily-logs h2, tr'));" +
                 "  for (let i = 0; i < elements.length; i++) {" +
                 "    const el = elements[i];" +
@@ -798,7 +803,7 @@ public class ReportGenerator {
                 "        spacerRow.style.border = 'none';" +
                 "        spacerRow.style.background = 'transparent';" +
                 "        const cell = document.createElement('td');" +
-                "        cell.colSpan = 3;" +
+                "        cell.colSpan = 10;" +
                 "        cell.style.border = 'none';" +
                 "        spacerRow.appendChild(cell);" +
                 "        el.parentNode.insertBefore(spacerRow, el);" +
@@ -853,26 +858,32 @@ public class ReportGenerator {
 
                     // Delay to allow the WebView to rasterize the new layout and JS charts
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                        // Re-measure the true content height after JS has run and layout settled
-                        int contentHeightVal = (int) (view.getContentHeight() * context.getResources().getDisplayMetrics().density);
-                        int measuredHeight = view.getMeasuredHeight();
-                        
-                        Log.d(TAG, "onPageFinished: Delayed Measure - ContentHeight*Density: " + contentHeightVal + ", Measured: " + measuredHeight);
+                        // Run pagination logic NOW, after layout is stable
+                        view.evaluateJavascript("applyPagination();", null);
 
-                        // Use the content height, but ensure it's at least the page height
-                        int calculatedHeight = contentHeightVal > 0 ? contentHeightVal : measuredHeight;
-                        if (calculatedHeight <= 0) calculatedHeight = pageHeight;
-                        
-                        final int finalContentHeight = calculatedHeight;
-
-                        // Force layout to the exact content height to ensure all content is rendered
-                        view.layout(0, 0, pageWidth, finalContentHeight);
-                        
-                        // Small delay to allow the WebView to update its internal viewport/buffers after resize
+                        // Give pagination a moment to DOM manipulation
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            generatePdfPages(view, pageWidth, pageHeight, finalContentHeight, outputFile, action);
-                        }, 250); // Short delay for resize to take effect
-                    }, 1500); // 1.5 seconds delay for JS charts
+                            // Re-measure the true content height after JS has run and layout settled
+                            int contentHeightVal = (int) (view.getContentHeight() * context.getResources().getDisplayMetrics().density);
+                            int measuredHeight = view.getMeasuredHeight();
+                            
+                            Log.d(TAG, "onPageFinished: Delayed Measure - ContentHeight*Density: " + contentHeightVal + ", Measured: " + measuredHeight);
+
+                            // Use the content height, but ensure it's at least the page height
+                            int calculatedHeight = contentHeightVal > 0 ? contentHeightVal : measuredHeight;
+                            if (calculatedHeight <= 0) calculatedHeight = pageHeight;
+                            
+                            final int finalContentHeight = calculatedHeight;
+
+                            // Force layout to the exact content height to ensure all content is rendered
+                            view.layout(0, 0, pageWidth, finalContentHeight);
+                            
+                            // Small delay to allow the WebView to update its internal viewport/buffers after resize
+                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                generatePdfPages(view, pageWidth, pageHeight, finalContentHeight, outputFile, action);
+                            }, 250); // Short delay for resize to take effect
+                        }, 500); // Wait for pagination JS
+                    }, 1000); // Wait for Charts JS
                 }
             });
             

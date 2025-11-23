@@ -90,25 +90,31 @@ public class RescueInhalerRepository {
         android.util.Log.d("childparentlink", "Repo: getLogsForUserInDateRange for user: " + userId);
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)
-            .whereGreaterThanOrEqualTo("timestamp", startDate)
-            .whereLessThanOrEqualTo("timestamp", endDate)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
                 android.util.Log.d("childparentlink", "Repo: Found " + queryDocumentSnapshots.size() + " logs for user: " + userId);
                 List<RescueInhalerLog> logs = new ArrayList<>();
                 for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    RescueInhalerLog log = new RescueInhalerLog();
-                    log.setId(document.getId());
-                    log.setUserId(document.getString("userId"));
-                    log.setTimestamp(document.getDate("timestamp"));
-                    Long doseCountLong = document.getLong("doseCount");
-                    log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
-                    log.setTriggers((List<String>) document.get("triggers"));
-                    log.setNotes(document.getString("notes"));
-                    log.setEnteredBy(document.getString("enteredBy"));
-                    logs.add(log);
+                    Date timestamp = document.getDate("timestamp");
+                    if (timestamp != null && !timestamp.before(startDate) && !timestamp.after(endDate)) {
+                        RescueInhalerLog log = new RescueInhalerLog();
+                        log.setId(document.getId());
+                        log.setUserId(document.getString("userId"));
+                        log.setTimestamp(timestamp);
+                        Long doseCountLong = document.getLong("doseCount");
+                        log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                        log.setTriggers((List<String>) document.get("triggers"));
+                        log.setNotes(document.getString("notes"));
+                        log.setEnteredBy(document.getString("enteredBy"));
+                        logs.add(log);
+                    }
                 }
+                // Sort by timestamp in memory (newest first)
+                logs.sort((a, b) -> {
+                    if (a.getTimestamp() == null) return 1;
+                    if (b.getTimestamp() == null) return -1;
+                    return b.getTimestamp().compareTo(a.getTimestamp());
+                });
                 if (callback != null) {
                     callback.onSuccess(logs);
                 }
