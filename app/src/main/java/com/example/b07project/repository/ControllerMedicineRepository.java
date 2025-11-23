@@ -36,6 +36,7 @@ public class ControllerMedicineRepository {
         data.put("takenOnTime", log.isTakenOnTime());
         data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
+        data.put("enteredBy", log.getEnteredBy());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -69,6 +70,7 @@ public class ControllerMedicineRepository {
                     log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
                     logs.add(log);
                 }
                 // Sort by timestamp in memory (newest first)
@@ -111,6 +113,7 @@ public class ControllerMedicineRepository {
                         log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
                         log.setTriggers((List<String>) document.get("triggers"));
                         log.setNotes(document.getString("notes"));
+                        log.setEnteredBy(document.getString("enteredBy"));
                         logs.add(log);
                     }
                 }

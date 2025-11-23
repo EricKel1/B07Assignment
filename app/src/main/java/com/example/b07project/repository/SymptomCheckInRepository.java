@@ -43,6 +43,7 @@ public class SymptomCheckInRepository {
         data.put("triggers", checkIn.getTriggers());
         data.put("notes", checkIn.getNotes());
         data.put("timestamp", checkIn.getTimestamp());
+        data.put("enteredBy", checkIn.getEnteredBy());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -77,6 +78,7 @@ public class SymptomCheckInRepository {
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
+                    checkIn.setEnteredBy(document.getString("enteredBy"));
                     checkIns.add(checkIn);
                 }
                 // Sort by date in memory (newest first)
@@ -133,6 +135,7 @@ public class SymptomCheckInRepository {
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
+                    checkIn.setEnteredBy(document.getString("enteredBy"));
                     if (callback != null) {
                         callback.onResult(true, checkIn);
                     }
