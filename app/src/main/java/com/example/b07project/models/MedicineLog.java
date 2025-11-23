@@ -10,6 +10,7 @@ public class MedicineLog {
     private int doseCount;
     private List<String> triggers;
     private String notes;
+    private String enteredBy;
 
     public MedicineLog() {
     }
@@ -68,5 +69,13 @@ public class MedicineLog {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getEnteredBy() {
+        return enteredBy;
+    }
+
+    public void setEnteredBy(String enteredBy) {
+        this.enteredBy = enteredBy;
     }
 }

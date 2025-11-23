@@ -35,6 +35,7 @@ public class RescueInhalerRepository {
         data.put("doseCount", log.getDoseCount());
         data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
+        data.put("enteredBy", log.getEnteredBy());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -65,6 +66,7 @@ public class RescueInhalerRepository {
                     log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
                     logs.add(log);
                 }
                 // Sort by timestamp in memory (newest first)
@@ -104,6 +106,7 @@ public class RescueInhalerRepository {
                     log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
                     logs.add(log);
                 }
                 if (callback != null) {

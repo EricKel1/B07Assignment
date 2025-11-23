@@ -12,6 +12,7 @@ public class SymptomCheckIn {
     private List<String> triggers; // exercise, cold air, pets, pollen, stress, smoke, weather change, dust
     private String notes;
     private Date timestamp;
+    private String enteredBy;
 
     public SymptomCheckIn() {
     }
@@ -88,5 +89,13 @@ public class SymptomCheckIn {
 
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getEnteredBy() {
+        return enteredBy;
+    }
+
+    public void setEnteredBy(String enteredBy) {
+        this.enteredBy = enteredBy;
     }
 }

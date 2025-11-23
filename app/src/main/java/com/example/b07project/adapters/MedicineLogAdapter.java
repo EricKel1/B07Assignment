@@ -96,6 +96,13 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
         } else {
             holder.tvNotes.setVisibility(View.GONE);
         }
+
+        if (log.getEnteredBy() != null && !log.getEnteredBy().isEmpty()) {
+            holder.tvEnteredBy.setText("Entered by: " + log.getEnteredBy());
+            holder.tvEnteredBy.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvEnteredBy.setVisibility(View.GONE);
+        }
     }
     
     @Override
@@ -104,7 +111,7 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
     }
     
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDoseCount, tvDate, tvTime, tvScheduledInfo, tvNotes;
+        TextView tvDoseCount, tvDate, tvTime, tvScheduledInfo, tvNotes, tvEnteredBy;
         ChipGroup chipGroupTriggers;
         
         ViewHolder(View itemView) {
@@ -115,6 +122,7 @@ public class MedicineLogAdapter extends RecyclerView.Adapter<MedicineLogAdapter.
             tvScheduledInfo = itemView.findViewById(R.id.tvScheduledInfo);
             chipGroupTriggers = itemView.findViewById(R.id.chipGroupTriggers);
             tvNotes = itemView.findViewById(R.id.tvNotes);
+            tvEnteredBy = itemView.findViewById(R.id.tvEnteredBy);
         }
     }
 }

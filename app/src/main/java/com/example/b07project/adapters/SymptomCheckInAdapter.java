@@ -129,6 +129,13 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
         } else {
             holder.tvNotes.setVisibility(View.GONE);
         }
+        
+        if (checkIn.getEnteredBy() != null) {
+            holder.tvEnteredBy.setText("Entered by: " + checkIn.getEnteredBy());
+            holder.tvEnteredBy.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvEnteredBy.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -137,7 +144,7 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDate, tvSymptomLevel, tvSymptomDescription, tvSymptomsLabel, tvTriggersLabel, tvNotes;
+        TextView tvDate, tvSymptomLevel, tvSymptomDescription, tvSymptomsLabel, tvTriggersLabel, tvNotes, tvEnteredBy;
         ChipGroup chipGroupSymptoms, chipGroupTriggers;
 
         ViewHolder(View itemView) {
@@ -148,6 +155,7 @@ public class SymptomCheckInAdapter extends RecyclerView.Adapter<SymptomCheckInAd
             tvSymptomsLabel = itemView.findViewById(R.id.tvSymptomsLabel);
             tvTriggersLabel = itemView.findViewById(R.id.tvTriggersLabel);
             tvNotes = itemView.findViewById(R.id.tvNotes);
+            tvEnteredBy = itemView.findViewById(R.id.tvEnteredBy);
             chipGroupSymptoms = itemView.findViewById(R.id.chipGroupSymptoms);
             chipGroupTriggers = itemView.findViewById(R.id.chipGroupTriggers);
         }
