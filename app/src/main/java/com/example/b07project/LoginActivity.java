@@ -23,7 +23,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
     private EditText etEmail, etPassword;
     private ProgressBar progress;
-    private TextView tvError, tvSignUp;
+    private TextView tvError, tvSignUp, tvForgotPassword;
     private LoginContract.Presenter presenter;
 
     @Override
@@ -36,6 +36,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         progress = findViewById(R.id.progress);
         tvError = findViewById(R.id.tvError);
         tvSignUp = findViewById(R.id.tvSignUp);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
 
         presenter = new LoginPresenter(this, new FirebaseAuthRepo());
@@ -45,6 +46,72 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         tvSignUp.setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
         });
+
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+    }
+
+    private void showForgotPasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
+        builder.setView(view);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        EditText etEmail = view.findViewById(R.id.etEmail);
+        Button btnCancel = view.findViewById(R.id.btnCancel);
+        Button btnSend = view.findViewById(R.id.btnSend);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSend.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            if (email.isEmpty()) {
+                android.widget.Toast.makeText(this, "Please enter your email", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            sendPasswordResetEmail(email);
+        });
+
+        dialog.show();
+    }
+
+    private void sendPasswordResetEmail(String email) {
+        showLoading(true);
+        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    showLoading(false);
+                    if (task.isSuccessful()) {
+                        showEmailSentDialog(email);
+                    } else {
+                        String error = "Failed to send reset email.";
+                        if (task.getException() != null) {
+                            error = task.getException().getMessage();
+                        }
+                        showError(error);
+                    }
+                });
+    }
+
+    private void showEmailSentDialog(String email) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_email_sent, null);
+        builder.setView(view);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvMessage = view.findViewById(R.id.tvSentMessage);
+        tvMessage.setText("We have sent a password reset link to " + email + ". Please check your inbox.");
+
+        Button btnOk = view.findViewById(R.id.btnOk);
+        btnOk.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     @Override
