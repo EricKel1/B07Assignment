@@ -37,35 +37,44 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         TriageSession session = incidents.get(position);
         
-        // Decision badge
+        // Decision badge & Header Color
         String decision = session.getDecision() != null ? session.getDecision() : "unknown";
+        int headerColor;
+        String badgeText;
+
         switch (decision) {
             case "emergency":
-                holder.tvDecisionBadge.setText("🚨 EMERGENCY");
-                holder.tvDecisionBadge.setBackgroundColor(
-                    ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_red_dark));
+                badgeText = "🚨 EMERGENCY";
+                headerColor = ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_red_dark);
                 break;
             case "home_steps":
-                holder.tvDecisionBadge.setText("⚠️ MONITOR");
-                holder.tvDecisionBadge.setBackgroundColor(
-                    ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_orange_dark));
+                badgeText = "⚠️ MONITOR";
+                headerColor = ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_orange_dark);
                 break;
             case "monitor":
-                holder.tvDecisionBadge.setText("🏠 HOME");
-                holder.tvDecisionBadge.setBackgroundColor(
-                    ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_blue_dark));
+                badgeText = "🏠 HOME";
+                headerColor = ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_blue_dark);
                 break;
             default:
-                holder.tvDecisionBadge.setText("UNKNOWN");
-                holder.tvDecisionBadge.setBackgroundColor(
-                    ContextCompat.getColor(holder.itemView.getContext(), android.R.color.darker_gray));
+                badgeText = "UNKNOWN";
+                headerColor = ContextCompat.getColor(holder.itemView.getContext(), android.R.color.darker_gray);
         }
+        
+        holder.tvDecisionBadge.setText(badgeText);
+        holder.layoutHeader.setBackgroundColor(headerColor);
         
         // Timestamp
         if (session.getStartTime() != null) {
             holder.tvTimestamp.setText(dateFormat.format(session.getStartTime()));
         }
         
+        // Guidance Summary
+        if (session.getGuidanceShown() != null && !session.getGuidanceShown().isEmpty()) {
+            holder.tvGuidanceSummary.setText(session.getGuidanceShown());
+        } else {
+            holder.tvGuidanceSummary.setText("No specific guidance recorded.");
+        }
+
         // Red flags
         if (session.hasCriticalFlags()) {
             holder.tvRedFlagsLabel.setVisibility(View.VISIBLE);
@@ -88,7 +97,7 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
         // Rescue attempts
         if (session.getRescueAttemptsLast3Hours() > 0) {
             holder.tvRescueAttempts.setVisibility(View.VISIBLE);
-            holder.tvRescueAttempts.setText("Rescue inhaler uses (3 hrs): " + session.getRescueAttemptsLast3Hours());
+            holder.tvRescueAttempts.setText("💊 Puffs: " + session.getRescueAttemptsLast3Hours());
             
             if (session.getRescueAttemptsLast3Hours() >= 3) {
                 holder.tvRescueAttempts.setTextColor(
@@ -108,7 +117,7 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
                 zoneInfo = " (" + zoneLabel + ")";
             }
             
-            holder.tvPEFReading.setText("Peak Flow: " + session.getCurrentPEF() + " L/min" + zoneInfo);
+            holder.tvPEFReading.setText("💨 PEF: " + session.getCurrentPEF() + zoneInfo);
         } else {
             holder.tvPEFReading.setVisibility(View.GONE);
         }
@@ -132,7 +141,7 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
             }
             
             if (session.isEscalated()) {
-                outcomeText += " → Escalated to emergency";
+                outcomeText += " → Escalated";
                 outcomeColor = ContextCompat.getColor(holder.itemView.getContext(), android.R.color.holo_red_dark);
             }
             
@@ -157,6 +166,8 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
         TextView tvDecisionBadge, tvTimestamp, tvRedFlagsLabel;
         ChipGroup chipGroupRedFlags;
         TextView tvRescueAttempts, tvPEFReading, tvOutcome;
+        TextView tvGuidanceSummary;
+        View layoutHeader;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -167,6 +178,8 @@ public class IncidentAdapter extends RecyclerView.Adapter<IncidentAdapter.ViewHo
             tvRescueAttempts = itemView.findViewById(R.id.tvRescueAttempts);
             tvPEFReading = itemView.findViewById(R.id.tvPEFReading);
             tvOutcome = itemView.findViewById(R.id.tvOutcome);
+            tvGuidanceSummary = itemView.findViewById(R.id.tvGuidanceSummary);
+            layoutHeader = itemView.findViewById(R.id.layoutHeader);
         }
     }
 }

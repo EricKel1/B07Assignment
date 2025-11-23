@@ -3,97 +3,150 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="6dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- Header with decision and date -->
+        <!-- Colored Header Strip -->
         <LinearLayout
+            android:id="@+id/layoutHeader"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="#FF5252"
             android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
             android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/tvDecisionBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="EMERGENCY"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:background="@android:color/holo_red_dark"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="4dp"/>
-
-            <TextView
-                android:id="@+id/tvTimestamp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Nov 15, 2025 3:45 PM"
-                android:textSize="14sp"
-                android:textColor="#757575"
-                android:layout_marginStart="12dp"
-                android:gravity="end"/>
+                android:text="🚨 EMERGENCY"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/white"/>
+
+            <TextView
+                android:id="@+id/tvTimestamp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nov 15, 3:45 PM"
+                android:textSize="12sp"
+                android:textColor="#E0E0E0"
+                android:textStyle="bold"/>
 
         </LinearLayout>
 
-        <!-- Red Flags -->
-        <TextView
-            android:id="@+id/tvRedFlagsLabel"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Warning Signs:"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginTop="12dp"
-            android:visibility="gone"/>
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupRedFlags"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            app:singleLine="false"/>
+            <!-- Guidance Section (New) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/ic_launcher_background"
+                android:backgroundTint="#F5F5F5"
+                android:padding="12dp"
+                android:layout_marginBottom="12dp">
+                
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💡 GUIDANCE GIVEN"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:textColor="#757575"/>
 
-        <!-- Rescue Attempts -->
-        <TextView
-            android:id="@+id/tvRescueAttempts"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Rescue inhaler uses (3 hrs): 3"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"/>
+                <TextView
+                    android:id="@+id/tvGuidanceSummary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Call 911 immediately and use rescue inhaler."
+                    android:textSize="14sp"
+                    android:textColor="#212121"
+                    android:layout_marginTop="4dp"/>
+            </LinearLayout>
 
-        <!-- PEF Reading -->
-        <TextView
-            android:id="@+id/tvPEFReading"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Peak Flow: 250 L/min (Red Zone - 55%)"
-            android:textSize="14sp"
-            android:layout_marginTop="4dp"
-            android:visibility="gone"/>
+            <!-- Red Flags -->
+            <TextView
+                android:id="@+id/tvRedFlagsLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚠️ Symptoms Reported:"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#D32F2F"
+                android:visibility="gone"/>
 
-        <!-- Outcome -->
-        <TextView
-            android:id="@+id/tvOutcome"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Outcome: User improved after 10 minutes"
-            android:textSize="14sp"
-            android:layout_marginTop="8dp"
-            android:textStyle="italic"
-            android:textColor="#4CAF50"
-            android:visibility="gone"/>
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupRedFlags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:singleLine="false"/>
+
+            <!-- Stats Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/tvRescueAttempts"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="💊 Puffs: 3"
+                    android:textSize="13sp"
+                    android:textColor="#546E7A"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:id="@+id/tvPEFReading"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💨 PEF: 250"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="#546E7A"
+                    android:visibility="gone"/>
+            </LinearLayout>
+
+            <!-- Outcome Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#EEEEEE"
+                android:layout_marginVertical="12dp"/>
+
+            <!-- Outcome -->
+            <TextView
+                android:id="@+id/tvOutcome"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Result: User improved"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#4CAF50"
+                android:gravity="center_vertical"
+                android:drawablePadding="8dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 
