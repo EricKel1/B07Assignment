@@ -9,6 +9,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.PEFRepository;
+import com.example.b07project.repository.ScheduleRepository;
+import com.example.b07project.repository.ControllerMedicineRepository;
+import com.example.b07project.models.MedicationSchedule;
+import com.example.b07project.models.ControllerMedicineLog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -20,6 +24,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import androidx.core.app.ActivityCompat;
 
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
 public class HomeActivity extends AppCompatActivity {
 
     private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut, btnSwitchProfile;
@@ -29,6 +37,8 @@ public class HomeActivity extends AppCompatActivity {
     private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice, tvMedicationSchedule;
     private CardView cardMedicationSchedule;
     private PEFRepository pefRepository;
+    private ScheduleRepository scheduleRepository;
+    private ControllerMedicineRepository controllerRepository;
     private String dataOwnerId;
 
     @Override
@@ -37,6 +47,8 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         pefRepository = new PEFRepository();
+        scheduleRepository = new ScheduleRepository();
+        controllerRepository = new ControllerMedicineRepository();
         initializeViews();
         setupListeners();
 
@@ -99,24 +111,58 @@ public class HomeActivity extends AppCompatActivity {
     private void loadMedicationSchedule() {
         if (dataOwnerId == null) return;
 
-        FirebaseFirestore.getInstance().collection("children").document(dataOwnerId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists() && documentSnapshot.contains("plannedDosesPerDay")) {
-                        Long doses = documentSnapshot.getLong("plannedDosesPerDay");
-                        if (doses != null && doses > 0) {
-                            tvMedicationSchedule.setText("Take " + doses + " controller dose(s) daily.");
-                            cardMedicationSchedule.setVisibility(View.VISIBLE);
-                        } else {
-                            cardMedicationSchedule.setVisibility(View.GONE);
-                        }
-                    } else {
-                        cardMedicationSchedule.setVisibility(View.GONE);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    if (cardMedicationSchedule != null) cardMedicationSchedule.setVisibility(View.GONE);
-                });
+        scheduleRepository.getSchedule(dataOwnerId, new ScheduleRepository.LoadCallback() {
+            @Override
+            public void onSuccess(MedicationSchedule schedule) {
+                if (schedule != null && schedule.getFrequency() > 0) {
+                    calculateRemainingDoses(schedule.getFrequency());
+                } else {
+                    cardMedicationSchedule.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                cardMedicationSchedule.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void calculateRemainingDoses(int frequency) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        Date startOfDay = cal.getTime();
+
+        cal.add(Calendar.DAY_OF_MONTH, 1);
+        Date endOfDay = cal.getTime();
+
+        controllerRepository.getLogsForUserInDateRange(dataOwnerId, startOfDay, endOfDay, new ControllerMedicineRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<ControllerMedicineLog> logs) {
+                int takenCount = logs.size();
+                int remaining = frequency - takenCount;
+                
+                cardMedicationSchedule.setVisibility(View.VISIBLE);
+                if (remaining <= 0) {
+                    tvMedicationSchedule.setText("All doses taken today! (" + takenCount + "/" + frequency + ")");
+                    tvMedicationSchedule.setTextColor(ContextCompat.getColor(HomeActivity.this, android.R.color.holo_green_dark));
+                } else {
+                    tvMedicationSchedule.setText("Take " + remaining + " more dose(s) today (" + takenCount + "/" + frequency + ")");
+                    // Use a standard color if primary_blue isn't guaranteed, or use the one from xml
+                    tvMedicationSchedule.setTextColor(0xFF00838F); // Cyan 800
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                // Fallback if logs fail to load
+                tvMedicationSchedule.setText("Daily Goal: " + frequency + " doses");
+                cardMedicationSchedule.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     private com.google.firebase.firestore.ListenerRegistration sharingSettingsListener;
