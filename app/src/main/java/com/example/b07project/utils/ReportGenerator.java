@@ -1051,4 +1051,118 @@ public class ReportGenerator {
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTimeInMillis();
     }
+
+    public void generateSymptomLogPdf(List<SymptomCheckIn> checkIns) {
+        showLoading();
+        String htmlContent = buildSymptomLogHtml(checkIns);
+        String fileName = "SymptomHistory_" + System.currentTimeMillis() + ".pdf";
+        File file = new File(context.getCacheDir(), fileName);
+        renderHtmlToPdf(htmlContent, file, ReportAction.DOWNLOAD);
+    }
+
+    private String buildSymptomLogHtml(List<SymptomCheckIn> checkIns) {
+        String patientName = FirebaseAuth.getInstance().getCurrentUser() != null ? FirebaseAuth.getInstance().getCurrentUser().getEmail() : "Patient";
+        SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.getDefault());
+        String dateRange = "Symptom History Export";
+        if (!checkIns.isEmpty()) {
+            Date minDate = checkIns.get(0).getDate();
+            Date maxDate = checkIns.get(0).getDate();
+            for (SymptomCheckIn checkIn : checkIns) {
+                if (checkIn.getDate().before(minDate)) minDate = checkIn.getDate();
+                if (checkIn.getDate().after(maxDate)) maxDate = checkIn.getDate();
+            }
+            dateRange = sdf.format(minDate) + " - " + sdf.format(maxDate);
+        }
+
+        StringBuilder dailyLogsHtml = new StringBuilder();
+        SimpleDateFormat logDateFmt = new SimpleDateFormat("MMM d", Locale.getDefault());
+        SimpleDateFormat logTimeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
+        
+        dailyLogsHtml.append("<div class='chart-box daily-logs'><h2>Daily Symptom Logs</h2>")
+                     .append("<table><thead><tr><th>Date</th><th>Time</th><th>Level</th><th>Triggers</th><th>Notes</th></tr></thead><tbody>");
+        
+        List<SymptomCheckIn> sortedCheckIns = new ArrayList<>(checkIns);
+        Collections.sort(sortedCheckIns, (a, b) -> b.getDate().compareTo(a.getDate()));
+        
+        for (SymptomCheckIn checkIn : sortedCheckIns) {
+            String triggers = checkIn.getTriggers() != null ? TextUtils.join(", ", checkIn.getTriggers()) : "-";
+            String notes = checkIn.getNotes() != null ? checkIn.getNotes() : "";
+            
+            dailyLogsHtml.append("<tr>")
+                         .append("<td>").append(logDateFmt.format(checkIn.getDate())).append("</td>")
+                         .append("<td>").append(logTimeFmt.format(checkIn.getDate())).append("</td>")
+                         .append("<td>").append(checkIn.getSymptomLevel()).append("</td>")
+                         .append("<td>").append(triggers).append("</td>")
+                         .append("<td>").append(notes).append("</td>")
+                         .append("</tr>");
+        }
+        dailyLogsHtml.append("</tbody></table></div>");
+
+        return "<!DOCTYPE html><html><head>" +
+                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
+                "<style>" +
+                "body { font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 40px 40px 0 40px; color: #333; }" +
+                ".header { text-align: center; margin-bottom: 40px; border-bottom: 3px solid #4F46E5; padding-bottom: 20px; }" +
+                ".header h1 { color: #4F46E5; margin: 0; font-size: 28px; }" +
+                ".meta { color: #666; margin-top: 10px; font-size: 14px; }" +
+                ".chart-box { margin-bottom: 30px; background: white; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px; page-break-inside: avoid; }" +
+                ".chart-box.daily-logs { page-break-inside: auto; }" +
+                ".chart-box h2 { font-size: 18px; color: #111827; border-left: 4px solid #4F46E5; padding-left: 10px; margin-bottom: 15px; }" +
+                "table { width: 100%; border-collapse: collapse; font-size: 13px; }" +
+                "th { text-align: left; padding: 12px; background: #F9FAFB; color: #6B7280; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #E5E7EB; }" +
+                "td { padding: 12px; border-bottom: 1px solid #E5E7EB; }" +
+                "tr:nth-child(even) { background: #F9FAFB; }" +
+                "tr { page-break-inside: avoid; }" +
+                "</style></head><body>" +
+                "<div class='header'>" +
+                "<h1>Symptom History Report</h1>" +
+                "<div class='meta'>" + patientName + " &bull; " + dateRange + "</div>" +
+                "</div>" +
+                dailyLogsHtml.toString() +
+                "<script>" +
+                "function applyPagination() {" +
+                "  const physicalPageHeight = 1754;" +
+                "  const physicalPageWidth = 1240;" +
+                "  const cssPageWidth = document.documentElement.clientWidth || window.innerWidth;" +
+                "  const scaleFactor = physicalPageWidth / cssPageWidth;" +
+                "  const pageHeight = (physicalPageHeight / scaleFactor) - 5;" +
+                "  const elements = Array.from(document.querySelectorAll('.header, .chart-box:not(.daily-logs), .daily-logs h2, tr'));" +
+                "  for (let i = 0; i < elements.length; i++) {" +
+                "    const el = elements[i];" +
+                "    if (el.offsetParent === null) continue;" +
+                "    if (el.tagName === 'TH' || el.closest('thead')) continue;" +
+                "    const rect = el.getBoundingClientRect();" +
+                "    const top = rect.top + window.scrollY;" +
+                "    const height = rect.height;" +
+                "    const startPage = Math.floor(top / pageHeight);" +
+                "    const endPage = Math.floor((top + height - 1) / pageHeight);" +
+                "    if (startPage !== endPage) {" +
+                "      const nextPageStart = (startPage + 1) * pageHeight;" +
+                "      const spacerHeight = nextPageStart - top + 40;" +
+                "      if (el.tagName === 'TR') {" +
+                "        const spacerRow = document.createElement('tr');" +
+                "        spacerRow.style.height = spacerHeight + 'px';" +
+                "        spacerRow.style.border = 'none';" +
+                "        spacerRow.style.background = 'transparent';" +
+                "        const cell = document.createElement('td');" +
+                "        cell.colSpan = 10;" +
+                "        cell.style.border = 'none';" +
+                "        spacerRow.appendChild(cell);" +
+                "        el.parentNode.insertBefore(spacerRow, el);" +
+                "      } else if (el.tagName === 'H2' && el.closest('.daily-logs')) {" +
+                "        const container = el.closest('.daily-logs');" +
+                "        const style = window.getComputedStyle(container);" +
+                "        const currentMargin = parseFloat(style.marginTop) || 0;" +
+                "        container.style.marginTop = (currentMargin + spacerHeight) + 'px';" +
+                "      } else {" +
+                "        const style = window.getComputedStyle(el);" +
+                "        const currentMargin = parseFloat(style.marginTop) || 0;" +
+                "        el.style.marginTop = (currentMargin + spacerHeight) + 'px';" +
+                "      }" +
+                "    }" +
+                "  }" +
+                "}" +
+                "</script>" +
+                "</body></html>";
+    }
 }

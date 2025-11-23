@@ -23,6 +23,7 @@ import com.example.b07project.adapters.SymptomCheckInAdapter;
 import com.example.b07project.models.SymptomCheckIn;
 import com.example.b07project.repository.SymptomCheckInRepository;
 import com.example.b07project.repository.TriggerAnalyticsRepository;
+import com.example.b07project.utils.ReportGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -38,6 +39,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
 
     private Button btnFilter;
     private Button btnDownloadCsv;
+    private Button btnDownloadPdf;
     private RecyclerView recyclerView;
     private ProgressBar progress;
     private TextView tvEmptyMessage;
@@ -64,6 +66,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
         
         btnFilter.setOnClickListener(v -> showFilterDialog());
         btnDownloadCsv.setOnClickListener(v -> exportToCsv());
+        btnDownloadPdf.setOnClickListener(v -> exportToPdf());
         
         // Default to all time
         Calendar cal = Calendar.getInstance();
@@ -77,6 +80,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
     private void initializeViews() {
         btnFilter = findViewById(R.id.btnFilter);
         btnDownloadCsv = findViewById(R.id.btnDownloadCsv);
+        btnDownloadPdf = findViewById(R.id.btnDownloadPdf);
         recyclerView = findViewById(R.id.recyclerView);
         progress = findViewById(R.id.progress);
         tvEmptyMessage = findViewById(R.id.tvEmptyMessage);
@@ -349,5 +353,16 @@ public class SymptomHistoryActivity extends AppCompatActivity {
             Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
+    }
+    
+    private void exportToPdf() {
+        if (filteredCheckIns.isEmpty()) {
+            Toast.makeText(this, "No records to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Toast.makeText(this, "Generating PDF...", Toast.LENGTH_SHORT).show();
+        ReportGenerator generator = new ReportGenerator(this);
+        generator.generateSymptomLogPdf(filteredCheckIns);
     }
 }
