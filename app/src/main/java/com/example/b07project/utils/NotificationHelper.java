@@ -19,8 +19,8 @@ public class NotificationHelper {
     public static void sendAlert(Context context, String userId, String title, String message) {
         android.util.Log.d("NotificationDebug", "sendAlert START. userId=" + userId + ", title=" + title);
 
-        // 1. Send System Notification (Local)
-        showLocalNotification(context, title, message);
+        // 1. Send System Notification (Local) - DISABLED to avoid duplicates with FCM
+        // showLocalNotification(context, title, message);
         
         // 2. Save to Firestore
         // We check the 'users' collection FIRST because it's the most reliable source 
