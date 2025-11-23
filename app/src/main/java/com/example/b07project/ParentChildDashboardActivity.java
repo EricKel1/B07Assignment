@@ -1,6 +1,8 @@
 package com.example.b07project;
 
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
@@ -8,7 +10,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import com.example.b07project.models.MedicationSchedule;
 import com.example.b07project.models.PersonalBest;
 import com.example.b07project.repository.ControllerMedicineRepository;
@@ -138,12 +139,24 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
                 tvAdherenceDetails.setText(actualDoses + "/" + expectedDoses + " doses taken (Last 7 days)");
                 
                 // Color coding
+                int color;
                 if (percentage >= 80) {
-                    progressAdherence.getProgressDrawable().setTint(getColor(android.R.color.holo_green_dark));
+                    color = getColor(android.R.color.holo_green_dark);
                 } else if (percentage >= 50) {
-                    progressAdherence.getProgressDrawable().setTint(getColor(android.R.color.holo_orange_dark));
+                    color = getColor(android.R.color.holo_orange_dark);
                 } else {
-                    progressAdherence.getProgressDrawable().setTint(getColor(android.R.color.holo_red_dark));
+                    color = getColor(android.R.color.holo_red_dark);
+                }
+
+                Drawable progressDrawable = progressAdherence.getProgressDrawable();
+                if (progressDrawable instanceof LayerDrawable) {
+                    LayerDrawable layerDrawable = (LayerDrawable) progressDrawable;
+                    Drawable progressLayer = layerDrawable.findDrawableByLayerId(android.R.id.progress);
+                    if (progressLayer != null) {
+                        progressLayer.setTint(color);
+                    }
+                } else {
+                    progressDrawable.setTint(color);
                 }
             }
 
