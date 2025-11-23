@@ -386,6 +386,16 @@
                         android:paddingVertical="12dp"/>
 
                     <Button
+                        android:id="@+id/btnViewPEFHistory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="View PEF History"
+                        android:textSize="16sp"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_marginTop="8dp"
+                        android:paddingVertical="12dp"/>
+
+                    <Button
                         android:id="@+id/btnViewIncidents"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

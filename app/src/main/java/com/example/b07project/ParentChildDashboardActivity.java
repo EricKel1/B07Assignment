@@ -59,6 +59,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         // History
         setupCardListener(R.id.cardHistoryMedicine, RescueInhalerHistoryActivity.class);
         setupCardListener(R.id.cardHistoryCheckIn, SymptomHistoryActivity.class);
+        setupCardListener(R.id.cardHistoryPEF, PEFHistoryActivity.class);
         setupCardListener(R.id.cardHistoryIncidents, IncidentHistoryActivity.class);
     }
 
@@ -133,6 +134,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         // PEF / Safety
         boolean sharePEF = Boolean.TRUE.equals(settings.get("pef"));
         setViewVisibility(R.id.badgeEnterPEF, sharePEF);
+        setViewVisibility(R.id.badgeHistoryPEF, sharePEF);
         setViewVisibility(R.id.badgeHistoryIncidents, sharePEF);
 
         // Patterns

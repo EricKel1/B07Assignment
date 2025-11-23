@@ -11,8 +11,6 @@ import com.example.b07project.repository.NotificationRepository;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-
 public class NotificationHelper {
     private static final String CHANNEL_ID = "smart_air_alerts";
     private static final String CHANNEL_NAME = "Smart Air Alerts";
@@ -21,8 +19,8 @@ public class NotificationHelper {
     public static void sendAlert(Context context, String userId, String title, String message) {
         android.util.Log.d("NotificationDebug", "sendAlert START. userId=" + userId + ", title=" + title);
 
-        // 1. Send System Notification (Local)
-        showLocalNotification(context, title, message);
+        // 1. Send System Notification (Local) - DISABLED to avoid duplicates with FCM
+        // showLocalNotification(context, title, message);
         
         // 2. Save to Firestore
         // We check the 'users' collection FIRST because it's the most reliable source 

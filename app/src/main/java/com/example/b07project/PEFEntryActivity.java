@@ -26,8 +26,8 @@ public class PEFEntryActivity extends AppCompatActivity {
     private EditText etPEFValue, etNotes;
     private RadioGroup rgMedicationContext;
     private RadioButton rbNoContext, rbPreMedication, rbPostMedication;
-    private CardView cardZoneDisplay, cardPersonalBestInfo;
-    private TextView tvZoneResult, tvZonePercentage, tvZoneGuidance;
+    private CardView cardZoneDisplay, cardPreMed, cardPostMed;
+    private TextView tvZoneResult, tvZoneGuidance, tvZoneEmoji, tvPBWarning;
     private Button btnSave, btnCancel;
     
     private PEFRepository pefRepository;
@@ -50,15 +50,23 @@ public class PEFEntryActivity extends AppCompatActivity {
     private void initializeViews() {
         etPEFValue = findViewById(R.id.etPEFValue);
         etNotes = findViewById(R.id.etNotes);
+        
+        // Hidden RadioGroup for logic compatibility
         rgMedicationContext = findViewById(R.id.rgMedicationContext);
         rbNoContext = findViewById(R.id.rbNoContext);
         rbPreMedication = findViewById(R.id.rbPreMedication);
         rbPostMedication = findViewById(R.id.rbPostMedication);
+        
+        // New UI Elements
         cardZoneDisplay = findViewById(R.id.cardZoneDisplay);
-        cardPersonalBestInfo = findViewById(R.id.cardPersonalBestInfo);
+        cardPreMed = findViewById(R.id.cardPreMed);
+        cardPostMed = findViewById(R.id.cardPostMed);
+        
         tvZoneResult = findViewById(R.id.tvZoneResult);
-        tvZonePercentage = findViewById(R.id.tvZonePercentage);
         tvZoneGuidance = findViewById(R.id.tvZoneGuidance);
+        tvZoneEmoji = findViewById(R.id.tvZoneEmoji);
+        tvPBWarning = findViewById(R.id.tvPBWarning);
+        
         btnSave = findViewById(R.id.btnSave);
         btnCancel = findViewById(R.id.btnCancel);
     }
@@ -72,14 +80,16 @@ public class PEFEntryActivity extends AppCompatActivity {
             public void onSuccess(PersonalBest pb) {
                 userPersonalBest = pb;
                 if (pb == null) {
-                    cardPersonalBestInfo.setVisibility(View.VISIBLE);
+                    tvPBWarning.setVisibility(View.VISIBLE);
+                } else {
+                    tvPBWarning.setVisibility(View.GONE);
                 }
             }
 
             @Override
             public void onFailure(String error) {
                 userPersonalBest = null;
-                cardPersonalBestInfo.setVisibility(View.VISIBLE);
+                tvPBWarning.setVisibility(View.VISIBLE);
             }
         });
     }
@@ -99,8 +109,42 @@ public class PEFEntryActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
+        // Custom Context Selection Logic
+        cardPreMed.setOnClickListener(v -> setContext(true));
+        cardPostMed.setOnClickListener(v -> setContext(false));
+
         btnSave.setOnClickListener(v -> savePEFReading());
         btnCancel.setOnClickListener(v -> finish());
+    }
+
+    private void setContext(boolean isPre) {
+        // Reset both first
+        cardPreMed.setCardBackgroundColor(android.graphics.Color.WHITE);
+        cardPostMed.setCardBackgroundColor(android.graphics.Color.WHITE);
+        cardPreMed.setCardElevation(2f);
+        cardPostMed.setCardElevation(2f);
+
+        if (isPre) {
+            // Select Pre
+            if (rbPreMedication.isChecked()) {
+                // Toggle off if already checked
+                rbNoContext.setChecked(true);
+            } else {
+                rbPreMedication.setChecked(true);
+                cardPreMed.setCardBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")); // Light Blue
+                cardPreMed.setCardElevation(8f);
+            }
+        } else {
+            // Select Post
+            if (rbPostMedication.isChecked()) {
+                // Toggle off if already checked
+                rbNoContext.setChecked(true);
+            } else {
+                rbPostMedication.setChecked(true);
+                cardPostMed.setCardBackgroundColor(android.graphics.Color.parseColor("#E3F2FD")); // Light Blue
+                cardPostMed.setCardElevation(8f);
+            }
+        }
     }
 
     private void updateZonePreview() {
@@ -121,9 +165,7 @@ public class PEFEntryActivity extends AppCompatActivity {
 
             if (userPersonalBest != null && userPersonalBest.getValue() > 0) {
                 String zone = PersonalBest.calculateZone(pefValue, userPersonalBest.getValue());
-                int percentage = (pefValue * 100) / userPersonalBest.getValue();
-                
-                displayZone(zone, percentage);
+                displayZone(zone);
                 cardZoneDisplay.setVisibility(View.VISIBLE);
             } else {
                 cardZoneDisplay.setVisibility(View.GONE);
@@ -133,30 +175,43 @@ public class PEFEntryActivity extends AppCompatActivity {
         }
     }
 
-    private void displayZone(String zone, int percentage) {
+    private void displayZone(String zone) {
         String zoneLabel = PersonalBest.getZoneLabel(zone);
         int zoneColor = PersonalBest.getZoneColor(zone);
         
         tvZoneResult.setText(zoneLabel);
-        tvZoneResult.setTextColor(ContextCompat.getColor(this, zoneColor));
-        tvZonePercentage.setText(percentage + "% of your Personal Best");
+        tvZoneResult.setTextColor(zoneColor);
         
-        // Set guidance based on zone
+        // Set guidance and emoji based on zone
         String guidance;
+        String emoji;
+        int cardColor;
+
         switch (zone) {
             case "green":
-                guidance = "Your asthma is well controlled. Continue your usual medications.";
+                guidance = "Great job! Your asthma is well controlled.";
+                emoji = "🟢";
+                cardColor = android.graphics.Color.parseColor("#E8F5E9"); // Light Green
                 break;
             case "yellow":
-                guidance = "Caution: Your asthma may not be well controlled. Follow your action plan or contact your healthcare provider.";
+                guidance = "Caution: Check your action plan.";
+                emoji = "🟡";
+                cardColor = android.graphics.Color.parseColor("#FFFDE7"); // Light Yellow
                 break;
             case "red":
-                guidance = "Medical Alert: This is a low reading. Follow your emergency action plan and seek medical attention if needed.";
+                guidance = "Medical Alert: Follow your emergency plan!";
+                emoji = "🔴";
+                cardColor = android.graphics.Color.parseColor("#FFEBEE"); // Light Red
                 break;
             default:
                 guidance = "";
+                emoji = "⚪";
+                cardColor = android.graphics.Color.WHITE;
         }
+        
         tvZoneGuidance.setText(guidance);
+        tvZoneEmoji.setText(emoji);
+        cardZoneDisplay.setCardBackgroundColor(cardColor);
     }
 
     private void savePEFReading() {
@@ -203,15 +258,15 @@ public class PEFEntryActivity extends AppCompatActivity {
                     }
                 }
                 
-                Toast.makeText(PEFEntryActivity.this, "Peak flow reading saved", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Peak flow reading saved", Toast.LENGTH_SHORT).show();
                 finish();
             }
 
             @Override
             public void onFailure(String error) {
-                Toast.makeText(PEFEntryActivity.this, "Error: " + error, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Error: " + error, Toast.LENGTH_SHORT).show();
                 btnSave.setEnabled(true);
-                btnSave.setText("Save Peak Flow Reading");
+                btnSave.setText("Save Reading");
             }
         });
     }
@@ -230,10 +285,10 @@ public class PEFEntryActivity extends AppCompatActivity {
                     name = "Child";
                 }
                 
-                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, name + " " + messageSuffix);
+                NotificationHelper.sendAlert(getApplicationContext(), targetUserId, title, name + " " + messageSuffix);
             })
             .addOnFailureListener(e -> {
-                NotificationHelper.sendAlert(PEFEntryActivity.this, targetUserId, title, "Child " + messageSuffix);
+                NotificationHelper.sendAlert(getApplicationContext(), targetUserId, title, "Child " + messageSuffix);
             });
     }
 }
