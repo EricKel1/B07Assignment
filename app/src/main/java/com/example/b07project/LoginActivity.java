@@ -52,34 +52,30 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
     private void showForgotPasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Reset Password");
-        builder.setMessage("Enter your email address to receive a password reset link.");
+        View view = getLayoutInflater().inflate(R.layout.dialog_forgot_password, null);
+        builder.setView(view);
 
-        final EditText input = new EditText(this);
-        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        input.setHint("Email");
-        
-        // Add padding
-        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
-        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.leftMargin = 50;
-        params.rightMargin = 50;
-        input.setLayoutParams(params);
-        container.addView(input);
-        
-        builder.setView(container);
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
 
-        builder.setPositiveButton("Send", (dialog, which) -> {
-            String email = input.getText().toString().trim();
+        EditText etEmail = view.findViewById(R.id.etEmail);
+        Button btnCancel = view.findViewById(R.id.btnCancel);
+        Button btnSend = view.findViewById(R.id.btnSend);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        btnSend.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
             if (email.isEmpty()) {
                 android.widget.Toast.makeText(this, "Please enter your email", android.widget.Toast.LENGTH_SHORT).show();
                 return;
             }
+            dialog.dismiss();
             sendPasswordResetEmail(email);
         });
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
-        builder.show();
+        dialog.show();
     }
 
     private void sendPasswordResetEmail(String email) {
@@ -88,11 +84,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
                 .addOnCompleteListener(task -> {
                     showLoading(false);
                     if (task.isSuccessful()) {
-                        new AlertDialog.Builder(this)
-                                .setTitle("Email Sent")
-                                .setMessage("We have sent a password reset link to " + email + ". Please check your inbox.")
-                                .setPositiveButton("OK", null)
-                                .show();
+                        showEmailSentDialog(email);
                     } else {
                         String error = "Failed to send reset email.";
                         if (task.getException() != null) {
@@ -101,6 +93,25 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
                         showError(error);
                     }
                 });
+    }
+
+    private void showEmailSentDialog(String email) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = getLayoutInflater().inflate(R.layout.dialog_email_sent, null);
+        builder.setView(view);
+
+        AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvMessage = view.findViewById(R.id.tvSentMessage);
+        tvMessage.setText("We have sent a password reset link to " + email + ". Please check your inbox.");
+
+        Button btnOk = view.findViewById(R.id.btnOk);
+        btnOk.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.show();
     }
 
     @Override
