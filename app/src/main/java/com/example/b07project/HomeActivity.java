@@ -377,7 +377,7 @@ public class HomeActivity extends AppCompatActivity {
         tvZonePercentage.setText("(" + percentage + "% of PB)");
 
         int color = PersonalBest.getZoneColor(zone);
-        tvCurrentZone.setTextColor(ContextCompat.getColor(this, color));
+        tvCurrentZone.setTextColor(color);
     }
 
     @Override

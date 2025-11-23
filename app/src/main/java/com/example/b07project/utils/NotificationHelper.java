@@ -11,8 +11,6 @@ import com.example.b07project.repository.NotificationRepository;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-
 public class NotificationHelper {
     private static final String CHANNEL_ID = "smart_air_alerts";
     private static final String CHANNEL_NAME = "Smart Air Alerts";
