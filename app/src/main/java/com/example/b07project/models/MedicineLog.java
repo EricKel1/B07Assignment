@@ -11,6 +11,8 @@ public class MedicineLog {
     private List<String> triggers;
     private String notes;
     private String enteredBy;
+    private String postDoseStatus; // "Better", "Same", "Worse"
+    private int breathRating; // 1-5
 
     public MedicineLog() {
     }
@@ -77,5 +79,21 @@ public class MedicineLog {
 
     public void setEnteredBy(String enteredBy) {
         this.enteredBy = enteredBy;
+    }
+
+    public String getPostDoseStatus() {
+        return postDoseStatus;
+    }
+
+    public void setPostDoseStatus(String postDoseStatus) {
+        this.postDoseStatus = postDoseStatus;
+    }
+
+    public int getBreathRating() {
+        return breathRating;
+    }
+
+    public void setBreathRating(int breathRating) {
+        this.breathRating = breathRating;
     }
 }

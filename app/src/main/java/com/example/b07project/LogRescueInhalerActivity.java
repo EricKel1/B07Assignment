@@ -43,17 +43,19 @@ import nl.dionsegijn.konfetti.core.models.Size;
 
 import com.example.b07project.utils.NotificationHelper;
 
+import android.widget.RatingBar;
+
 public class LogRescueInhalerActivity extends AppCompatActivity {
     
-    private RadioGroup rgMedicineType;
-    private RadioButton rbRescue, rbController;
+    private RadioGroup rgMedicineType, rgPostDoseStatus;
+    private RadioButton rbRescue, rbController, rbBetter, rbSame, rbWorse;
     private ConstraintLayout controllerOnlySection;
     private TextView tvTimestamp, tvDoseCount, tvMessage, tvScheduledTime;
     private Button btnSelectTime;
     private CheckBox cbTakenOnTime;
     private CheckBox cbTriggerExercise, cbTriggerColdAir, cbTriggerPets, cbTriggerPollen;
     private CheckBox cbTriggerStress, cbTriggerSmoke, cbTriggerWeather, cbTriggerDust;
-    private CheckBox cbWorseAfterDose;
+    private RatingBar ratingBarBreath;
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
@@ -117,7 +119,13 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         cbTriggerSmoke = findViewById(R.id.cbTriggerSmoke);
         cbTriggerWeather = findViewById(R.id.cbTriggerWeather);
         cbTriggerDust = findViewById(R.id.cbTriggerDust);
-        cbWorseAfterDose = findViewById(R.id.cbWorseAfterDose);
+        
+        rgPostDoseStatus = findViewById(R.id.rgPostDoseStatus);
+        rbBetter = findViewById(R.id.rbBetter);
+        rbSame = findViewById(R.id.rbSame);
+        rbWorse = findViewById(R.id.rbWorse);
+        ratingBarBreath = findViewById(R.id.ratingBarBreath);
+        
         etNotes = findViewById(R.id.etNotes);
         btnDecrease = findViewById(R.id.btnDecrease);
         btnIncrease = findViewById(R.id.btnIncrease);
@@ -222,6 +230,14 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
+        // Get Post-Dose Status
+        String postDoseStatus = null;
+        if (rbBetter.isChecked()) postDoseStatus = "Better";
+        else if (rbSame.isChecked()) postDoseStatus = "Same";
+        else if (rbWorse.isChecked()) postDoseStatus = "Worse";
+        
+        int breathRating = (int) ratingBarBreath.getRating();
+        
         // Determine target user ID (child if provided, else current user)
         final String targetUserId = (childId != null) ? childId : currentUser.getUid();
         android.util.Log.d("childparentlink", "Saving log for targetUserId: " + targetUserId);
@@ -256,6 +272,8 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 notes.isEmpty() ? null : notes
             );
             log.setEnteredBy(enteredBy);
+            log.setPostDoseStatus(postDoseStatus);
+            log.setBreathRating(breathRating);
             
             controllerRepository.saveLog(log, new ControllerMedicineRepository.SaveCallback() {
                 @Override
@@ -303,12 +321,14 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 notes.isEmpty() ? null : notes
             );
             log.setEnteredBy(enteredBy);
+            log.setPostDoseStatus(postDoseStatus);
+            log.setBreathRating(breathRating);
             
             rescueRepository.saveLog(log, new RescueInhalerRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
                     // Check for "Worse After Dose" Alert
-                    if (cbWorseAfterDose.isChecked()) {
+                    if (rbWorse.isChecked()) {
                         sendAlertWithChildName(targetUserId, "Worse After Dose Alert", "reported feeling worse after using rescue inhaler.");
                     }
 
