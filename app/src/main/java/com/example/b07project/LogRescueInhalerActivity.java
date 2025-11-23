@@ -226,6 +226,12 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         final String targetUserId = (childId != null) ? childId : currentUser.getUid();
         android.util.Log.d("childparentlink", "Saving log for targetUserId: " + targetUserId);
         
+        // Determine enteredBy
+        String enteredBy = "Child";
+        if (!targetUserId.equals(currentUser.getUid())) {
+            enteredBy = "Parent";
+        }
+        
         // Inventory is managed by the parent (currentUser) for the child (childId)
         // If childId is null (self-logging), we pass null as childId to inventory
         final String inventoryChildId = childId;
@@ -240,6 +246,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 triggers,
                 notes.isEmpty() ? null : notes
             );
+            log.setEnteredBy(enteredBy);
             
             controllerRepository.saveLog(log, new ControllerMedicineRepository.SaveCallback() {
                 @Override
@@ -286,6 +293,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 triggers,
                 notes.isEmpty() ? null : notes
             );
+            log.setEnteredBy(enteredBy);
             
             rescueRepository.saveLog(log, new RescueInhalerRepository.SaveCallback() {
                 @Override

@@ -193,6 +193,12 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         List<String> symptoms = getSelectedSymptoms();
         List<String> triggers = getSelectedTriggers();
         String notes = etNotes.getText().toString().trim();
+        
+        // Determine enteredBy
+        String enteredBy = "Child";
+        if (!targetUserId.equals(currentUser.getUid())) {
+            enteredBy = "Parent";
+        }
 
         SymptomCheckIn checkIn = new SymptomCheckIn(
             targetUserId,
@@ -203,6 +209,7 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
             notes.isEmpty() ? null : notes,
             new Date()
         );
+        checkIn.setEnteredBy(enteredBy);
 
         repository.saveCheckIn(checkIn, new SymptomCheckInRepository.SaveCallback() {
             @Override
