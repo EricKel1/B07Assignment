@@ -23,7 +23,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
 
     private EditText etEmail, etPassword;
     private ProgressBar progress;
-    private TextView tvError, tvSignUp;
+    private TextView tvError, tvSignUp, tvForgotPassword;
     private LoginContract.Presenter presenter;
 
     @Override
@@ -36,6 +36,7 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         progress = findViewById(R.id.progress);
         tvError = findViewById(R.id.tvError);
         tvSignUp = findViewById(R.id.tvSignUp);
+        tvForgotPassword = findViewById(R.id.tvForgotPassword);
         Button btnLogin = findViewById(R.id.btnLogin);
 
         presenter = new LoginPresenter(this, new FirebaseAuthRepo());
@@ -45,6 +46,61 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         tvSignUp.setOnClickListener(v -> {
             startActivity(new Intent(this, WelcomeActivity.class));
         });
+
+        tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+    }
+
+    private void showForgotPasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Reset Password");
+        builder.setMessage("Enter your email address to receive a password reset link.");
+
+        final EditText input = new EditText(this);
+        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+        input.setHint("Email");
+        
+        // Add padding
+        android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+        android.widget.FrameLayout.LayoutParams params = new  android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.leftMargin = 50;
+        params.rightMargin = 50;
+        input.setLayoutParams(params);
+        container.addView(input);
+        
+        builder.setView(container);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String email = input.getText().toString().trim();
+            if (email.isEmpty()) {
+                android.widget.Toast.makeText(this, "Please enter your email", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            sendPasswordResetEmail(email);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void sendPasswordResetEmail(String email) {
+        showLoading(true);
+        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                .addOnCompleteListener(task -> {
+                    showLoading(false);
+                    if (task.isSuccessful()) {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Email Sent")
+                                .setMessage("We have sent a password reset link to " + email + ". Please check your inbox.")
+                                .setPositiveButton("OK", null)
+                                .show();
+                    } else {
+                        String error = "Failed to send reset email.";
+                        if (task.getException() != null) {
+                            error = task.getException().getMessage();
+                        }
+                        showError(error);
+                    }
+                });
     }
 
     @Override
