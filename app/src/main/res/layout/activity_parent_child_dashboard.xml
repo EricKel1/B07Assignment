@@ -99,7 +99,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Log\nMedicine"
+                                android:text="Log
+Medicine"
                                 android:textAlignment="center"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
@@ -147,7 +148,8 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Daily\nCheck-in"
+                                android:text="Daily
+Check-in"
                                 android:textAlignment="center"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
@@ -221,6 +223,15 @@
                         android:visibility="gone"/>
                 </FrameLayout>
             </androidx.cardview.widget.CardView>
+
+            <Button
+                android:id="@+id/btnEditPersonalBest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Edit Personal Best"
+                android:backgroundTint="#FFB74D"
+                android:textColor="@android:color/white" />
 
             <!-- Analytics Section -->
             <TextView
