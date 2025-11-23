@@ -1,6 +1,7 @@
 package com.example.b07project.models;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class MedicationSchedule {
@@ -9,9 +10,11 @@ public class MedicationSchedule {
     private int dosagePerIntake; // e.g., 2 puffs
     private int frequency; // times per day
     private List<String> scheduledTimes; // e.g., "08:00", "20:00"
+    private Date startDate;
 
     public MedicationSchedule() {
         this.scheduledTimes = new ArrayList<>();
+        this.startDate = new Date();
     }
 
     public MedicationSchedule(String userId, String medicationName, int dosagePerIntake, int frequency, List<String> scheduledTimes) {
@@ -20,6 +23,7 @@ public class MedicationSchedule {
         this.dosagePerIntake = dosagePerIntake;
         this.frequency = frequency;
         this.scheduledTimes = scheduledTimes;
+        this.startDate = new Date();
     }
 
     public String getUserId() {
@@ -60,5 +64,13 @@ public class MedicationSchedule {
 
     public void setScheduledTimes(List<String> scheduledTimes) {
         this.scheduledTimes = scheduledTimes;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
     }
 }

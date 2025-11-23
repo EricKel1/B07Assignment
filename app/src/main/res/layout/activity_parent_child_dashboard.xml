@@ -263,7 +263,7 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
-                                android:text="Medication Adherence (7 Days)"
+                                android:text="Medication Adherence (Last 30 Days)"
                                 android:textSize="16sp"
                                 android:textStyle="bold"
                                 android:textColor="#455A64"/>
@@ -279,32 +279,57 @@
                                 android:background="?attr/selectableItemBackgroundBorderless"/>
                         </LinearLayout>
 
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvAdherenceCalendar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:overScrollMode="never"/>
+
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="center_vertical"
-                            android:layout_marginTop="12dp">
-
-                            <ProgressBar
-                                android:id="@+id/progressAdherence"
-                                style="?android:attr/progressBarStyleHorizontal"
-                                android:layout_width="0dp"
-                                android:layout_height="8dp"
-                                android:layout_weight="1"
-                                android:progressDrawable="@drawable/progress_rounded"
-                                android:max="100"
-                                android:progress="0"/>
-
+                            android:layout_marginTop="8dp"
+                            android:gravity="center">
+                            
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="@drawable/bg_calendar_day"
+                                android:backgroundTint="#4CAF50"/>
                             <TextView
-                                android:id="@+id/tvAdherencePercentage"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="--%"
-                                android:textSize="16sp"
-                                android:textStyle="bold"
-                                android:textColor="#455A64"
-                                android:layout_marginStart="12dp"/>
+                                android:text="Good"
+                                android:textSize="10sp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="12dp"/>
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="@drawable/bg_calendar_day"
+                                android:backgroundTint="#FFC107"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Partial"
+                                android:textSize="10sp"
+                                android:layout_marginStart="4dp"
+                                android:layout_marginEnd="12dp"/>
+
+                            <View
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:background="@drawable/bg_calendar_day"
+                                android:backgroundTint="#F44336"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Missed"
+                                android:textSize="10sp"
+                                android:layout_marginStart="4dp"/>
                         </LinearLayout>
 
                         <TextView
