@@ -238,6 +238,87 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
+                <!-- Adherence Card (New) -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardAdherence"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Medication Adherence (7 Days)"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#455A64"/>
+
+                            <ImageView
+                                android:id="@+id/btnConfigureSchedule"
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:src="@android:drawable/ic_menu_manage"
+                                app:tint="#757575"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:background="?attr/selectableItemBackgroundBorderless"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="12dp">
+
+                            <ProgressBar
+                                android:id="@+id/progressAdherence"
+                                style="?android:attr/progressBarStyleHorizontal"
+                                android:layout_width="0dp"
+                                android:layout_height="8dp"
+                                android:layout_weight="1"
+                                android:progressDrawable="@drawable/progress_rounded"
+                                android:max="100"
+                                android:progress="0"/>
+
+                            <TextView
+                                android:id="@+id/tvAdherencePercentage"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="--%"
+                                android:textSize="16sp"
+                                android:textStyle="bold"
+                                android:textColor="#455A64"
+                                android:layout_marginStart="12dp"/>
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvAdherenceDetails"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No schedule configured"
+                            android:textSize="12sp"
+                            android:textColor="#757575"
+                            android:layout_marginTop="4dp"/>
+
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
                 <androidx.cardview.widget.CardView
                     android:id="@+id/cardStats"
                     android:layout_width="match_parent"

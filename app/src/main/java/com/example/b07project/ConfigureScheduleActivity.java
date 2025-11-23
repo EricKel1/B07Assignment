@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -13,18 +14,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.b07project.models.MedicationSchedule;
+import com.example.b07project.models.MedicineInventory;
+import com.example.b07project.repository.InventoryRepository;
 import com.example.b07project.repository.ScheduleRepository;
+import com.google.firebase.auth.FirebaseAuth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class ConfigureScheduleActivity extends AppCompatActivity {
 
-    private EditText etMedicationName, etDosage;
+    private AutoCompleteTextView etMedicationName;
+    private EditText etDosage;
     private Spinner spinnerFrequency;
     private LinearLayout layoutTimePickers;
     private Button btnSaveSchedule;
     private ScheduleRepository scheduleRepository;
+    private InventoryRepository inventoryRepository;
     private String childId;
     private List<String> selectedTimes = new ArrayList<>();
 
@@ -35,9 +41,11 @@ public class ConfigureScheduleActivity extends AppCompatActivity {
 
         childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
         scheduleRepository = new ScheduleRepository();
+        inventoryRepository = new InventoryRepository(this);
 
         initializeViews();
         setupFrequencySpinner();
+        loadInventorySuggestions();
         loadExistingSchedule();
         
         btnSaveSchedule.setOnClickListener(v -> saveSchedule());
@@ -49,6 +57,32 @@ public class ConfigureScheduleActivity extends AppCompatActivity {
         spinnerFrequency = findViewById(R.id.spinnerFrequency);
         layoutTimePickers = findViewById(R.id.layoutTimePickers);
         btnSaveSchedule = findViewById(R.id.btnSaveSchedule);
+    }
+
+    private void loadInventorySuggestions() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        inventoryRepository.getMedicines(userId, new InventoryRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<MedicineInventory> medicines) {
+                List<String> medicineNames = new ArrayList<>();
+                for (MedicineInventory med : medicines) {
+                    if (!medicineNames.contains(med.getName())) {
+                        medicineNames.add(med.getName());
+                    }
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    ConfigureScheduleActivity.this,
+                    android.R.layout.simple_dropdown_item_1line,
+                    medicineNames
+                );
+                etMedicationName.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(String error) {
+                // Just ignore errors for suggestions
+            }
+        });
     }
 
     private void setupFrequencySpinner() {
@@ -70,11 +104,16 @@ public class ConfigureScheduleActivity extends AppCompatActivity {
 
     private void updateTimePickers(int count) {
         layoutTimePickers.removeAllViews();
+        List<String> oldTimes = new ArrayList<>(selectedTimes);
         selectedTimes.clear();
         
         // Preserve existing times if possible, otherwise default
         for (int i = 0; i < count; i++) {
-            selectedTimes.add("08:00"); // Default
+            if (i < oldTimes.size()) {
+                selectedTimes.add(oldTimes.get(i));
+            } else {
+                selectedTimes.add("08:00"); // Default
+            }
             addTimePickerRow(i);
         }
     }
