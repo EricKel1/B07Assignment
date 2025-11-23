@@ -197,7 +197,16 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         // Determine enteredBy
         String enteredBy = "Child";
         if (!targetUserId.equals(currentUser.getUid())) {
-            enteredBy = "Parent";
+            // Check if we are in "Child Mode" via DeviceChooser (Parent logged in but acting as Child)
+            android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            String lastRole = prefs.getString("last_role", "");
+            String lastChildId = prefs.getString("last_child_id", "");
+            
+            if ("child".equals(lastRole) && targetUserId.equals(lastChildId)) {
+                enteredBy = "Child";
+            } else {
+                enteredBy = "Parent";
+            }
         }
 
         SymptomCheckIn checkIn = new SymptomCheckIn(
