@@ -23,7 +23,7 @@ import androidx.core.app.ActivityCompat;
 public class HomeActivity extends AppCompatActivity {
 
     private Button btnLogRescueInhaler, btnViewHistory, btnDailyCheckIn, btnViewSymptomHistory, btnViewPatterns, btnSignOut, btnSwitchProfile;
-    private Button btnEmergencyTriage, btnEnterPEF, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
+    private Button btnEmergencyTriage, btnEnterPEF, btnViewPEFHistory, btnViewIncidents, btnInhalerTechnique, btnMotivation, btnStatisticsReports;
     private Button btnInventory;
     private ImageButton btnNotifications;
     private TextView tvCurrentZone, tvZonePercentage, tvViewingChildNotice, tvMedicationSchedule;
@@ -206,6 +206,7 @@ public class HomeActivity extends AppCompatActivity {
         btnViewPatterns = findViewById(R.id.btnViewPatterns);
         btnEmergencyTriage = findViewById(R.id.btnEmergencyTriage);
         btnEnterPEF = findViewById(R.id.btnEnterPEF);
+        btnViewPEFHistory = findViewById(R.id.btnViewPEFHistory);
         btnViewIncidents = findViewById(R.id.btnViewIncidents);
         btnInhalerTechnique = findViewById(R.id.btnInhalerTechnique);
         btnMotivation = findViewById(R.id.btnMotivation);
@@ -286,6 +287,14 @@ public class HomeActivity extends AppCompatActivity {
 
         btnEnterPEF.setOnClickListener(v -> {
             Intent intent = new Intent(this, PEFEntryActivity.class);
+            if (dataOwnerId != null) {
+                intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
+            }
+            startActivity(intent);
+        });
+
+        btnViewPEFHistory.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PEFHistoryActivity.class);
             if (dataOwnerId != null) {
                 intent.putExtra("EXTRA_CHILD_ID", dataOwnerId);
             }

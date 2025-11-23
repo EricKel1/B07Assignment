@@ -430,6 +430,42 @@
                 </androidx.cardview.widget.CardView>
 
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/cardHistoryPEF"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="1dp"
+                    android:clickable="true"
+                    android:foreground="?attr/selectableItemBackground">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="Peak Flow History"
+                            android:textSize="15sp"
+                            android:textColor="#455A64"/>
+
+                        <TextView
+                            android:id="@+id/badgeHistoryPEF"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Shared with Provider"
+                            android:textSize="10sp"
+                            android:textColor="#455A64"
+                            android:background="@drawable/bg_shared_badge"
+                            android:layout_gravity="top|end"
+                            android:layout_margin="4dp"
+                            android:visibility="gone"/>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
                     android:id="@+id/cardHistoryIncidents"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
