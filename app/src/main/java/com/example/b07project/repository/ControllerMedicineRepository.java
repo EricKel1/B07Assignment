@@ -95,6 +95,42 @@ public class ControllerMedicineRepository {
             });
     }
 
+    public void getLogsSince(String userId, Date startDate, LoadCallback callback) {
+        db.collection(COLLECTION_NAME)
+            .whereEqualTo("userId", userId)
+            .whereGreaterThanOrEqualTo("timestamp", startDate)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                List<ControllerMedicineLog> logs = new ArrayList<>();
+                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                    ControllerMedicineLog log = new ControllerMedicineLog();
+                    log.setId(document.getId());
+                    log.setUserId(document.getString("userId"));
+                    log.setTimestamp(document.getDate("timestamp"));
+                    Long doseCountLong = document.getLong("doseCount");
+                    log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                    log.setScheduledTime(document.getDate("scheduledTime"));
+                    Boolean takenOnTime = document.getBoolean("takenOnTime");
+                    log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
+                    log.setTriggers((List<String>) document.get("triggers"));
+                    log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
+                    log.setPostDoseStatus(document.getString("postDoseStatus"));
+                    Long rating = document.getLong("breathRating");
+                    log.setBreathRating(rating != null ? rating.intValue() : 0);
+                    logs.add(log);
+                }
+                if (callback != null) {
+                    callback.onSuccess(logs);
+                }
+            })
+            .addOnFailureListener(e -> {
+                if (callback != null) {
+                    callback.onFailure(e.getMessage());
+                }
+            });
+    }
+
     public void getLogsForUserInDateRange(String userId, Date startDate, Date endDate, LoadCallback callback) {
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)

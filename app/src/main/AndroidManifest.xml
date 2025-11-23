@@ -75,6 +75,7 @@
         <activity
             android:name=".ParentDashboardActivity"
             android:exported="false" />
+        <activity android:name=".ConfigureScheduleActivity" />
 
         <service
             android:name=".services.MyFirebaseMessagingService"
