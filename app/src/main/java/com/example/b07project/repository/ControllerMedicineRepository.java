@@ -37,6 +37,8 @@ public class ControllerMedicineRepository {
         data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
         data.put("enteredBy", log.getEnteredBy());
+        data.put("postDoseStatus", log.getPostDoseStatus());
+        data.put("breathRating", log.getBreathRating());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -71,6 +73,9 @@ public class ControllerMedicineRepository {
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
                     log.setEnteredBy(document.getString("enteredBy"));
+                    log.setPostDoseStatus(document.getString("postDoseStatus"));
+                    Long rating = document.getLong("breathRating");
+                    log.setBreathRating(rating != null ? rating.intValue() : 0);
                     logs.add(log);
                 }
                 // Sort by timestamp in memory (newest first)
@@ -114,6 +119,9 @@ public class ControllerMedicineRepository {
                         log.setTriggers((List<String>) document.get("triggers"));
                         log.setNotes(document.getString("notes"));
                         log.setEnteredBy(document.getString("enteredBy"));
+                        log.setPostDoseStatus(document.getString("postDoseStatus"));
+                        Long rating = document.getLong("breathRating");
+                        log.setBreathRating(rating != null ? rating.intValue() : 0);
                         logs.add(log);
                     }
                 }
