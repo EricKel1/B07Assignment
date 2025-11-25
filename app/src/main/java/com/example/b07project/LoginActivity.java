@@ -48,6 +48,10 @@ public class LoginActivity extends AppCompatActivity implements LoginContract.Vi
         });
 
         tvForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void showForgotPasswordDialog() {
