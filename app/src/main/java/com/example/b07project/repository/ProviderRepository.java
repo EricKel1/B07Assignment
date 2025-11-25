@@ -71,28 +71,28 @@ public class ProviderRepository {
     /**
      * Fetch rescue inhaler logs for a child (if shared)
      */
-    public void getRescueInhalerLogs(String childId, int limitDays, RescueInhalerRepository.LoadCallback<List<com.example.b07project.models.RescueInhalerLog>> callback) {
-        new RescueInhalerRepository().getRescueLogsForProvider(childId, limitDays, callback);
+    public void getRescueInhalerLogs(String childId, RescueInhalerRepository.LoadCallback callback) {
+        new RescueInhalerRepository().getLogsForUser(childId, callback);
     }
 
     /**
      * Fetch symptom entries for a child (if shared)
      */
-    public void getSymptomEntries(String childId, int limitDays, SymptomCheckInRepository.LoadCallback<List<com.example.b07project.models.SymptomCheckIn>> callback) {
-        new SymptomCheckInRepository().getSymptomEntriesForProvider(childId, limitDays, callback);
+    public void getSymptomEntries(String childId, SymptomCheckInRepository.LoadCallback callback) {
+        new SymptomCheckInRepository().getEntriesForUser(childId, callback);
     }
 
     /**
      * Fetch PEF readings for a child (if shared)
      */
-    public void getPEFReadings(String childId, int limitDays, PEFRepository.LoadCallback<List<com.example.b07project.models.PEFReading>> callback) {
-        new PEFRepository().getPEFReadingsForProvider(childId, limitDays, callback);
+    public void getPEFReadings(String childId, PEFRepository.LoadCallback callback) {
+        new PEFRepository().getReadingsForUser(childId, callback);
     }
 
     /**
      * Fetch triage incidents for a child (if shared)
      */
-    public void getTriageIncidents(String childId, int limitDays, TriageRepository.LoadCallback<List<com.example.b07project.models.TriageSession>> callback) {
-        new TriageRepository().getTriageSessionsForProvider(childId, limitDays, callback);
+    public void getTriageIncidents(String childId, TriageRepository.LoadCallback callback) {
+        new TriageRepository().getSessionsForUser(childId, callback);
     }
 }
