@@ -83,7 +83,7 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
             PopupMenu popup = new PopupMenu(v.getContext(), holder.btnMenu);
             popup.getMenu().add("Edit Profile");
             popup.getMenu().add("Set Personal Best");
-            popup.getMenu().add("Medication Schedule");
+            // popup.getMenu().add("Medication Schedule"); // Removed
             popup.getMenu().add("Remove Child");
             
             popup.setOnMenuItemClickListener(item -> {
@@ -91,8 +91,6 @@ public class ChildAdapter extends RecyclerView.Adapter<ChildAdapter.ChildViewHol
                     listener.onEditProfile(name, id);
                 } else if (item.getTitle().equals("Set Personal Best")) {
                     listener.onSetPersonalBest(name, id);
-                } else if (item.getTitle().equals("Medication Schedule")) {
-                    listener.onSetMedicationSchedule(name, id);
                 } else if (item.getTitle().equals("Remove Child")) {
                     listener.onRemoveChild(name, id);
                 }
