@@ -40,7 +40,7 @@ public class ProviderPEFActivity extends AppCompatActivity {
     }
 
     private void loadPEFReadings() {
-        pefRepository.getReadingsForUser(childId, new PEFRepository.LoadCallback() {
+        pefRepository.getPEFReadingsForUser(childId, new PEFRepository.LoadCallback<List<PEFReading>>() {
             @Override
             public void onSuccess(List<PEFReading> readings) {
                 displayPEF(readings);
@@ -94,7 +94,7 @@ public class ProviderPEFActivity extends AppCompatActivity {
 
             // PEF Value
             TextView tvPEFValue = new TextView(this);
-            tvPEFValue.setText("PEF: " + reading.getPefValue() + " L/min");
+            tvPEFValue.setText("PEF: " + reading.getValue() + " L/min");
             tvPEFValue.setTextSize(16);
             tvPEFValue.setTypeface(null, android.graphics.Typeface.BOLD);
             tvPEFValue.setTextColor(0xFF1565C0);

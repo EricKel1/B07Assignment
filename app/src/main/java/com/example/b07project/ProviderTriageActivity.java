@@ -40,7 +40,7 @@ public class ProviderTriageActivity extends AppCompatActivity {
     }
 
     private void loadTriageSessions() {
-        triageRepository.getSessionsForUser(childId, new TriageRepository.LoadCallback() {
+        triageRepository.getTriageSessions(childId, new TriageRepository.LoadCallback<List<TriageSession>>() {
             @Override
             public void onSuccess(List<TriageSession> sessions) {
                 displayTriage(sessions);
@@ -89,8 +89,8 @@ public class ProviderTriageActivity extends AppCompatActivity {
 
             // Timestamp
             TextView tvTimestamp = new TextView(this);
-            tvTimestamp.setText(session.getTimestamp() != null ? 
-                    dateFormat.format(session.getTimestamp()) : "Unknown time");
+            tvTimestamp.setText(session.getStartTime() != null ? 
+                    dateFormat.format(session.getStartTime()) : "Unknown time");
             tvTimestamp.setTextSize(14);
             tvTimestamp.setTypeface(null, android.graphics.Typeface.BOLD);
             tvTimestamp.setTextColor(titleColor);
@@ -100,8 +100,8 @@ public class ProviderTriageActivity extends AppCompatActivity {
             TextView tvFlags = new TextView(this);
             StringBuilder flags = new StringBuilder("Flags: ");
             if (session.isCantSpeakFullSentences()) flags.append("Can't speak full sentences, ");
-            if (session.isChestPullingIn()) flags.append("Chest pulling in, ");
-            if (session.isBlueGrayLips()) flags.append("Blue/gray lips");
+            if (session.isChestPullingInRetractions()) flags.append("Chest pulling in, ");
+            if (session.isBlueGrayLipsNails()) flags.append("Blue/gray lips");
             
             String flagsStr = flags.toString();
             if (flagsStr.endsWith(", ")) flagsStr = flagsStr.substring(0, flagsStr.length() - 2);
@@ -117,7 +117,7 @@ public class ProviderTriageActivity extends AppCompatActivity {
             cardContent.addView(tvFlags);
 
             // Guidance given
-            String guidanceText = session.getGuidanceFollowed();
+            String guidanceText = session.getGuidanceShown();
             if (guidanceText != null && !guidanceText.isEmpty()) {
                 TextView tvGuidance = new TextView(this);
                 tvGuidance.setText("Guidance: " + guidanceText);
@@ -132,7 +132,7 @@ public class ProviderTriageActivity extends AppCompatActivity {
             }
 
             // Notes
-            String notes = session.getNotes();
+            String notes = session.getUserResponse();
             if (notes != null && !notes.isEmpty()) {
                 TextView tvNotes = new TextView(this);
                 tvNotes.setText("Notes: " + notes);

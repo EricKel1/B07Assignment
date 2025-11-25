@@ -88,7 +88,7 @@ public class ProviderRescueLogsActivity extends AppCompatActivity {
             tvTimestamp.setText(log.getTimestamp() != null ? 
                     dateFormat.format(log.getTimestamp()) : "Unknown time");
             tvTimestamp.setTextSize(14);
-            tvTimestamp.setTextStyle(android.graphics.Typeface.BOLD);
+            tvTimestamp.setTypeface(null, android.graphics.Typeface.BOLD);
             tvTimestamp.setTextColor(0xFF1565C0);
             cardContent.addView(tvTimestamp);
 

@@ -40,7 +40,7 @@ public class ProviderSymptomsActivity extends AppCompatActivity {
     }
 
     private void loadSymptomEntries() {
-        symptomRepository.getEntriesForUser(childId, new SymptomCheckInRepository.LoadCallback() {
+        symptomRepository.getCheckInsForUser(childId, new SymptomCheckInRepository.LoadCallback() {
             @Override
             public void onSuccess(List<SymptomCheckIn> entries) {
                 displaySymptoms(entries);
@@ -93,7 +93,9 @@ public class ProviderSymptomsActivity extends AppCompatActivity {
 
             // Night Waking
             TextView tvNightWaking = new TextView(this);
-            tvNightWaking.setText("Night Waking: " + (entry.isNightWaking() ? "Yes" : "No"));
+            List<String> symptoms = entry.getSymptoms();
+            boolean hasNightSymptoms = symptoms != null && symptoms.contains("nighttime symptoms");
+            tvNightWaking.setText("Night Waking: " + (hasNightSymptoms ? "Yes" : "No"));
             tvNightWaking.setTextSize(13);
             tvNightWaking.setTextColor(0xFF424242);
             LinearLayout.LayoutParams nightParams = new LinearLayout.LayoutParams(
@@ -103,9 +105,9 @@ public class ProviderSymptomsActivity extends AppCompatActivity {
             tvNightWaking.setLayoutParams(nightParams);
             cardContent.addView(tvNightWaking);
 
-            // Activity Limitation
+            // Activity Limitation - Check if symptom level is high
             TextView tvActivityLimit = new TextView(this);
-            tvActivityLimit.setText("Activity Limited: " + (entry.isActivityLimitation() ? "Yes" : "No"));
+            tvActivityLimit.setText("Activity Limited: " + (entry.getSymptomLevel() >= 3 ? "Yes" : "No"));
             tvActivityLimit.setTextSize(13);
             tvActivityLimit.setTextColor(0xFF424242);
             LinearLayout.LayoutParams activityParams = new LinearLayout.LayoutParams(
@@ -117,7 +119,9 @@ public class ProviderSymptomsActivity extends AppCompatActivity {
 
             // Cough/Wheeze
             TextView tvCoughWheeze = new TextView(this);
-            tvCoughWheeze.setText("Cough/Wheeze: " + (entry.isCoughWheeze() ? "Yes" : "No"));
+            List<String> syms = entry.getSymptoms();
+            boolean hasCoughWheeze = (syms != null && (syms.contains("wheezing") || syms.contains("coughing")));
+            tvCoughWheeze.setText("Cough/Wheeze: " + (hasCoughWheeze ? "Yes" : "No"));
             tvCoughWheeze.setTextSize(13);
             tvCoughWheeze.setTextColor(0xFF424242);
             LinearLayout.LayoutParams coughParams = new LinearLayout.LayoutParams(

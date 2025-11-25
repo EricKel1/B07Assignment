@@ -79,20 +79,20 @@ public class ProviderRepository {
      * Fetch symptom entries for a child (if shared)
      */
     public void getSymptomEntries(String childId, SymptomCheckInRepository.LoadCallback callback) {
-        new SymptomCheckInRepository().getEntriesForUser(childId, callback);
+        new SymptomCheckInRepository().getCheckInsForUser(childId, callback);
     }
 
     /**
      * Fetch PEF readings for a child (if shared)
      */
-    public void getPEFReadings(String childId, PEFRepository.LoadCallback callback) {
-        new PEFRepository().getReadingsForUser(childId, callback);
+    public void getPEFReadings(String childId, PEFRepository.LoadCallback<List<com.example.b07project.models.PEFReading>> callback) {
+        new PEFRepository().getPEFReadingsForUser(childId, callback);
     }
 
     /**
      * Fetch triage incidents for a child (if shared)
      */
-    public void getTriageIncidents(String childId, TriageRepository.LoadCallback callback) {
-        new TriageRepository().getSessionsForUser(childId, callback);
+    public void getTriageIncidents(String childId, TriageRepository.LoadCallback<List<com.example.b07project.models.TriageSession>> callback) {
+        new TriageRepository().getTriageSessions(childId, callback);
     }
 }
