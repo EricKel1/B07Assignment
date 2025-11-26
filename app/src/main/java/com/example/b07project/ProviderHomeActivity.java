@@ -2,6 +2,7 @@ package com.example.b07project;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +23,7 @@ public class ProviderHomeActivity extends AppCompatActivity {
     private List<Map<String, Object>> childrenList;
     private FirebaseFirestore db;
     private String providerId;
+    private TextView tvEmptyState;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +36,8 @@ public class ProviderHomeActivity extends AppCompatActivity {
 
         TextView tvWelcome = findViewById(R.id.tvWelcome);
         tvWelcome.setText("Provider Dashboard");
+
+        tvEmptyState = findViewById(R.id.tvEmptyState);
 
         rvChildren = findViewById(R.id.rvChildren);
         rvChildren.setLayoutManager(new LinearLayoutManager(this));
@@ -80,11 +84,26 @@ public class ProviderHomeActivity extends AppCompatActivity {
                                             childData.putAll(sharingData); // Include sharing settings
                                             childrenList.add(childData);
                                             adapter.notifyDataSetChanged();
+                                            updateEmptyState();
                                         }
                                     });
                         }
+                        // Show empty state if no children shared
+                        if (querySnapshot.isEmpty()) {
+                            updateEmptyState();
+                        }
                     }
                 });
+    }
+
+    private void updateEmptyState() {
+        if (childrenList.isEmpty()) {
+            tvEmptyState.setVisibility(View.VISIBLE);
+            rvChildren.setVisibility(View.GONE);
+        } else {
+            tvEmptyState.setVisibility(View.GONE);
+            rvChildren.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

@@ -48,6 +48,7 @@
         <activity android:name=".ProviderSymptomsActivity" />
         <activity android:name=".ProviderPEFActivity" />
         <activity android:name=".ProviderTriageActivity" />
+        <activity android:name=".ProviderReportActivity" />
         <activity android:name=".InventoryActivity" />
         <activity android:name=".NotificationCenterActivity" />
         <activity

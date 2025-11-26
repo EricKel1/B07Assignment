@@ -1,45 +1,166 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardChild"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
+    android:layout_margin="12dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
-    app:cardBackgroundColor="#E3F2FD">
+    app:strokeColor="#E0E0E0"
+    app:strokeWidth="1dp"
+    app:cardBackgroundColor="#F5F5F5">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Left side: Child info -->
         <TextView
             android:id="@+id/tvChildName"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Child Name"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#1565C0" />
+            android:textColor="#1976D2"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivPEFZone"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- DOB -->
         <TextView
             android:id="@+id/tvChildDob"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="DOB: N/A"
-            android:textSize="14sp"
-            android:textColor="#424242"
-            android:layout_marginTop="4dp" />
+            android:textSize="13sp"
+            android:textColor="#757575"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivPEFZone"
+            app:layout_constraintTop_toBottomOf="@id/tvChildName" />
 
-        <TextView
+        <!-- Triage badge (shown only if recent escalation) -->
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipTriageEscalation"
             android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔴 Recent triage escalation"
+            android:textSize="11sp"
+            style="@style/Widget.Material3.Chip.Filled"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvChildDob"
+            app:chipBackgroundColor="#FFCDD2" />
+
+        <!-- Helper text -->
+        <TextView
+            android:id="@+id/tvHelper"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Tap to view shared information"
             android:textSize="12sp"
-            android:textColor="#757575"
-            android:layout_marginTop="8dp" />
+            android:textColor="#9E9E9E"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivPEFZone"
+            app:layout_constraintTop_toBottomOf="@id/chipTriageEscalation" />
 
-    </LinearLayout>
+        <!-- Shared badge -->
+        <TextView
+            android:id="@+id/tvSharedBadge"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="✓ Shared with Provider"
+            android:textSize="11sp"
+            android:textColor="#2E7D32"
+            android:layout_marginTop="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivPEFZone"
+            app:layout_constraintTop_toBottomOf="@id/tvHelper" />
 
-</androidx.cardview.widget.CardView>
+        <!-- Right side: PEF Zone Indicator -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/ivPEFZone"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintVertical_bias="0">
+
+            <!-- Circular zone indicator -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardZoneCircle"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cardCornerRadius="40dp"
+                app:cardBackgroundColor="#E8F5E9"
+                app:strokeColor="#4CAF50"
+                app:strokeWidth="2dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="8dp">
+
+                    <TextView
+                        android:id="@+id/tvZoneLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's PEF"
+                        android:textSize="10sp"
+                        android:textColor="#2E7D32"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvPEFValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="400"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#1B5E20"
+                        android:layout_marginTop="2dp" />
+
+                    <TextView
+                        android:id="@+id/tvPEFUnit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="L/min"
+                        android:textSize="9sp"
+                        android:textColor="#2E7D32" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Zone status text below circle -->
+            <TextView
+                android:id="@+id/tvZoneStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="GREEN"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#2E7D32"
+                android:gravity="center"
+                android:layout_marginTop="4dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cardZoneCircle" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

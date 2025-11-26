@@ -135,6 +135,15 @@
     <string name="im_the_parent">I\'m %1$s (Parent)</string>
 
     <!-- Strings for Parent Dashboard Activity -->
-    <string name="parent_dashboard_title">This is the parent’s dashboard.</string>
+    <string name="parent_dashboard_title">This is the parent's dashboard.</string>
     <string name="log_out">Log Out</string>
+
+    <!-- Provider Report Date Range Options -->
+    <string-array name="report_date_ranges">
+        <item>Last 7 Days</item>
+        <item>Last 14 Days</item>
+        <item>Last 30 Days</item>
+        <item>Last 3 Months</item>
+        <item>Last 6 Months</item>
+    </string-array>
 </resources>
