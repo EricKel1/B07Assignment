@@ -67,6 +67,12 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
         startDate = cal.getTime();
         
         loadLogs();
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        BackToParent bh = new BackToParent();
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
     
     private void initializeViews() {
@@ -86,19 +92,27 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
     }
     
     private void loadLogs() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "Please sign in to view logs", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(this, "Please sign in to view logs", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            userId = currentUser.getUid();
         }
+        
+        android.util.Log.d("childparentdatalink", "RescueInhalerHistoryActivity: Loading logs for userId: " + userId);
         
         showLoading(true);
         
         boolean isController = rbControllerHistory.isChecked();
         
         if (isController) {
-            controllerRepository.getLogsForUser(currentUser.getUid(), new ControllerMedicineRepository.LoadCallback() {
+            controllerRepository.getLogsForUser(userId, new ControllerMedicineRepository.LoadCallback() {
                 @Override
                 public void onSuccess(List<ControllerMedicineLog> logs) {
                     showLoading(false);
@@ -115,7 +129,7 @@ public class RescueInhalerHistoryActivity extends AppCompatActivity {
                 }
             });
         } else {
-            rescueRepository.getLogsForUser(currentUser.getUid(), new RescueInhalerRepository.LoadCallback() {
+            rescueRepository.getLogsForUser(userId, new RescueInhalerRepository.LoadCallback() {
                 @Override
                 public void onSuccess(List<RescueInhalerLog> logs) {
                     showLoading(false);

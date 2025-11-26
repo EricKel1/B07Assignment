@@ -56,6 +56,13 @@ public class RescueInhalerLogAdapter extends RecyclerView.Adapter<RescueInhalerL
         } else {
             holder.tvNotes.setVisibility(View.GONE);
         }
+        
+        if (log.getEnteredBy() != null) {
+            holder.tvEnteredBy.setText("Entered by: " + log.getEnteredBy());
+            holder.tvEnteredBy.setVisibility(View.VISIBLE);
+        } else {
+            holder.tvEnteredBy.setVisibility(View.GONE);
+        }
     }
     
     @Override
@@ -64,7 +71,7 @@ public class RescueInhalerLogAdapter extends RecyclerView.Adapter<RescueInhalerL
     }
     
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvDoseCount, tvDate, tvTime, tvNotes;
+        TextView tvDoseCount, tvDate, tvTime, tvNotes, tvEnteredBy;
         
         ViewHolder(View itemView) {
             super(itemView);
@@ -72,6 +79,7 @@ public class RescueInhalerLogAdapter extends RecyclerView.Adapter<RescueInhalerL
             tvDate = itemView.findViewById(R.id.tvDate);
             tvTime = itemView.findViewById(R.id.tvTime);
             tvNotes = itemView.findViewById(R.id.tvNotes);
+            tvEnteredBy = itemView.findViewById(R.id.tvEnteredBy);
         }
     }
 }

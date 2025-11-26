@@ -33,6 +33,17 @@ public class MotivationActivity extends AppCompatActivity {
         android.util.Log.d("RescueInhalerService", "=== MOTIVATION ACTIVITY CREATED ===");
 
         motivationService = new MotivationService(this);
+        
+        // Check for child ID passed from HomeActivity
+        String childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        if (childId != null && !childId.isEmpty()) {
+            android.util.Log.d("MotivationActivity", "Using child ID: " + childId);
+            motivationService.setTargetUserId(childId);
+            // Hide settings button if viewing as parent (optional, but good practice)
+            // btnSettings.setVisibility(View.GONE); 
+        } else {
+            android.util.Log.d("MotivationActivity", "Using current user ID");
+        }
 
         initializeViews();
         setupRecyclerView();
@@ -44,6 +55,10 @@ public class MotivationActivity extends AppCompatActivity {
             android.util.Log.d("RescueInhalerService", "Cleanup complete, loading data...");
             loadData();
         });
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void initializeViews() {

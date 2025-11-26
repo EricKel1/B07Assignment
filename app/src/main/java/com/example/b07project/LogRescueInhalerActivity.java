@@ -26,6 +26,7 @@ import com.example.b07project.repository.RescueInhalerRepository;
 import com.example.b07project.services.MotivationService;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,27 +41,24 @@ import nl.dionsegijn.konfetti.core.emitter.EmitterConfig;
 import nl.dionsegijn.konfetti.core.models.Shape;
 import nl.dionsegijn.konfetti.core.models.Size;
 
-import android.widget.ArrayAdapter;
-import android.widget.Spinner;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import java.util.HashMap;
-import java.util.Map;
+import com.example.b07project.utils.NotificationHelper;
+
+import android.widget.RatingBar;
 
 public class LogRescueInhalerActivity extends AppCompatActivity {
     
-    private RadioGroup rgMedicineType;
-    private RadioButton rbRescue, rbController;
+    private RadioGroup rgMedicineType, rgPostDoseStatus;
+    private RadioButton rbRescue, rbController, rbBetter, rbSame, rbWorse;
     private ConstraintLayout controllerOnlySection;
     private TextView tvTimestamp, tvDoseCount, tvMessage, tvScheduledTime;
     private Button btnSelectTime;
     private CheckBox cbTakenOnTime;
     private CheckBox cbTriggerExercise, cbTriggerColdAir, cbTriggerPets, cbTriggerPollen;
     private CheckBox cbTriggerStress, cbTriggerSmoke, cbTriggerWeather, cbTriggerDust;
+    private RatingBar ratingBarBreath;
     private EditText etNotes;
     private Button btnDecrease, btnIncrease, btnSave;
     private ProgressBar progress;
-    private Spinner spUserSelector;
     
     private int doseCount = 1;
     private Date timestamp;
@@ -72,15 +70,16 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
     private SimpleDateFormat dateFormat;
     private SimpleDateFormat timeFormat;
     private KonfettiView konfettiView;
-    
-    private Map<String, String> childrenMap = new HashMap<>();
-    private List<String> childIds = new ArrayList<>();
-    
+    private String childId;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log_rescue_inhaler);
         
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        android.util.Log.d("childparentdatalink", "LogRescueInhalerActivity onCreate: EXTRA_CHILD_ID=" + childId);
+
         initializeViews();
         rescueRepository = new RescueInhalerRepository();
         controllerRepository = new ControllerMedicineRepository();
@@ -93,17 +92,19 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         motivationService.setBadgeEarnedCallback(badge -> {
             runOnUiThread(() -> showBadgeEarnedNotification(badge));
         });
-        
+
+
+        findViewById(R.id.btnBackLM).setOnClickListener(v -> finish());
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
         timestamp = new Date();
         updateTimestampDisplay();
         updateDoseCountDisplay();
         
         setupListeners();
-        fetchChildren();
     }
     
     private void initializeViews() {
-        spUserSelector = findViewById(R.id.spUserSelector);
         rgMedicineType = findViewById(R.id.rgMedicineType);
         rbRescue = findViewById(R.id.rbRescue);
         rbController = findViewById(R.id.rbController);
@@ -122,6 +123,13 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         cbTriggerSmoke = findViewById(R.id.cbTriggerSmoke);
         cbTriggerWeather = findViewById(R.id.cbTriggerWeather);
         cbTriggerDust = findViewById(R.id.cbTriggerDust);
+        
+        rgPostDoseStatus = findViewById(R.id.rgPostDoseStatus);
+        rbBetter = findViewById(R.id.rbBetter);
+        rbSame = findViewById(R.id.rbSame);
+        rbWorse = findViewById(R.id.rbWorse);
+        ratingBarBreath = findViewById(R.id.ratingBarBreath);
+        
         etNotes = findViewById(R.id.etNotes);
         btnDecrease = findViewById(R.id.btnDecrease);
         btnIncrease = findViewById(R.id.btnIncrease);
@@ -129,29 +137,6 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         progress = findViewById(R.id.progress);
     }
 
-    private void fetchChildren() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        FirebaseFirestore.getInstance().collection("children")
-                .whereEqualTo("parentId", userId)
-                .get()
-                .addOnSuccessListener(snapshots -> {
-                    List<String> names = new ArrayList<>();
-                    names.add("Log for: Me (Parent)");
-                    childIds.clear();
-                    childIds.add(null);
-                    
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        names.add("Log for: " + doc.getString("name"));
-                        childIds.add(doc.getId());
-                    }
-                    
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, names);
-                    adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                    spUserSelector.setAdapter(adapter);
-                });
-    }
-
-    
     private void setupListeners() {
         rgMedicineType.setOnCheckedChangeListener((group, checkedId) -> {
             boolean isController = checkedId == R.id.rbController;
@@ -181,12 +166,12 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         
         btnSave.setOnClickListener(v -> saveLog());
     }
-    
+
     private void showTimePickerDialog() {
         Calendar calendar = Calendar.getInstance();
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
-        
+
         TimePickerDialog timePickerDialog = new TimePickerDialog(
             this,
             (view, selectedHour, selectedMinute) -> {
@@ -196,7 +181,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 scheduledCal.set(Calendar.SECOND, 0);
                 scheduledTime = scheduledCal.getTime();
                 tvScheduledTime.setText(timeFormat.format(scheduledTime));
-                
+
                 // Auto-detect if taken on time (within 30 minutes)
                 long timeDiff = Math.abs(timestamp.getTime() - scheduledTime.getTime());
                 boolean onTime = timeDiff <= 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -208,7 +193,7 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         );
         timePickerDialog.show();
     }
-    
+
     private void updateTimestampDisplay() {
         tvTimestamp.setText(dateFormat.format(timestamp));
     }
@@ -238,27 +223,51 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         }
         
         boolean isController = rbController.isChecked();
-        
+
         if (isController && scheduledTime == null) {
             showMessage("Please select a scheduled time", true);
             return;
         }
-        
+
         showLoading(true);
         
         String notes = etNotes.getText().toString().trim();
         List<String> triggers = getSelectedTriggers();
         
-        // Get selected child ID
-        String selectedChildId = null;
-        if (spUserSelector.getAdapter() != null && !childIds.isEmpty()) {
-            selectedChildId = childIds.get(spUserSelector.getSelectedItemPosition());
+        // Get Post-Dose Status
+        String postDoseStatus = null;
+        if (rbBetter.isChecked()) postDoseStatus = "Better";
+        else if (rbSame.isChecked()) postDoseStatus = "Same";
+        else if (rbWorse.isChecked()) postDoseStatus = "Worse";
+        
+        int breathRating = (int) ratingBarBreath.getRating();
+        
+        // Determine target user ID (child if provided, else current user)
+        final String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentlink", "Saving log for targetUserId: " + targetUserId);
+        
+        // Determine enteredBy
+        String enteredBy = "Child";
+        if (!targetUserId.equals(currentUser.getUid())) {
+            // Check if we are in "Child Mode" via DeviceChooser (Parent logged in but acting as Child)
+            android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            String lastRole = prefs.getString("last_role", "");
+            String lastChildId = prefs.getString("last_child_id", "");
+            
+            if ("child".equals(lastRole) && targetUserId.equals(lastChildId)) {
+                enteredBy = "Child";
+            } else {
+                enteredBy = "Parent";
+            }
         }
-        final String childIdToUse = selectedChildId;
+        
+        // Inventory is managed by the parent (currentUser) for the child (childId)
+        // If childId is null (self-logging), we pass null as childId to inventory
+        final String inventoryChildId = childId;
 
         if (isController) {
             ControllerMedicineLog log = new ControllerMedicineLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 scheduledTime,
@@ -266,12 +275,15 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
                 triggers,
                 notes.isEmpty() ? null : notes
             );
+            log.setEnteredBy(enteredBy);
+            log.setPostDoseStatus(postDoseStatus);
+            log.setBreathRating(breathRating);
             
             controllerRepository.saveLog(log, new ControllerMedicineRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Controller", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Controller", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             // Continue with existing flow
@@ -306,18 +318,29 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
             });
         } else {
             RescueInhalerLog log = new RescueInhalerLog(
-                currentUser.getUid(),
+                targetUserId,
                 timestamp,
                 doseCount,
                 triggers,
                 notes.isEmpty() ? null : notes
             );
+            log.setEnteredBy(enteredBy);
+            log.setPostDoseStatus(postDoseStatus);
+            log.setBreathRating(breathRating);
             
             rescueRepository.saveLog(log, new RescueInhalerRepository.SaveCallback() {
                 @Override
                 public void onSuccess(String documentId) {
+                    // Check for "Worse After Dose" Alert
+                    if (rbWorse.isChecked()) {
+                        sendAlertWithChildName(targetUserId, "Worse After Dose Alert", "reported feeling worse after using rescue inhaler.");
+                    }
+
+                    // Check for Rapid Rescue Repeats (e.g., > 4 puffs in last 4 hours)
+                    checkRapidRescueRepeats(targetUserId, documentId, doseCount);
+
                     // Decrement inventory
-                    inventoryRepository.decrementDose(currentUser.getUid(), childIdToUse, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
+                    inventoryRepository.decrementDose(currentUser.getUid(), inventoryChildId, "Rescue", doseCount, new InventoryRepository.SaveCallback() {
                         @Override
                         public void onSuccess() {
                             showLoading(false);
@@ -445,5 +468,61 @@ public class LogRescueInhalerActivity extends AppCompatActivity {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(R.color.primary_blue));
         
         android.util.Log.d("ConfettiService", "Dialog shown");
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(LogRescueInhalerActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
+    }
+
+    private void checkRapidRescueRepeats(String targetUserId, String currentLogId, int currentDoseCount) {
+        Calendar cal = Calendar.getInstance();
+        Date now = cal.getTime();
+        cal.add(Calendar.HOUR_OF_DAY, -3);
+        Date startTime = cal.getTime();
+
+        rescueRepository.getLogsForUserInDateRange(targetUserId, startTime, now, new RescueInhalerRepository.LoadCallback() {
+            @Override
+            public void onSuccess(List<RescueInhalerLog> logs) {
+                int totalPuffs = 0;
+                boolean currentLogFound = false;
+                
+                for (RescueInhalerLog log : logs) {
+                    if (log.getId() != null && log.getId().equals(currentLogId)) {
+                        currentLogFound = true;
+                    }
+                    totalPuffs += log.getDoseCount();
+                }
+                
+                if (!currentLogFound) {
+                    totalPuffs += currentDoseCount;
+                }
+                
+                if (totalPuffs >= 3) { // Threshold: 3 or more puffs in 3 hours
+                     sendAlertWithChildName(targetUserId, "Rapid Rescue Usage Alert", "has used " + totalPuffs + " puffs of rescue inhaler in the last 3 hours.");
+                }
+            }
+
+            @Override
+            public void onFailure(String error) {
+                android.util.Log.e("RapidRescue", "Failed to fetch logs: " + error);
+            }
+        });
     }
 }

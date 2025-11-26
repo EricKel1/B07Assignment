@@ -43,6 +43,7 @@ public class SymptomCheckInRepository {
         data.put("triggers", checkIn.getTriggers());
         data.put("notes", checkIn.getNotes());
         data.put("timestamp", checkIn.getTimestamp());
+        data.put("enteredBy", checkIn.getEnteredBy());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -59,10 +60,12 @@ public class SymptomCheckInRepository {
     }
 
     public void getCheckInsForUser(String userId, LoadCallback callback) {
+        android.util.Log.d("childparentlink", "Repo: getCheckInsForUser for user: " + userId);
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
+                android.util.Log.d("childparentlink", "Repo: Found " + queryDocumentSnapshots.size() + " check-ins for user: " + userId);
                 List<SymptomCheckIn> checkIns = new ArrayList<>();
                 for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
                     SymptomCheckIn checkIn = new SymptomCheckIn();
@@ -75,6 +78,7 @@ public class SymptomCheckInRepository {
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
+                    checkIn.setEnteredBy(document.getString("enteredBy"));
                     checkIns.add(checkIn);
                 }
                 // Sort by date in memory (newest first)
@@ -88,6 +92,7 @@ public class SymptomCheckInRepository {
                 }
             })
             .addOnFailureListener(e -> {
+                android.util.Log.e("childparentlink", "Repo: Error fetching check-ins", e);
                 if (callback != null) {
                     callback.onFailure(e.getMessage());
                 }
@@ -130,6 +135,7 @@ public class SymptomCheckInRepository {
                     checkIn.setTriggers((List<String>) document.get("triggers"));
                     checkIn.setNotes(document.getString("notes"));
                     checkIn.setTimestamp(document.getDate("timestamp"));
+                    checkIn.setEnteredBy(document.getString("enteredBy"));
                     if (callback != null) {
                         callback.onResult(true, checkIn);
                     }

@@ -22,12 +22,15 @@ public class NotificationRepository {
     }
 
     public void saveNotification(AppNotification notification) {
+        android.util.Log.d("NotificationDebug", "Repo saving: userId=" + notification.getUserId() + ", title=" + notification.getTitle());
         db.collection(COLLECTION)
                 .add(notification)
                 .addOnSuccessListener(doc -> {
+                    android.util.Log.d("NotificationDebug", "Repo save SUCCESS. DocID=" + doc.getId());
                     notification.setId(doc.getId());
                     doc.update("id", doc.getId());
-                });
+                })
+                .addOnFailureListener(e -> android.util.Log.e("NotificationDebug", "Repo save FAILED: " + e.getMessage()));
     }
 
     public void getNotifications(String userId, LoadCallback callback) {

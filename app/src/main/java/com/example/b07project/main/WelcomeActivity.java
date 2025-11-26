@@ -13,6 +13,8 @@ import com.example.b07project.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import android.content.SharedPreferences;
+
 public class WelcomeActivity extends AppCompatActivity {
 
     @Override
@@ -27,6 +29,27 @@ public class WelcomeActivity extends AppCompatActivity {
                     String role = documentSnapshot.getString("role");
                     if ("provider".equals(role)) {
                         startActivity(new Intent(WelcomeActivity.this, ProviderHomeActivity.class));
+                    } else if ("parent".equals(role)) {
+                        // Check preferences for last selected profile
+                        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                        String lastRole = prefs.getString("last_role", null);
+                        
+                        if ("parent".equals(lastRole)) {
+                            startActivity(new Intent(WelcomeActivity.this, com.example.b07project.ParentDashboardActivity.class));
+                        } else if ("child".equals(lastRole)) {
+                            String childId = prefs.getString("last_child_id", null);
+                            String childName = prefs.getString("last_child_name", null);
+                            if (childId != null) {
+                                Intent intent = new Intent(WelcomeActivity.this, HomeActivity.class);
+                                intent.putExtra("EXTRA_CHILD_ID", childId);
+                                intent.putExtra("EXTRA_CHILD_NAME", childName);
+                                startActivity(intent);
+                            } else {
+                                startActivity(new Intent(WelcomeActivity.this, com.example.b07project.DeviceChooserActivity.class));
+                            }
+                        } else {
+                            startActivity(new Intent(WelcomeActivity.this, com.example.b07project.DeviceChooserActivity.class));
+                        }
                     } else {
                         startActivity(new Intent(WelcomeActivity.this, HomeActivity.class));
                     }

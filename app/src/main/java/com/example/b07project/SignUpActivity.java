@@ -36,6 +36,10 @@ public class SignUpActivity extends AppCompatActivity {
         
         initializeViews();
         setupListeners();
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
     
     private void initializeViews() {
@@ -81,6 +85,7 @@ public class SignUpActivity extends AppCompatActivity {
                         userData.put("userId", user.getUid());
                         userData.put("email", email);
                         userData.put("name", name);
+                        userData.put("role", "child");
                         userData.put("accountCreatedAt", creationTime);
                         
                         db.collection("users").document(user.getUid())
@@ -98,13 +103,10 @@ public class SignUpActivity extends AppCompatActivity {
                         
                         user.updateProfile(profileUpdates)
                             .addOnCompleteListener(profileTask -> {
-                                showLoading(false);
                                 if (profileTask.isSuccessful()) {
-                                    Toast.makeText(SignUpActivity.this, 
-                                        "Account created successfully!", 
-                                        Toast.LENGTH_SHORT).show();
-                                    navigateToHome();
+                                    sendVerificationEmail(user);
                                 } else {
+                                    showLoading(false);
                                     Toast.makeText(SignUpActivity.this, 
                                         "Account created, but profile update failed", 
                                         Toast.LENGTH_SHORT).show();
@@ -112,7 +114,7 @@ public class SignUpActivity extends AppCompatActivity {
                                 }
                             });
                     }
-                } else {
+                   } else {
                     showLoading(false);
                     String errorMessage = "Sign up failed";
                     if (task.getException() != null) {
@@ -132,6 +134,27 @@ public class SignUpActivity extends AppCompatActivity {
             });
     }
     
+    private void sendVerificationEmail(FirebaseUser user) {
+        if (user.getEmail() != null && user.getEmail().endsWith("@test.com")) {
+            showLoading(false);
+            Toast.makeText(SignUpActivity.this, "Test account created!", Toast.LENGTH_SHORT).show();
+            navigateToHome();
+            return;
+        }
+
+        user.sendEmailVerification()
+            .addOnCompleteListener(task -> {
+                showLoading(false);
+                if (task.isSuccessful()) {
+                    android.util.Log.d("SignUpActivity", "Verification email sent to " + user.getEmail());
+                    showSuccessDialog(user.getEmail());
+                } else {
+                    android.util.Log.e("SignUpActivity", "Failed to send verification email", task.getException());
+                    Toast.makeText(SignUpActivity.this, "Failed to send verification email.", Toast.LENGTH_SHORT).show();
+                }
+            });
+    }
+
     private boolean validateInput(String name, String email, String password, String confirmPassword) {
         if (TextUtils.isEmpty(name)) {
             showError("Please enter your name");
@@ -192,6 +215,31 @@ public class SignUpActivity extends AppCompatActivity {
         tvError.setVisibility(View.VISIBLE);
     }
     
+    private void showSuccessDialog(String email) {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_verification_sent, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        dialog.setCancelable(false);
+
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        tvMessage.setText("We've sent a verification link to " + email + ". Please check your inbox and verify your email before logging in.");
+
+        dialogView.findViewById(R.id.btnDialogLogin).setOnClickListener(v -> {
+            dialog.dismiss();
+            auth.signOut();
+            Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
+
+        dialog.show();
+    }
+
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -12,15 +13,19 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.b07project.main.WelcomeActivity;
 import com.example.b07project.models.ChildDraft;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class ConfirmFragment extends Fragment {
 
     private ParentSignupViewModel viewModel;
     private ProgressBar progressBar;
+    private Button btnCreateAccount;
 
     @Nullable
     @Override
@@ -33,6 +38,7 @@ public class ConfirmFragment extends Fragment {
         TextView tvParentEmail = view.findViewById(R.id.tvParentEmail);
         LinearLayout llChildrenList = view.findViewById(R.id.llChildrenList);
         progressBar = view.findViewById(R.id.progressBar);
+        btnCreateAccount = view.findViewById(R.id.btnCreateAccount);
 
         tvParentName.setText(viewModel.parentName.getValue());
         tvParentEmail.setText(viewModel.email.getValue());
@@ -50,7 +56,8 @@ public class ConfirmFragment extends Fragment {
             }
         }
 
-        view.findViewById(R.id.btnCreateAccount).setOnClickListener(v -> {
+        btnCreateAccount.setOnClickListener(v -> {
+            btnCreateAccount.setEnabled(false);
             viewModel.createParentAccount();
         });
 
@@ -65,25 +72,52 @@ public class ConfirmFragment extends Fragment {
 
     private void observeViewModel() {
         viewModel.getSignupState().observe(getViewLifecycleOwner(), state -> {
-            switch (state) {
-                case LOADING:
-                    progressBar.setVisibility(View.VISIBLE);
-                    break;
-                case SUCCESS:
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Account created successfully!", Toast.LENGTH_SHORT).show();
+            if (state == ParentSignupViewModel.SignupState.SUCCESS) {
+                progressBar.setVisibility(View.GONE);
+                Boolean bypassed = viewModel.getVerificationBypassed().getValue();
+                if (bypassed != null && bypassed) {
+                    // Bypass is active, go straight to the dashboard
+                    Toast.makeText(getContext(), "Test account created!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(getActivity(), DeviceChooserActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
-                    break;
-                case ERROR:
-                    progressBar.setVisibility(View.GONE);
-                    Toast.makeText(getContext(), "Error: " + viewModel.getErrorMessage().getValue(), Toast.LENGTH_LONG).show();
-                    break;
-                default:
-                    progressBar.setVisibility(View.GONE);
-                    break;
+                } else {
+                    // Normal flow, show verification dialog
+                    showSuccessDialog();
+                }
+            } else if (state == ParentSignupViewModel.SignupState.LOADING) {
+                progressBar.setVisibility(View.VISIBLE);
+                btnCreateAccount.setEnabled(false);
+            } else if (state == ParentSignupViewModel.SignupState.ERROR) {
+                progressBar.setVisibility(View.GONE);
+                btnCreateAccount.setEnabled(true);
+                Toast.makeText(getContext(), "Error: " + viewModel.getErrorMessage().getValue(), Toast.LENGTH_LONG).show();
+            } else {
+                progressBar.setVisibility(View.GONE);
+                btnCreateAccount.setEnabled(true);
             }
         });
+    }
+
+    private void showSuccessDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext());
+        View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_verification_sent, null);
+        builder.setView(dialogView);
+        android.app.AlertDialog dialog = builder.create();
+        dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        dialog.setCancelable(false);
+
+        TextView tvMessage = dialogView.findViewById(R.id.tvDialogMessage);
+        tvMessage.setText("We've sent a verification link to " + viewModel.email.getValue() + ". Please check your inbox and verify your email before logging in.");
+
+        dialogView.findViewById(R.id.btnDialogLogin).setOnClickListener(v -> {
+            dialog.dismiss();
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(getActivity(), LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+        });
+
+        dialog.show();
     }
 }

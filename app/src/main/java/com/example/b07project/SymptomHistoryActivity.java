@@ -1,7 +1,11 @@
 package com.example.b07project;
 
 import android.app.AlertDialog;
+import android.content.ContentValues;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -19,17 +23,23 @@ import com.example.b07project.adapters.SymptomCheckInAdapter;
 import com.example.b07project.models.SymptomCheckIn;
 import com.example.b07project.repository.SymptomCheckInRepository;
 import com.example.b07project.repository.TriggerAnalyticsRepository;
+import com.example.b07project.utils.ReportGenerator;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class SymptomHistoryActivity extends AppCompatActivity {
 
     private Button btnFilter;
+    private Button btnDownloadCsv;
+    private Button btnDownloadPdf;
     private RecyclerView recyclerView;
     private ProgressBar progress;
     private TextView tvEmptyMessage;
@@ -38,6 +48,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
     private SymptomCheckInRepository repository;
     
     private List<SymptomCheckIn> allCheckIns = new ArrayList<>();
+    private List<SymptomCheckIn> filteredCheckIns = new ArrayList<>();
     private List<String> selectedTriggers = new ArrayList<>();
     private List<String> selectedSymptoms = new ArrayList<>();
     private Date startDate;
@@ -54,6 +65,8 @@ public class SymptomHistoryActivity extends AppCompatActivity {
         repository = new SymptomCheckInRepository();
         
         btnFilter.setOnClickListener(v -> showFilterDialog());
+        btnDownloadCsv.setOnClickListener(v -> exportToCsv());
+        btnDownloadPdf.setOnClickListener(v -> exportToPdf());
         
         // Default to all time
         Calendar cal = Calendar.getInstance();
@@ -62,10 +75,18 @@ public class SymptomHistoryActivity extends AppCompatActivity {
         startDate = cal.getTime();
         
         loadCheckIns();
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        BackToParent bh = new BackToParent();
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void initializeViews() {
         btnFilter = findViewById(R.id.btnFilter);
+        btnDownloadCsv = findViewById(R.id.btnDownloadCsv);
+        btnDownloadPdf = findViewById(R.id.btnDownloadPdf);
         recyclerView = findViewById(R.id.recyclerView);
         progress = findViewById(R.id.progress);
         tvEmptyMessage = findViewById(R.id.tvEmptyMessage);
@@ -78,16 +99,24 @@ public class SymptomHistoryActivity extends AppCompatActivity {
     }
 
     private void loadCheckIns() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser == null) {
-            Toast.makeText(this, "Please sign in to view history", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+            android.util.Log.d("childparentlink", "SymptomHistoryActivity: Using EXTRA_CHILD_ID: " + userId);
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                Toast.makeText(this, "Please sign in to view history", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+            userId = currentUser.getUid();
+            android.util.Log.d("childparentlink", "SymptomHistoryActivity: Using current user ID: " + userId);
         }
 
         showLoading(true);
 
-        repository.getCheckInsForUser(currentUser.getUid(), new SymptomCheckInRepository.LoadCallback() {
+        repository.getCheckInsForUser(userId, new SymptomCheckInRepository.LoadCallback() {
             @Override
             public void onSuccess(List<SymptomCheckIn> checkIns) {
                 showLoading(false);
@@ -116,7 +145,7 @@ public class SymptomHistoryActivity extends AppCompatActivity {
     }
     
     private void applyFilters() {
-        List<SymptomCheckIn> filteredCheckIns = new ArrayList<>();
+        filteredCheckIns.clear();
         
         for (SymptomCheckIn checkIn : allCheckIns) {
             // Date filter
@@ -267,5 +296,79 @@ public class SymptomHistoryActivity extends AppCompatActivity {
             })
             .setNeutralButton("Cancel", null)
             .show();
+    }
+    
+    private void exportToCsv() {
+        if (filteredCheckIns.isEmpty()) {
+            Toast.makeText(this, "No records to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("Date,Time,Symptom Level,Symptoms,Triggers,Notes\n");
+        
+        SimpleDateFormat dateFmt = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat timeFmt = new SimpleDateFormat("HH:mm", Locale.getDefault());
+
+        for (SymptomCheckIn checkIn : filteredCheckIns) {
+            if (checkIn.getDate() == null) continue;
+            
+            csv.append(dateFmt.format(checkIn.getDate())).append(",");
+            csv.append(timeFmt.format(checkIn.getDate())).append(",");
+            csv.append(checkIn.getSymptomLevel()).append(",");
+            
+            String symptoms = checkIn.getSymptoms() != null ? TextUtils.join(";", checkIn.getSymptoms()) : "";
+            csv.append("\"").append(symptoms.replace("\"", "\"\"")).append("\",");
+            
+            String triggers = checkIn.getTriggers() != null ? TextUtils.join(";", checkIn.getTriggers()) : "";
+            csv.append("\"").append(triggers.replace("\"", "\"\"")).append("\",");
+            
+            String notes = checkIn.getNotes() != null ? checkIn.getNotes() : "";
+            csv.append("\"").append(notes.replace("\"", "\"\"")).append("\"\n");
+        }
+
+        saveCsvFile(csv.toString());
+    }
+
+    private void saveCsvFile(String csvContent) {
+        String fileName = "SymptomHistory_" + System.currentTimeMillis() + ".csv";
+        
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                values.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+                values.put(MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS);
+
+                Uri uri = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri != null) {
+                    try (OutputStream out = getContentResolver().openOutputStream(uri)) {
+                        out.write(csvContent.getBytes());
+                    }
+                    Toast.makeText(this, "Saved to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+                }
+            } else {
+                java.io.File path = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS);
+                java.io.File file = new java.io.File(path, fileName);
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                    fos.write(csvContent.getBytes());
+                }
+                Toast.makeText(this, "Saved to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Error saving CSV: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+    
+    private void exportToPdf() {
+        if (filteredCheckIns.isEmpty()) {
+            Toast.makeText(this, "No records to export", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        Toast.makeText(this, "Generating PDF...", Toast.LENGTH_SHORT).show();
+        ReportGenerator generator = new ReportGenerator(this);
+        generator.generateSymptomLogPdf(filteredCheckIns);
     }
 }

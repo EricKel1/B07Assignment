@@ -25,6 +25,14 @@ public class StatisticsReportsActivity extends AppCompatActivity {
 
         initializeViews();
         setupViewPager();
+
+        BackToParent bh = new BackToParent();
+        findViewById(R.id.btnBack3).setOnClickListener(v -> finish());
+
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTopColored("#2596be");
     }
 
     private void initializeViews() {
@@ -33,7 +41,8 @@ public class StatisticsReportsActivity extends AppCompatActivity {
     }
 
     private void setupViewPager() {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(this);
+        String childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+        ViewPagerAdapter adapter = new ViewPagerAdapter(this, childId);
         viewPager.setAdapter(adapter);
 
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
@@ -49,9 +58,11 @@ public class StatisticsReportsActivity extends AppCompatActivity {
     }
 
     private static class ViewPagerAdapter extends FragmentStateAdapter {
+        private final String childId;
 
-        public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity) {
+        public ViewPagerAdapter(@NonNull FragmentActivity fragmentActivity, String childId) {
             super(fragmentActivity);
+            this.childId = childId;
         }
 
         @NonNull
@@ -59,11 +70,11 @@ public class StatisticsReportsActivity extends AppCompatActivity {
         public Fragment createFragment(int position) {
             switch (position) {
                 case 0:
-                    return new StatisticsFragment();
+                    return StatisticsFragment.newInstance(childId);
                 case 1:
-                    return new ReportsFragment();
+                    return ReportsFragment.newInstance(childId);
                 default:
-                    return new StatisticsFragment();
+                    return StatisticsFragment.newInstance(childId);
             }
         }
 

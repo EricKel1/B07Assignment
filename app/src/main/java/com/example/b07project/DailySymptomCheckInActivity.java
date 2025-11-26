@@ -16,6 +16,7 @@ import com.example.b07project.repository.SymptomCheckInRepository;
 import com.google.android.material.slider.Slider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import com.example.b07project.utils.NotificationHelper;
 
 public class DailySymptomCheckInActivity extends AppCompatActivity {
 
@@ -38,11 +41,14 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
     private Date todayDate;
     private SymptomCheckInRepository repository;
     private SimpleDateFormat dateFormat;
+    private String childId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_daily_symptom_checkin);
+
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
 
         initializeViews();
         repository = new SymptomCheckInRepository();
@@ -59,6 +65,14 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
 
         setupListeners();
         checkForExistingCheckIn();
+
+        BackToParent bh = new BackToParent();
+        findViewById(R.id.btnBack5).setOnClickListener(v ->finish());
+
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void initializeViews() {
@@ -121,8 +135,10 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
+        String targetUserId = (childId != null) ? childId : currentUser.getUid();
+
         showLoading(true);
-        repository.checkIfCheckInExistsForDate(currentUser.getUid(), todayDate,
+        repository.checkIfCheckInExistsForDate(targetUserId, todayDate,
             new SymptomCheckInRepository.CheckInExistsCallback() {
                 @Override
                 public void onResult(boolean exists, SymptomCheckIn existingCheckIn) {
@@ -178,13 +194,31 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
 
         showLoading(true);
 
+        String targetUserId = (childId != null) ? childId : currentUser.getUid();
+        android.util.Log.d("childparentlink", "DailySymptomCheckInActivity: Saving check-in for targetUserId: " + targetUserId);
+
         int symptomLevel = (int) sliderSymptomLevel.getValue();
         List<String> symptoms = getSelectedSymptoms();
         List<String> triggers = getSelectedTriggers();
         String notes = etNotes.getText().toString().trim();
+        
+        // Determine enteredBy
+        String enteredBy = "Child";
+        if (!targetUserId.equals(currentUser.getUid())) {
+            // Check if we are in "Child Mode" via DeviceChooser (Parent logged in but acting as Child)
+            android.content.SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+            String lastRole = prefs.getString("last_role", "");
+            String lastChildId = prefs.getString("last_child_id", "");
+            
+            if ("child".equals(lastRole) && targetUserId.equals(lastChildId)) {
+                enteredBy = "Child";
+            } else {
+                enteredBy = "Parent";
+            }
+        }
 
         SymptomCheckIn checkIn = new SymptomCheckIn(
-            currentUser.getUid(),
+            targetUserId,
             todayDate,
             symptomLevel,
             symptoms,
@@ -192,10 +226,16 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
             notes.isEmpty() ? null : notes,
             new Date()
         );
+        checkIn.setEnteredBy(enteredBy);
 
         repository.saveCheckIn(checkIn, new SymptomCheckInRepository.SaveCallback() {
             @Override
             public void onSuccess(String documentId) {
+                // Check for Triage Escalation
+                if (symptomLevel >= 4) {
+                    sendAlertWithChildName(targetUserId, "Triage Escalation Alert", "reported severe symptoms (Level " + symptomLevel + "). Please check on them immediately.");
+                }
+
                 showLoading(false);
                 Toast.makeText(DailySymptomCheckInActivity.this,
                     "Symptom check-in saved successfully!",
@@ -209,6 +249,27 @@ public class DailySymptomCheckInActivity extends AppCompatActivity {
                 showMessage("Failed to save check-in: " + error, true);
             }
         });
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(DailySymptomCheckInActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 
     private List<String> getSelectedSymptoms() {

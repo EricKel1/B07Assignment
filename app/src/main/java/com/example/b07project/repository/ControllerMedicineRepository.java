@@ -36,6 +36,9 @@ public class ControllerMedicineRepository {
         data.put("takenOnTime", log.isTakenOnTime());
         data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
+        data.put("enteredBy", log.getEnteredBy());
+        data.put("postDoseStatus", log.getPostDoseStatus());
+        data.put("breathRating", log.getBreathRating());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -69,6 +72,10 @@ public class ControllerMedicineRepository {
                     log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
+                    log.setPostDoseStatus(document.getString("postDoseStatus"));
+                    Long rating = document.getLong("breathRating");
+                    log.setBreathRating(rating != null ? rating.intValue() : 0);
                     logs.add(log);
                 }
                 // Sort by timestamp in memory (newest first)
@@ -77,6 +84,42 @@ public class ControllerMedicineRepository {
                     if (b.getTimestamp() == null) return -1;
                     return b.getTimestamp().compareTo(a.getTimestamp());
                 });
+                if (callback != null) {
+                    callback.onSuccess(logs);
+                }
+            })
+            .addOnFailureListener(e -> {
+                if (callback != null) {
+                    callback.onFailure(e.getMessage());
+                }
+            });
+    }
+
+    public void getLogsSince(String userId, Date startDate, LoadCallback callback) {
+        db.collection(COLLECTION_NAME)
+            .whereEqualTo("userId", userId)
+            .whereGreaterThanOrEqualTo("timestamp", startDate)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                List<ControllerMedicineLog> logs = new ArrayList<>();
+                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                    ControllerMedicineLog log = new ControllerMedicineLog();
+                    log.setId(document.getId());
+                    log.setUserId(document.getString("userId"));
+                    log.setTimestamp(document.getDate("timestamp"));
+                    Long doseCountLong = document.getLong("doseCount");
+                    log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                    log.setScheduledTime(document.getDate("scheduledTime"));
+                    Boolean takenOnTime = document.getBoolean("takenOnTime");
+                    log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
+                    log.setTriggers((List<String>) document.get("triggers"));
+                    log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
+                    log.setPostDoseStatus(document.getString("postDoseStatus"));
+                    Long rating = document.getLong("breathRating");
+                    log.setBreathRating(rating != null ? rating.intValue() : 0);
+                    logs.add(log);
+                }
                 if (callback != null) {
                     callback.onSuccess(logs);
                 }
@@ -111,6 +154,10 @@ public class ControllerMedicineRepository {
                         log.setTakenOnTime(takenOnTime != null ? takenOnTime : false);
                         log.setTriggers((List<String>) document.get("triggers"));
                         log.setNotes(document.getString("notes"));
+                        log.setEnteredBy(document.getString("enteredBy"));
+                        log.setPostDoseStatus(document.getString("postDoseStatus"));
+                        Long rating = document.getLong("breathRating");
+                        log.setBreathRating(rating != null ? rating.intValue() : 0);
                         logs.add(log);
                     }
                 }

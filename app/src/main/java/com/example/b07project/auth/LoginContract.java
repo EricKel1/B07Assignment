@@ -7,6 +7,7 @@ public interface LoginContract {
         void navigateToHome();
         void navigateToProviderHome();
         void navigateToDeviceChooser();
+        void showEmailNotVerifiedDialog();
         String getEmailInput();
         String getPasswordInput();
     }

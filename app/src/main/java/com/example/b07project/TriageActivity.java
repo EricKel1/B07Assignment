@@ -23,6 +23,8 @@ import com.example.b07project.repository.PEFRepository;
 import com.example.b07project.repository.TriageRepository;
 import com.example.b07project.utils.NotificationHelper;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -45,17 +47,24 @@ public class TriageActivity extends AppCompatActivity {
     private CountDownTimer countDownTimer;
     private ObjectAnimator breathingAnimator;
     private static final long TIMER_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+    private String childId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_triage);
 
+        childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+
         triageRepository = new TriageRepository();
         pefRepository = new PEFRepository();
         
         initializeViews();
         setupListeners();
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void initializeViews() {
@@ -93,6 +102,7 @@ public class TriageActivity extends AppCompatActivity {
 
     private void performTriage() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String targetUserId = (childId != null) ? childId : userId;
         
         // Gather data
         boolean cantSpeak = cbCantSpeak.isChecked();
@@ -107,7 +117,7 @@ public class TriageActivity extends AppCompatActivity {
         
         // Create session
         currentSession = new TriageSession();
-        currentSession.setUserId(userId);
+        currentSession.setUserId(targetUserId);
         currentSession.setStartTime(new Date());
         currentSession.setCantSpeakFullSentences(cantSpeak);
         currentSession.setChestPullingInRetractions(chestRetractions);
@@ -117,7 +127,7 @@ public class TriageActivity extends AppCompatActivity {
         
         // Get zone if PEF provided
         if (currentPEF != null) {
-            pefRepository.getPersonalBest(userId, new PEFRepository.LoadCallback<PersonalBest>() {
+            pefRepository.getPersonalBest(targetUserId, new PEFRepository.LoadCallback<PersonalBest>() {
                 @Override
                 public void onSuccess(PersonalBest pb) {
                     if (pb != null) {
@@ -156,12 +166,9 @@ public class TriageActivity extends AppCompatActivity {
                 currentSession.setId(documentId);
                 
                 // Send Parent Alert
-                String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
-                if (userName == null || userName.isEmpty()) userName = "User";
-                
                 String alertTitle = "Triage Started";
-                String alertMessage = userName + " started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
-                NotificationHelper.sendAlert(TriageActivity.this, currentSession.getUserId(), alertTitle, alertMessage);
+                String alertMessageSuffix = "started a triage session. Status: " + currentSession.getDecision().replace("_", " ").toUpperCase();
+                sendAlertWithChildName(currentSession.getUserId(), alertTitle, alertMessageSuffix);
             }
 
             @Override
@@ -343,15 +350,33 @@ public class TriageActivity extends AppCompatActivity {
         triageRepository.saveTriageSession(currentSession, null);
         
         // Send Parent Alert
-        String userName = FirebaseAuth.getInstance().getCurrentUser().getDisplayName();
-        if (userName == null || userName.isEmpty()) userName = "User";
-        
-        NotificationHelper.sendAlert(this, currentSession.getUserId(), "Triage Escalation", userName + " requested emergency assistance during triage.");
+        sendAlertWithChildName(currentSession.getUserId(), "Triage Escalation", "requested emergency assistance during triage.");
         
         // Show emergency guidance
         showEmergencyDecision();
         
         Toast.makeText(this, "Escalating to emergency guidance", Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendAlertWithChildName(String targetUserId, String title, String messageSuffix) {
+        FirebaseFirestore.getInstance().collection("users").document(targetUserId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                String name = documentSnapshot.getString("name");
+                if (name == null || name.isEmpty()) {
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    if (user != null && user.getUid().equals(targetUserId) && user.getDisplayName() != null) {
+                        name = user.getDisplayName();
+                    }
+                }
+                if (name == null || name.isEmpty()) {
+                    name = "Child";
+                }
+                
+                NotificationHelper.sendAlert(TriageActivity.this, targetUserId, title, name + " " + messageSuffix);
+            })
+            .addOnFailureListener(e -> {
+                NotificationHelper.sendAlert(TriageActivity.this, targetUserId, title, "Child " + messageSuffix);
+            });
     }
 
     @Override

@@ -137,6 +137,7 @@ public class PEFRepository {
     }
 
     public void getLastPEFReading(String userId, LoadCallback<PEFReading> callback) {
+        android.util.Log.d("childparentlink", "Repo: getLastPEFReading for user: " + userId);
         db.collection(PEF_COLLECTION)
             .whereEqualTo("userId", userId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
@@ -144,6 +145,7 @@ public class PEFRepository {
             .get()
             .addOnSuccessListener(snapshots -> {
                 if (!snapshots.isEmpty()) {
+                    android.util.Log.d("childparentlink", "Repo: Found PEF reading for user: " + userId);
                     QueryDocumentSnapshot doc = (QueryDocumentSnapshot) snapshots.getDocuments().get(0);
                     PEFReading reading = new PEFReading();
                     reading.setId(doc.getId());
@@ -158,12 +160,14 @@ public class PEFRepository {
                         callback.onSuccess(reading);
                     }
                 } else {
+                    android.util.Log.d("childparentlink", "Repo: No PEF reading found for user: " + userId);
                     if (callback != null) {
                         callback.onSuccess(null);
                     }
                 }
             })
             .addOnFailureListener(e -> {
+                android.util.Log.e("childparentlink", "Repo: Error fetching PEF reading", e);
                 if (callback != null) {
                     callback.onFailure(e.getMessage());
                 }

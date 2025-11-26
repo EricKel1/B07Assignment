@@ -90,10 +90,12 @@ public class TriageRepository {
 
     // Get triage sessions for user
     public void getTriageSessions(String userId, LoadCallback<List<TriageSession>> callback) {
+        android.util.Log.d("childparentlink", "Repo: getTriageSessions for user: " + userId);
         db.collection(TRIAGE_COLLECTION)
             .whereEqualTo("userId", userId)
             .get()
             .addOnSuccessListener(snapshots -> {
+                android.util.Log.d("childparentlink", "Repo: Found " + snapshots.size() + " triage sessions for user: " + userId);
                 List<TriageSession> sessions = new ArrayList<>();
                 for (QueryDocumentSnapshot doc : snapshots) {
                     TriageSession session = documentToTriageSession(doc);
@@ -111,6 +113,7 @@ public class TriageRepository {
                 }
             })
             .addOnFailureListener(e -> {
+                android.util.Log.e("childparentlink", "Repo: Error fetching triage sessions", e);
                 if (callback != null) {
                     callback.onFailure(e.getMessage());
                 }

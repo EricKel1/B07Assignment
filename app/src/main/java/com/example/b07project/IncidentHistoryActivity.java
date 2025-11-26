@@ -12,6 +12,7 @@ import com.example.b07project.adapters.IncidentAdapter;
 import com.example.b07project.models.TriageSession;
 import com.example.b07project.repository.TriageRepository;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +34,12 @@ public class IncidentHistoryActivity extends AppCompatActivity {
         
         initializeViews();
         loadIncidents();
+        //To move the top elements under the phone's nav bar so buttons and whatnot
+        //can be pressed
+        BackToParent bh = new BackToParent();
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        TopMover mover = new TopMover(this);
+        mover.adjustTop();
     }
 
     private void initializeViews() {
@@ -50,7 +57,20 @@ public class IncidentHistoryActivity extends AppCompatActivity {
         rvIncidents.setVisibility(View.GONE);
         tvNoIncidents.setVisibility(View.GONE);
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String userId;
+        if (getIntent().hasExtra("EXTRA_CHILD_ID")) {
+            userId = getIntent().getStringExtra("EXTRA_CHILD_ID");
+            android.util.Log.d("childparentlink", "IncidentHistoryActivity: Using EXTRA_CHILD_ID: " + userId);
+        } else {
+            FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+            if (currentUser == null) {
+                tvNoIncidents.setVisibility(View.VISIBLE);
+                tvNoIncidents.setText("Please sign in to view incidents");
+                return;
+            }
+            userId = currentUser.getUid();
+            android.util.Log.d("childparentlink", "IncidentHistoryActivity: Using current user ID: " + userId);
+        }
 
         triageRepository.getTriageSessions(userId, new TriageRepository.LoadCallback<List<TriageSession>>() {
             @Override

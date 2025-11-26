@@ -35,6 +35,9 @@ public class RescueInhalerRepository {
         data.put("doseCount", log.getDoseCount());
         data.put("triggers", log.getTriggers());
         data.put("notes", log.getNotes());
+        data.put("enteredBy", log.getEnteredBy());
+        data.put("postDoseStatus", log.getPostDoseStatus());
+        data.put("breathRating", log.getBreathRating());
 
         db.collection(COLLECTION_NAME)
             .add(data)
@@ -65,6 +68,10 @@ public class RescueInhalerRepository {
                     log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
                     log.setTriggers((List<String>) document.get("triggers"));
                     log.setNotes(document.getString("notes"));
+                    log.setEnteredBy(document.getString("enteredBy"));
+                    log.setPostDoseStatus(document.getString("postDoseStatus"));
+                    Long rating = document.getLong("breathRating");
+                    log.setBreathRating(rating != null ? rating.intValue() : 0);
                     logs.add(log);
                 }
                 // Sort by timestamp in memory (newest first)
@@ -85,30 +92,43 @@ public class RescueInhalerRepository {
     }
 
     public void getLogsForUserInDateRange(String userId, Date startDate, Date endDate, LoadCallback callback) {
+        android.util.Log.d("childparentlink", "Repo: getLogsForUserInDateRange for user: " + userId);
         db.collection(COLLECTION_NAME)
             .whereEqualTo("userId", userId)
-            .whereGreaterThanOrEqualTo("timestamp", startDate)
-            .whereLessThanOrEqualTo("timestamp", endDate)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
+                android.util.Log.d("childparentlink", "Repo: Found " + queryDocumentSnapshots.size() + " logs for user: " + userId);
                 List<RescueInhalerLog> logs = new ArrayList<>();
                 for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    RescueInhalerLog log = new RescueInhalerLog();
-                    log.setId(document.getId());
-                    log.setUserId(document.getString("userId"));
-                    log.setTimestamp(document.getDate("timestamp"));
-                    Long doseCountLong = document.getLong("doseCount");
-                    log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
-                    log.setTriggers((List<String>) document.get("triggers"));
-                    log.setNotes(document.getString("notes"));
-                    logs.add(log);
+                    Date timestamp = document.getDate("timestamp");
+                    if (timestamp != null && !timestamp.before(startDate) && !timestamp.after(endDate)) {
+                        RescueInhalerLog log = new RescueInhalerLog();
+                        log.setId(document.getId());
+                        log.setUserId(document.getString("userId"));
+                        log.setTimestamp(timestamp);
+                        Long doseCountLong = document.getLong("doseCount");
+                        log.setDoseCount(doseCountLong != null ? doseCountLong.intValue() : 0);
+                        log.setTriggers((List<String>) document.get("triggers"));
+                        log.setNotes(document.getString("notes"));
+                        log.setEnteredBy(document.getString("enteredBy"));
+                        log.setPostDoseStatus(document.getString("postDoseStatus"));
+                        Long rating = document.getLong("breathRating");
+                        log.setBreathRating(rating != null ? rating.intValue() : 0);
+                        logs.add(log);
+                    }
                 }
+                // Sort by timestamp in memory (newest first)
+                logs.sort((a, b) -> {
+                    if (a.getTimestamp() == null) return 1;
+                    if (b.getTimestamp() == null) return -1;
+                    return b.getTimestamp().compareTo(a.getTimestamp());
+                });
                 if (callback != null) {
                     callback.onSuccess(logs);
                 }
             })
             .addOnFailureListener(e -> {
+                android.util.Log.e("childparentlink", "Repo: Error fetching logs", e);
                 if (callback != null) {
                     callback.onFailure(e.getMessage());
                 }

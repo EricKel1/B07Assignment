@@ -4,7 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -110,5 +113,86 @@ public class ProviderHomeActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadLinkedChildren();
+    }
+
+    private void loadPatients() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
+
+        progressBar.setVisibility(View.VISIBLE);
+        tvNoPatients.setVisibility(View.GONE);
+
+        db.collection("users").document(user.getUid()).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        List<String> childIds = (List<String>) documentSnapshot.get("childIds");
+                        if (childIds != null && !childIds.isEmpty()) {
+                            fetchChildrenDetails(childIds);
+                        } else {
+                            progressBar.setVisibility(View.GONE);
+                            tvNoPatients.setVisibility(View.VISIBLE);
+                        }
+                    } else {
+                        progressBar.setVisibility(View.GONE);
+                        tvNoPatients.setVisibility(View.VISIBLE);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    progressBar.setVisibility(View.GONE);
+                    Toast.makeText(this, "Failed to load profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void fetchChildrenDetails(List<String> childIds) {
+        patientsList.clear();
+        adapter.notifyDataSetChanged(); // Clear UI immediately
+        
+        // Simple counter to know when all are fetched
+        final int[] completedCount = {0};
+        final int total = childIds.size();
+
+        for (String childId : childIds) {
+            db.collection("children").document(childId).get()
+                    .addOnSuccessListener(documentSnapshot -> {
+                        if (documentSnapshot.exists()) {
+                            Map<String, Object> patient = new HashMap<>();
+                            patient.put("id", documentSnapshot.getId());
+                            patient.put("name", documentSnapshot.getString("name"));
+                            // Add other fields if needed
+                            patientsList.add(patient);
+                        }
+                        checkLoadComplete(++completedCount[0], total);
+                    })
+                    .addOnFailureListener(e -> {
+                        checkLoadComplete(++completedCount[0], total);
+                    });
+        }
+    }
+
+    private void checkLoadComplete(int current, int total) {
+        if (current == total) {
+            progressBar.setVisibility(View.GONE);
+            if (patientsList.isEmpty()) {
+                tvNoPatients.setVisibility(View.VISIBLE);
+            } else {
+                adapter.notifyDataSetChanged();
+            }
+        }
+    }
+
+    private void onPatientClick(Map<String, Object> patient) {
+        String childId = (String) patient.get("id");
+        String childName = (String) patient.get("name");
+        
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.putExtra("EXTRA_CHILD_ID", childId);
+        intent.putExtra("EXTRA_CHILD_NAME", childName);
+        startActivity(intent);
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadPatients(); // Refresh list when returning from adding a patient
     }
 }

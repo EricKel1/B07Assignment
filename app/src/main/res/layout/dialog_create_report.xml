@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Create Report"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select Time Period"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="8dp"/>
+
+    <Spinner
+        android:id="@+id/spinnerTimePeriod"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/edit_text_background"
+        android:layout_marginBottom="16dp"/>
+
+    <LinearLayout
+        android:id="@+id/layoutCustomDates"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        android:layout_marginBottom="24dp">
+
+        <Button
+            android:id="@+id/btnStartDate"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Start Date"
+            android:textSize="12sp"
+            android:layout_marginEnd="8dp"/>
+
+        <Button
+            android:id="@+id/btnEndDate"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="End Date"
+            android:textSize="12sp"
+            android:layout_marginStart="8dp"/>
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Include in Report"
+        android:textSize="14sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbRescue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Rescue Inhaler Usage"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbController"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Controller Medication"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbSymptoms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Symptom Burden"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbDailyLogs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Daily Check-in Logs"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbTriggerChart"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Trigger Trends Chart"
+        android:checked="true"
+        android:layout_marginStart="32dp"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbZones"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Zone Distribution"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <CheckBox
+        android:id="@+id/cbTriage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Notable Triage Incidents"
+        android:checked="true"
+        android:paddingStart="8dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="24dp">
+
+        <Button
+            android:id="@+id/btnCancel"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="#666666"/>
+
+        <Button
+            android:id="@+id/btnGenerate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Generate"
+            android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+</LinearLayout>
