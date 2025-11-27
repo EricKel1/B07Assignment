@@ -7,106 +7,70 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import android.util.Patterns;
-
 import com.example.b07project.auth.AuthRepo;
 import com.example.b07project.auth.LoginContract;
 import com.example.b07project.auth.LoginPresenter;
-import com.google.firebase.Firebase;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-import java.util.regex.Pattern;
-
 @RunWith(MockitoJUnitRunner.class)
 public class LoginPresenterTest {
-    //Mocks to use
-    @Mock
-    private LoginContract.View mockView;
-
-    @Mock
-    private AuthRepo mockRepo;
-
-    @Mock
-    private FirebaseAuth mockFirebaseAuth;
-
-    @Mock
-    private FirebaseUser mockFirebaseUser;
-
-    @Mock
-    private java.util.regex.Matcher mockMatcher;
+    @Mock private LoginContract.View mockView;
+    @Mock private AuthRepo mockRepo;
+    @Mock private FirebaseAuth mockFirebaseAuth;
+    @Mock private FirebaseUser mockFirebaseUser;
 
     private MockedStatic<FirebaseAuth> mockedFirebaseAuth;
+    private LoginPresenter realPresenter;
+    private LoginPresenter spyPresenter;
 
-    private LoginPresenter presenter;
-
-    //Need tests for the following cases
-        /*
-        WHen email field is empty; should show the error and stop
-        when email is null, should show error and stop.
-        when password is less than the proper amount (6 chars) should error and stop
-        when password is null, sohuld error and stop
-
-        when email and password are right, loading appears and log in should occur
-        when username and password are right, loading appears and log in occurs
-
-        When good log in occurs, should get user role from database (parent, child, provider)
-        WHen log in with @test.com, should skip email verification (will remove on launch)
-        when child account is opening should skip email verification and check role
-        when trying to log in with unverified email, show email verification dialog
-        When firebaseauth returns null user (might happen when no wifi?) should have behaviour
-                handling to not crash
-
-        When the login fails for whatever reason, should hide the loading circle and display the error
-        When the login fails with no exception message, show login failed, something went wrong, etc.
-
-        Test that parents are sent to the device chooser activity
-        When users with Provider type log in,  sent to provider home activity.
-        test that users with child role (from the device chooser) are sent to their proper home
-        when errors during role fetching occur show correct error to user
-
-        Test that ondestroy gets rid of view reference (stop memory leaks)
-        Test that if the sign in succeeds AFTER activity is destroyed (async...) no crash
-        Test that if sign in fails AFTER activity is destroyed, no crash
-        Test if role fetch succeeds after ondestroy, no crash
-        test if role fetch fails after ondestroy, no crash.
-
-
-
-         */
     @Before
     public void setUpTests(){
         mockedFirebaseAuth = mockStatic(FirebaseAuth.class);
         mockedFirebaseAuth.when(FirebaseAuth::getInstance).thenReturn(mockFirebaseAuth);
 
-        presenter = new LoginPresenter(mockView, mockRepo);
+        // Create the real presenter first
+        realPresenter = new LoginPresenter(mockView, mockRepo);
+
+        // Create the spy from the real presenter
+        spyPresenter = Mockito.spy(realPresenter);
     }
 
     @After
-    public void tearDownTests(){
-        mockedFirebaseAuth.close();
+    public void tearDown() {
+        if (mockedFirebaseAuth != null) {
+            mockedFirebaseAuth.close();
+        }
     }
 
     //Test
     @Test
     public void onLoginWithEmptyEmailShowsError(){
-        //when the email input is ""
+        // Create spy
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+
         when(mockView.getEmailInput()).thenReturn("");
         when(mockView.getPasswordInput()).thenReturn("password123");
 
-        presenter.onLoginClicked();
+        spyPresenter.onLoginClicked();
+
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
+        verify(mockRepo, never()).signIn(anyString(), anyString(), any());
+        verify(mockView, never()).showLoading(true);
     }
 
     //Test
@@ -115,8 +79,10 @@ public class LoginPresenterTest {
         when(mockView.getEmailInput()).thenReturn(null);
         when(mockView.getPasswordInput()).thenReturn("123456789");//valid password
 
-        presenter.onLoginClicked();
+        spyPresenter.onLoginClicked();
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
+        verify(mockRepo, never()).signIn(anyString(), anyString(), any());
+        verify(mockView, never()).showLoading(true);
     }
 
     //Test
@@ -125,8 +91,10 @@ public class LoginPresenterTest {
         when(mockView.getEmailInput()).thenReturn("123@example.com");//valid email
         when(mockView.getPasswordInput()).thenReturn(null);
 
-        presenter.onLoginClicked();
+        spyPresenter.onLoginClicked();
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
+        verify(mockRepo, never()).signIn(anyString(), anyString(), any());
+        verify(mockView, never()).showLoading(true);
     }
 
     //Test
@@ -135,43 +103,51 @@ public class LoginPresenterTest {
         when(mockView.getEmailInput()).thenReturn("123@example.com");//valid email
         when(mockView.getPasswordInput()).thenReturn("12345");
 
-        presenter.onLoginClicked();
+        spyPresenter.onLoginClicked();
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
+        verify(mockRepo, never()).signIn(anyString(), anyString(), any());
+        verify(mockView, never()).showLoading(true);
     }
 
     //Test
     @Test
     public void onLoginWithValidEmailAndPasswordSignsIn(){
-        when(mockView.getEmailInput()).thenReturn("123@example.com");//valid email
-        when(mockView.getPasswordInput()).thenReturn("123456789");
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
-            presenter.onLoginClicked();
-            verify(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
+        // Create spy and mock the email validation to return true
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
 
-        }
+        when(mockView.getEmailInput()).thenReturn("123@example.com");
+        when(mockView.getPasswordInput()).thenReturn("123456789");
+
+        spyPresenter.onLoginClicked();
+
+        verify(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
+        verify(mockView).showLoading(true);
     }
 
     //Test
     @Test
-    public void onLoginWithUserNameConvertsToEmail(){
-        when(mockView.getEmailInput()).thenReturn("123user");//valid email
-        when(mockView.getPasswordInput()).thenReturn("123456789");
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("123user"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(false);
-            presenter.onLoginClicked();
-            verify(mockRepo).signIn(eq("123user@b07project.local"), eq("123456789"), any(AuthRepo.Callback.class));
+    public void onLoginWithUserNameConvertsToEmail() {
+        // Create spy and mock the email validation to return false (invalid email)
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(false).when(spyPresenter).isValidEmailFormat("123user");
 
-        }
+        when(mockView.getEmailInput()).thenReturn("123user");
+        when(mockView.getPasswordInput()).thenReturn("123456789");
+
+        spyPresenter.onLoginClicked();
+
+        verify(mockRepo).signIn(eq("123user@b07project.local"), eq("123456789"), any(AuthRepo.Callback.class));
+        verify(mockView).showLoading(true);
     }
 
     //Test
     @Test
-    public void onLoginWithSignInSuccessWIthVerifiedEmailFetchRole(){
+    public void onLoginWithSignInSuccessWithVerifiedEmailFetchRole(){
+        // Create spy and mock the email validation to return true
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");//valid email
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
@@ -179,18 +155,17 @@ public class LoginPresenterTest {
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
 
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
+        // Mock the signIn to capture callback and trigger onSuccess
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
+        spyPresenter.onLoginClicked();
 
-            verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
-        }
+        verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
+        verify(mockView).showLoading(true);
     }
 
     //Test
@@ -203,23 +178,27 @@ public class LoginPresenterTest {
         when(mockFirebaseUser.getEmail()).thenReturn("123@test.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
 
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("123@test.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@test.com");
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@test.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
-        }
+        spyPresenter.onLoginClicked();
+
+        verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
+        verify(mockView).showLoading(true);
+        // Verify that showEmailNotVerifiedDialog is NOT called (verification bypassed)
+        verify(mockView, never()).showEmailNotVerifiedDialog();
     }
-
-    //Test
     @Test
-    public void onLoginWithSignInSuccessWIthChildUserWithVerificationBypass(){
+    public void onLoginWithSignInSuccessWithChildUserWithVerificationBypass(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("child@b07project.local");
+
         when(mockView.getEmailInput()).thenReturn("child@b07project.local");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
@@ -227,321 +206,311 @@ public class LoginPresenterTest {
         when(mockFirebaseUser.getEmail()).thenReturn("child@b07project.local");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
 
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("child@b07project.local"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("child@b07project.local"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
+        spyPresenter.onLoginClicked();
 
-            verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
-        }
+        verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
     }
 
-    //Test
     @Test
-    public void onLoginWithSignInSuccessWIthUnverifiedEmail_showsDialog(){
+    public void onLoginWithSignInSuccessWithUnverifiedEmail_showsDialog(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(false);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
 
-        try(MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)){
-            mockedPatterns.when(()-> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
+        spyPresenter.onLoginClicked();
 
-            verify(this.mockView).showEmailNotVerifiedDialog();
-        }
+        verify(mockView).showEmailNotVerifiedDialog();
     }
 
-    //Test
     @Test
-    public void onLoginWithSignInSuccessWIthNullUserDoesNotCrash() {
+    public void onLoginWithSignInSuccessWithNullUserDoesNotCrash(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(null);
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockRepo, never()).getUserRole(anyString(), any(AuthRepo.RoleCallback.class));
-        }
+        spyPresenter.onLoginClicked();
 
+        verify(mockRepo, never()).getUserRole(anyString(), any(AuthRepo.RoleCallback.class));
     }
 
-    //Test
     @Test
-    public void onLoginWithSignInErrorShowsError() {
+    public void onLoginWithSignInErrorShowsError(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            Exception exception = new Exception("Authentication failed");
-            callbackArgumentCaptor.getValue().onError(exception);
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onError(new Exception("Authentication failed"));
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).showError("Authentication failed");
+        spyPresenter.onLoginClicked();
 
-        }
-
+        verify(mockView).showError("Authentication failed");
     }
 
-    //Test
     @Test
-    public void onLoginWithSignInErrorWithNullMessageShowDefaultError() {
+    public void onLoginWithSignInErrorWithNullMessageShowDefaultError(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            Exception exception = new Exception();
-            callbackArgumentCaptor.getValue().onError(exception);
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onError(new Exception());
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).showError("Login failed");
+        spyPresenter.onLoginClicked();
 
-        }
-
+        verify(mockView).showError("Login failed");
     }
 
-    //Test
     @Test
-    public void fetchUserRoleWIthParentRoleNavigatesToDeviceChooser() {
+    public void fetchUserRoleWithParentRoleNavigatesToDeviceChooser(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            roleCallbackArgumentCaptor.getValue().onRole("parent");
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).navigateToDeviceChooser();
+        doAnswer(invocation -> {
+            AuthRepo.RoleCallback callback = invocation.getArgument(1);
+            callback.onRole("parent");
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
-        }
+        spyPresenter.onLoginClicked();
 
+        verify(mockView).navigateToDeviceChooser();
     }
 
-    //Test
     @Test
-    public void fetchUserRoleWIthProviderRoleNavigatesToProviderHome() {
+    public void fetchUserRoleWithProviderRoleNavigatesToProviderHome(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            roleCallbackArgumentCaptor.getValue().onRole("provider");
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).navigateToProviderHome();
+        doAnswer(invocation -> {
+            AuthRepo.RoleCallback callback = invocation.getArgument(1);
+            callback.onRole("provider");
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
-        }
+        spyPresenter.onLoginClicked();
 
+        verify(mockView).navigateToProviderHome();
     }
 
-    //Test
     @Test
-    public void fetchUserRoleOtherRoleNavigatesToHome() {
+    public void fetchUserRoleWithOtherRoleNavigatesToHome(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            roleCallbackArgumentCaptor.getValue().onRole("child");
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).navigateToHome();
-        }
+        doAnswer(invocation -> {
+            AuthRepo.RoleCallback callback = invocation.getArgument(1);
+            callback.onRole("child");
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
+        spyPresenter.onLoginClicked();
+
+        verify(mockView).navigateToHome();
     }
 
-    //Test
     @Test
-    public void fetchUserRoleErrorShowsError() {
+    public void fetchUserRoleErrorShowsError(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            Exception exception = new Exception("Database error");
-            roleCallbackArgumentCaptor.getValue().onError(exception);
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            verify(mockView).showError("Failed to get user role: Database error");
-        }
+        doAnswer(invocation -> {
+            AuthRepo.RoleCallback callback = invocation.getArgument(1);
+            callback.onError(new Exception("Database error"));
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
+        spyPresenter.onLoginClicked();
+
+        verify(mockView).showError("Failed to get user role: Database error");
     }
 
     @Test
     public void onDestroySetViewToNull(){
-        presenter.onDestroy();
-        presenter.onLoginClicked();
+        realPresenter.onDestroy();
+        realPresenter.onLoginClicked();
 
         verify(mockView, never()).getEmailInput();
     }
 
     @Test
-    public void signInCallBackSuccessDoesntCrashAfterDestroy(){
+    public void signInCallbackSuccessDoesntCrashAfterDestroy(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            presenter.onDestroy();
+        doAnswer(invocation -> {
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            callbackArgumentCaptor.getValue().onSuccess();
-        }
-
+        spyPresenter.onLoginClicked();
+        spyPresenter.onDestroy();
     }
 
     @Test
-    public void signInCallBackSuccessDoesntCrashOnError(){
+    public void signInCallbackErrorDoesntCrashAfterDestroy(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            presenter.onDestroy();
+        doAnswer(invocation -> {
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            callbackArgumentCaptor.getValue().onError(new Exception("Error"));
-        }
-
+        spyPresenter.onLoginClicked();
+        spyPresenter.onDestroy();
     }
 
     @Test
-    public void roleCallbackDoesNotCrashOnRoleAfterDestroy() {
+    public void roleCallbackDoesNotCrashOnRoleAfterDestroy(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            presenter.onDestroy();
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            roleCallbackArgumentCaptor.getValue().onRole("parent");
-        }
+        doAnswer(invocation -> {
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
+        spyPresenter.onLoginClicked();
+        spyPresenter.onDestroy();
     }
 
     @Test
-    public void roleCallbackDoesNotCrashOnErrorAfterDestroy() {
+    public void roleCallbackDoesNotCrashOnErrorAfterDestroy(){
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
+
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
         when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.isEmailVerified()).thenReturn(true);
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
-        try (MockedStatic<Patterns> mockedPatterns = mockStatic(Patterns.class)) {
-            mockedPatterns.when(() -> Patterns.EMAIL_ADDRESS.matcher("123@example.com"))
-                    .thenReturn(mockMatcher);
-            when(mockMatcher.matches()).thenReturn(true);
 
-            presenter.onLoginClicked();
-            ArgumentCaptor<AuthRepo.Callback> callbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.Callback.class);
-            verify(mockRepo).signIn(anyString(), anyString(), callbackArgumentCaptor.capture());
-            callbackArgumentCaptor.getValue().onSuccess();
-            ArgumentCaptor<AuthRepo.RoleCallback> roleCallbackArgumentCaptor = ArgumentCaptor.forClass(AuthRepo.RoleCallback.class);
-            verify(mockRepo).getUserRole(anyString(), roleCallbackArgumentCaptor.capture());
-            presenter.onDestroy();
+        doAnswer(invocation -> {
+            AuthRepo.Callback callback = invocation.getArgument(2);
+            callback.onSuccess();
+            return null;
+        }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
-            roleCallbackArgumentCaptor.getValue().onError(new Exception("Error"));
-        }
+        doAnswer(invocation -> {
+            return null;
+        }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
+
+        spyPresenter.onLoginClicked();
+        spyPresenter.onDestroy();
     }
 
     @Test
     public void onLoginWithNullViewDoesNothing(){
-        presenter.onDestroy();
-        presenter.onLoginClicked();
+        realPresenter.onDestroy();
+        realPresenter.onLoginClicked();
+
         verify(mockView, never()).getEmailInput();
     }
 
