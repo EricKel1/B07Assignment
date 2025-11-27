@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +58,7 @@ public class LoginPresenterTest {
             mockedFirebaseAuth.close();
         }
     }
+    
 
     //Test
     @Test
@@ -428,7 +431,7 @@ public class LoginPresenterTest {
 
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
-        when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
+//        when(mockFirebaseAuth.getCurrentUser()).thenReturn(mockFirebaseUser);
 
         doAnswer(invocation -> {
             return null;
@@ -506,12 +509,36 @@ public class LoginPresenterTest {
         spyPresenter.onDestroy();
     }
 
+
     @Test
     public void onLoginWithNullViewDoesNothing(){
         realPresenter.onDestroy();
         realPresenter.onLoginClicked();
 
         verify(mockView, never()).getEmailInput();
+    }
+
+    @Test
+    public void onDestroySetsViewToNull() {
+        // Create spy and mock the email validation
+        LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        doReturn(true).when(spyPresenter).isValidEmailFormat("test@example.com");
+
+        // First call onLoginClicked when view exists (this should work)
+        when(mockView.getEmailInput()).thenReturn("test@example.com");
+        when(mockView.getPasswordInput()).thenReturn("123456789");
+
+        spyPresenter.onLoginClicked();
+        verify(mockView).getEmailInput();
+        verify(mockView).getPasswordInput();
+        spyPresenter.onDestroy();
+
+        reset(mockView);
+        spyPresenter.onLoginClicked();
+        verify(mockView, never()).getEmailInput();
+        verify(mockView, never()).getPasswordInput();
+        verify(mockView, never()).showError(anyString());
+        verify(mockView, never()).showLoading(anyBoolean());
     }
 
 }
