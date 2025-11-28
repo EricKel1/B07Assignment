@@ -55,4 +55,7 @@ dependencies {
     implementation("androidx.work:work-runtime:2.9.0")
     implementation("com.google.guava:guava:31.1-android")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Onboarding Library
+    implementation("com.getkeepsafe.taptargetview:taptargetview:1.13.3")
 }
