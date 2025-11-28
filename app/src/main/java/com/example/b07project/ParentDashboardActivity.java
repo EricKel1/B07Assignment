@@ -225,11 +225,11 @@ public class ParentDashboardActivity extends AppCompatActivity {
         if (!hasBeenShown) {
             new TapTargetSequence(this)
                 .targets(
-                    TapTarget.forView(btnAddChild, "Add Your Child", "Tap here to add a new child to your dashboard.")
+                    TapTarget.forView(btnAddChild, "Add Your Child", "Tap here to add a new child.")
                         .id(1),
                     TapTarget.forView(findViewById(R.id.btnInventory), "Manage Inventory", "Track your medication supplies here.")
                         .id(2),
-                    TapTarget.forView(btnSwitchProfile, "Switch Profile", "If you have multiple profiles, you can switch between them here.")
+                    TapTarget.forView(btnSwitchProfile, "Switch Profile", "If this is your children's device, you can swap to their view here.")
                         .id(3),
                     TapTarget.forView(btnNotifications, "Notifications", "View important alerts and reminders here.")
                         .id(4)
