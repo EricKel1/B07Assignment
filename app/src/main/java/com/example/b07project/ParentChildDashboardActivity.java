@@ -4,11 +4,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.b07project.models.ControllerMedicineLog;
@@ -50,7 +52,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         childId = getIntent().getStringExtra("EXTRA_CHILD_ID");
         childName = getIntent().getStringExtra("EXTRA_CHILD_NAME");
-        
+
         pefRepository = new PEFRepository();
         scheduleRepository = new ScheduleRepository();
         controllerRepository = new ControllerMedicineRepository();
@@ -74,14 +76,11 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
         if (!hasBeenShown) {
             new TapTargetSequence(this)
                 .targets(
-                    TapTarget.forView(findViewById(R.id.cardLogMedicine), "Quick Actions", "Use these cards to quickly log events like rescue medicine use, daily symptoms, or a Peak Flow reading.").id(1),
-                    TapTarget.forView(findViewById(R.id.cardAdherence), "Medication Adherence", "This calendar tracks how well your child is following their controller medication schedule. Green is good, red means a dose was missed.").id(2),
-                    TapTarget.forView(findViewById(R.id.btnConfigureSchedule), "Configure Schedule", "Tap here to set up or change your child's daily controller medicine schedule.").id(3),
-                    TapTarget.forView(findViewById(R.id.cardStats), "View Reports", "See detailed charts and statistics of your child's data over time.").id(4),
-                    TapTarget.forView(findViewById(R.id.cardPatterns), "Trigger Patterns", "Discover what might be triggering your child\'s asthma symptoms.").id(5),
-                    TapTarget.forView(findViewById(R.id.cardHistoryMedicine), "History Logs", "Review past entries for medicine, symptoms, Peak Flow, and more.").id(6),
-                    TapTarget.forView(findViewById(R.id.btnBack4), "Go Back", "Tap here to return to the main parent dashboard.").id(7)
-                )
+                    TapTarget.forView(findViewById(R.id.cardLogMedicine), "Quick Actions", "Use these cards to quickly log events like medication, symptoms, and Peak Flow.").id(1),
+                    TapTarget.forView(findViewById(R.id.cardAdherence), "Medication Adherence", "Set up the expected medication schedule for adherence tracking here.").id(2),
+                    TapTarget.forView(findViewById(R.id.cardStats), "Statistics and Reports", "Tap here to see detailed charts and statistics of your child's data over time.").id(3),
+                    TapTarget.forView(findViewById(R.id.cardPatterns), "Trigger Patterns", "Discover what might be triggering your child's asthma symptoms.").id(4),
+                    TapTarget.forView(findViewById(R.id.cardHistoryMedicine), "History Logs", "Review past entries for medicine, symptoms, Peak Flow, and more.").id(5))
                 .listener(new TapTargetSequence.Listener() {
                     @Override
                     public void onSequenceFinish() {
@@ -89,7 +88,15 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {}
+                    public void onSequenceStep(TapTarget lastTarget, boolean targetClicked) {
+                        final NestedScrollView nestedScrollView = findViewById(R.id.nested_scroll_view);
+                        if (nestedScrollView == null) return;
+
+                        // After step 4, scroll down to see the lower cards
+                        if (lastTarget.id() == 4) {
+                            nestedScrollView.post(() -> nestedScrollView.fullScroll(View.FOCUS_DOWN));
+                        }
+                    }
 
                     @Override
                     public void onSequenceCanceled(TapTarget lastTarget) {}
@@ -100,10 +107,11 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
     private void initializeViews() {
         tvChildNameHeader = findViewById(R.id.tvChildNameHeader);
         tvCurrentZoneHeader = findViewById(R.id.tvCurrentZoneHeader);
-        
+
         tvAdherenceDetails = findViewById(R.id.tvAdherenceDetails);
         rvAdherenceCalendar = findViewById(R.id.rvAdherenceCalendar);
-        rvAdherenceCalendar.setLayoutManager(new GridLayoutManager(this, 7)); // 7 days a week
+        rvAdherenceCalendar.setLayoutManager(new GridLayoutManager(this, 7));
+        rvAdherenceCalendar.setNestedScrollingEnabled(false);
 
         btnConfigureSchedule = findViewById(R.id.btnConfigureSchedule);
 
@@ -111,6 +119,7 @@ public class ParentChildDashboardActivity extends AppCompatActivity {
             tvChildNameHeader.setText(childName);
         }
     }
+
 
     private void setupListeners() {
         // Quick Actions
