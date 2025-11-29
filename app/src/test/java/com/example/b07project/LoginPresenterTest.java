@@ -29,6 +29,10 @@ import com.example.b07project.auth.LoginPresenter;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+
+//READBEFORE:
+//I will be documenting certain parts of the tests so that future testers who want to build on this
+//test suite, or make a similar one, can do so with minimal downtime due to learning.
 @RunWith(MockitoJUnitRunner.class)
 public class LoginPresenterTest {
     @Mock private LoginContract.View mockView;
@@ -36,9 +40,9 @@ public class LoginPresenterTest {
     @Mock private FirebaseAuth mockFirebaseAuth;
     @Mock private FirebaseUser mockFirebaseUser;
 
-    private MockedStatic<FirebaseAuth> mockedFirebaseAuth;
-    private LoginPresenter realPresenter;
-    private LoginPresenter spyPresenter;
+     private MockedStatic<FirebaseAuth> mockedFirebaseAuth;
+     private LoginPresenter realPresenter;
+     private LoginPresenter spyPresenter;
 
     @Before
     public void setUpTests(){
@@ -48,12 +52,20 @@ public class LoginPresenterTest {
         // Create the real presenter first
         realPresenter = new LoginPresenter(mockView, mockRepo);
 
-        // Create the spy from the real presenter
+        //In mockito a spy serves  as a way to  call methods that rely on other classes
+        // without using their implementations. Trying to call just the real doesn't work or has pitfalls
+        // , like if it requires a FirebaseAuth that doesn't yet exist or works incorrectly.
+        // they allow you to replace specific methods that rely on other classes we arent testing,
+        // with mocks to pretend those classes did their behaviour correctly.
         spyPresenter = Mockito.spy(realPresenter);
     }
 
     @After
     public void tearDown() {
+        //mockedFirebaseAuth is part of mockStatic so if we don't close it
+        //it can stay active for an indeterminate amount of time and can stop our test suite from
+        //finishing execution.
+
         if (mockedFirebaseAuth != null) {
             mockedFirebaseAuth.close();
         }
@@ -63,26 +75,35 @@ public class LoginPresenterTest {
     //Test
     @Test
     public void onLoginWithEmptyEmailShowsError(){
-        // Create spy
         LoginPresenter spyPresenter = Mockito.spy(realPresenter);
 
+        //We take pretend inputs "" for email and password respectively.
+        //Mockview is a mock of the loginContract so we can pretend these values are
+        //taken as input for the actual login.
         when(mockView.getEmailInput()).thenReturn("");
         when(mockView.getPasswordInput()).thenReturn("password123");
 
+        //When we try to login
         spyPresenter.onLoginClicked();
 
+        //Make sure it shows this error
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
+        //verify signIn was never called in AuthRepo; i.e. we never tried to sign in.
         verify(mockRepo, never()).signIn(anyString(), anyString(), any());
+        //also verify never did the showLoading during the test.
         verify(mockView, never()).showLoading(true);
     }
 
     //Test
     @Test
     public void onLoginWithNullEmailShowsError(){
+        //If the email input is null
         when(mockView.getEmailInput()).thenReturn(null);
+        //If our password is 123456789
         when(mockView.getPasswordInput()).thenReturn("123456789");//valid password
 
         spyPresenter.onLoginClicked();
+        //same as above test.
         verify(mockView).showError("Enter a valid email/username and a 6+ character password.");
         verify(mockRepo, never()).signIn(anyString(), anyString(), any());
         verify(mockView, never()).showLoading(true);
@@ -91,6 +112,7 @@ public class LoginPresenterTest {
     //Test
     @Test
     public void onLoginWithNullPasswordShowsError(){
+        //Test for when the password input is null; we don't want to crash
         when(mockView.getEmailInput()).thenReturn("123@example.com");//valid email
         when(mockView.getPasswordInput()).thenReturn(null);
 
@@ -115,15 +137,17 @@ public class LoginPresenterTest {
     //Test
     @Test
     public void onLoginWithValidEmailAndPasswordSignsIn(){
-        // Create spy and mock the email validation to return true
+        // Creates spy and mock the email validation to return true
         LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        //This line "overrides" isValidEmailFormat to not execute implementation and
+        //to just return true.
         doReturn(true).when(spyPresenter).isValidEmailFormat("123@example.com");
 
         when(mockView.getEmailInput()).thenReturn("123@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
 
         spyPresenter.onLoginClicked();
-
+        //Verifies that signIn was called with those values and only once.
         verify(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
         verify(mockView).showLoading(true);
     }
@@ -131,7 +155,6 @@ public class LoginPresenterTest {
     //Test
     @Test
     public void onLoginWithUserNameConvertsToEmail() {
-        // Create spy and mock the email validation to return false (invalid email)
         LoginPresenter spyPresenter = Mockito.spy(realPresenter);
         doReturn(false).when(spyPresenter).isValidEmailFormat("123user");
 
@@ -158,9 +181,13 @@ public class LoginPresenterTest {
         when(mockFirebaseUser.getEmail()).thenReturn("123@example.com");
         when(mockFirebaseUser.getUid()).thenReturn("user123");
 
-        // Mock the signIn to capture callback and trigger onSuccess
+        // Mock the signIn to capture callback and trigger onSuccess.
+        //Basically it says to perform the code in the doAnswer when we call signIn on mockRepo.
+        //It is mocking that our sign in succeeeded.
         doAnswer(invocation -> {
+            //get the callback in index two of the when below.
             AuthRepo.Callback callback = invocation.getArgument(2);
+            //signal success in the mock
             callback.onSuccess();
             return null;
         }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
@@ -182,6 +209,7 @@ public class LoginPresenterTest {
         when(mockFirebaseUser.getUid()).thenReturn("user123");
 
         LoginPresenter spyPresenter = Mockito.spy(realPresenter);
+        //Assume 123@test.com is a valid email.
         doReturn(true).when(spyPresenter).isValidEmailFormat("123@test.com");
 
         doAnswer(invocation -> {
@@ -191,10 +219,10 @@ public class LoginPresenterTest {
         }).when(mockRepo).signIn(eq("123@test.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
         spyPresenter.onLoginClicked();
-
+        //verify getUserRole was called with these arguments once.
         verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
         verify(mockView).showLoading(true);
-        // Verify that showEmailNotVerifiedDialog is NOT called (verification bypassed)
+        // Verify showEmailNotVerifiedDialog is not called (verification bypassed)
         verify(mockView, never()).showEmailNotVerifiedDialog();
     }
     @Test
@@ -218,6 +246,8 @@ public class LoginPresenterTest {
         spyPresenter.onLoginClicked();
 
         verify(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
+        verify(mockView, never()).showEmailNotVerifiedDialog();
+
     }
 
     @Test
@@ -256,7 +286,7 @@ public class LoginPresenterTest {
             callback.onSuccess();
             return null;
         }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
-
+        //If this throws an exception or fails the test automatically fails.
         spyPresenter.onLoginClicked();
 
         verify(mockRepo, never()).getUserRole(anyString(), any(AuthRepo.RoleCallback.class));
@@ -320,6 +350,7 @@ public class LoginPresenterTest {
 
         doAnswer(invocation -> {
             AuthRepo.RoleCallback callback = invocation.getArgument(1);
+            //pretend it returned "parent"
             callback.onRole("parent");
             return null;
         }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
@@ -383,7 +414,7 @@ public class LoginPresenterTest {
         }).when(mockRepo).getUserRole(eq("user123"), any(AuthRepo.RoleCallback.class));
 
         spyPresenter.onLoginClicked();
-
+        //Home is the child screen.
         verify(mockView).navigateToHome();
     }
 
@@ -405,6 +436,7 @@ public class LoginPresenterTest {
             return null;
         }).when(mockRepo).signIn(eq("123@example.com"), eq("123456789"), any(AuthRepo.Callback.class));
 
+        //Pretend an exception was thrown when we tried to getUserRole
         doAnswer(invocation -> {
             AuthRepo.RoleCallback callback = invocation.getArgument(1);
             callback.onError(new Exception("Database error"));
@@ -520,11 +552,9 @@ public class LoginPresenterTest {
 
     @Test
     public void onDestroySetsViewToNull() {
-        // Create spy and mock the email validation
         LoginPresenter spyPresenter = Mockito.spy(realPresenter);
         doReturn(true).when(spyPresenter).isValidEmailFormat("test@example.com");
 
-        // First call onLoginClicked when view exists (this should work)
         when(mockView.getEmailInput()).thenReturn("test@example.com");
         when(mockView.getPasswordInput()).thenReturn("123456789");
 
